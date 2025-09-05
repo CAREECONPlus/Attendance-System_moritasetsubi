@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug: Add User to Global Users</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Debug: Add User to Global Users Collection</h1>
+    
+    <!-- Login Section -->
+    <div id="loginSection">
+        <h3>Super Admin Login</h3>
+        <input type="email" id="email" placeholder="Email" value="dxconsulting.branu2@gmail.com">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()" id="loginBtn">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <!-- Debug Actions Section -->
+    <div id="debugSection" style="display: none;">
+        <h3>Logged in as: <span id="currentUserEmail"></span></h3>
+        <button onclick="logout()" style="margin-bottom: 20px;">Logout</button>
+        
+        <h3>Fix Email Case Mismatch Issue</h3>
+        <button onclick="fixEmailCaseMismatch()" id="fixBtn">Fix Email Case</button>
+        <button onclick="checkUserExists()" id="checkBtn">Check User Exists</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- App scripts -->
+    <script src="./js/config.js"></script>
+    <script src="./js/firebase.js"></script>
+
+    <script>
+        // Auth state monitoring
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('debugSection').style.display = 'block';
+                document.getElementById('currentUserEmail').textContent = user.email;
+            } else {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('debugSection').style.display = 'none';
+            }
+        });
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const result = document.getElementById('loginResult');
+            
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                result.innerHTML = '<div style="color: green;">✅ Login successful</div>';
+            } catch (error) {
+                result.innerHTML = `<div style="color: red;">❌ Login failed: ${error.message}</div>`;
+            }
+        }
+
+        async function logout() {
+            await firebase.auth().signOut();
+        }
+
+        async function checkUserExists() {
+            const result = document.getElementById('result');
+            try {
+                const db = firebase.firestore();
+                
+                // Check both possible documents
+                const lowerCaseDoc = await db.collection('global_users')
+                    .doc('dxconsulting.branu_attendance@gmail.com')
+                    .get();
+                
+                const upperCaseDoc = await db.collection('global_users')
+                    .doc('dxconsulting.branu_Attendance@gmail.com')
+                    .get();
+                
+                result.innerHTML = `
+                    <div>
+                        <h4>Document Check Results:</h4>
+                        <p>Lowercase (dxconsulting.branu_attendance@gmail.com): ${lowerCaseDoc.exists ? '✅ EXISTS' : '❌ NOT FOUND'}</p>
+                        <p>Mixed case (dxconsulting.branu_Attendance@gmail.com): ${upperCaseDoc.exists ? '✅ EXISTS' : '❌ NOT FOUND'}</p>
+                        ${lowerCaseDoc.exists ? `<p>Lowercase data: ${JSON.stringify(lowerCaseDoc.data(), null, 2)}</p>` : ''}
+                        ${upperCaseDoc.exists ? `<p>Mixed case data: ${JSON.stringify(upperCaseDoc.data(), null, 2)}</p>` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                result.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function fixEmailCaseMismatch() {
+            const btn = document.getElementById('fixBtn');
+            const result = document.getElementById('result');
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Fixing...';
+                result.innerHTML = 'Processing...';
+                
+                const db = firebase.firestore();
+                
+                // Get the existing document with wrong case
+                const wrongCaseDoc = await db.collection('global_users')
+                    .doc('dxconsulting.branu_Attendance@gmail.com')
+                    .get();
+                
+                if (!wrongCaseDoc.exists) {
+                    result.innerHTML = '<div style="color: red;">❌ Document with wrong case not found</div>';
+                    return;
+                }
+                
+                const userData = wrongCaseDoc.data();
+                
+                // Update email to lowercase
+                userData.email = 'dxconsulting.branu_attendance@gmail.com';
+                userData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                userData.fixedBy = 'debug-script';
+                
+                // Create new document with correct lowercase key
+                await db.collection('global_users')
+                    .doc('dxconsulting.branu_attendance@gmail.com')
+                    .set(userData);
+                
+                // Delete the old document with wrong case
+                await db.collection('global_users')
+                    .doc('dxconsulting.branu_Attendance@gmail.com')
+                    .delete();
+                
+                result.innerHTML = `
+                    <div style="color: green;">
+                        ✅ Success! Email case mismatch fixed<br>
+                        Old key: dxconsulting.branu_Attendance@gmail.com<br>
+                        New key: dxconsulting.branu_attendance@gmail.com<br>
+                        Role: ${userData.role}<br>
+                        Tenant: ${userData.tenantId}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error fixing email case:', error);
+                result.innerHTML = `
+                    <div style="color: red;">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Fix Email Case';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者登録 - 勤怠管理システム</title>
+    
+    <!-- Favicon追加 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
+    
+    <!-- Firebase v8 SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase設定 -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase.js"></script>
+    
+    <!-- 不足関数の補完 -->
+    <script src="js/missing-functions.js"></script>
+    
+    <!-- テナント管理 -->
+    <script src="js/tenant.js"></script>
+    
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
+    <!-- Email設定 -->
+    <script src="js/email-config.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* CAREECON公式ブランドカラー */
+            --careecon-primary-blue: #244EFF;
+            --careecon-secondary-blue: #0133D8;
+            --careecon-navy: #001350;
+            --careecon-gray: #82889D;
+            --careecon-background-blue: #F1F4FF;
+            --careecon-gray-blue: #F9FAFC;
+            --careecon-green: #1DCE85;
+            --careecon-pink: #FF2C5D;
+            --careecon-yellow: #FFCE2C;
+            --careecon-white: #FFFFFF;
+            
+            /* セマンティックカラー */
+            --success-color: var(--careecon-green);
+            --warning-color: var(--careecon-yellow);
+            --danger-color: var(--careecon-pink);
+            --info-color: var(--careecon-primary-blue);
+            
+            /* グレースケール */
+            --text-primary: var(--careecon-navy);
+            --text-secondary: var(--careecon-gray);
+            --text-muted: var(--careecon-gray);
+            --border-color: var(--careecon-gray);
+            --background-light: var(--careecon-gray-blue);
+            
+            /* シャドウ */
+            --shadow-sm: 0 1px 3px rgba(0, 19, 80, 0.12), 0 1px 2px rgba(0, 19, 80, 0.08);
+            --shadow-md: 0 4px 6px rgba(0, 19, 80, 0.07), 0 2px 4px rgba(0, 19, 80, 0.06);
+            --shadow-lg: 0 10px 15px rgba(0, 19, 80, 0.1), 0 4px 6px rgba(0, 19, 80, 0.05);
+            --shadow-xl: 0 20px 25px rgba(0, 19, 80, 0.1), 0 10px 10px rgba(0, 19, 80, 0.04);
+            
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background: var(--careecon-primary-blue);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: var(--careecon-white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(124, 157, 254, 0.1);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .register-header h1 {
+            color: var(--careecon-primary-blue);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .register-header .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .required {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--careecon-white);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--careecon-primary-blue);
+            box-shadow: 0 0 0 3px rgba(44, 93, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+            color: var(--careecon-white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-full {
+            width: 100%;
+            display: block;
+        }
+
+        .btn-secondary {
+            background: var(--careecon-light-gray);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: var(--radius-md);
+            margin: 15px 0;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer .link {
+            color: var(--careecon-primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer .link:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 480px) {
+            .register-container {
+                padding: 30px 20px;
+            }
+            
+            .register-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>管理者登録</h1>
+            <p class="subtitle">勤怠管理システムの管理者アカウントを作成します</p>
+        </div>
+
+        <!-- 管理者登録フォーム -->
+        <form id="adminRegisterForm">
+            <div class="form-group">
+                <label for="adminEmail">メールアドレス <span class="required">*</span></label>
+                <input type="email" id="adminEmail" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adminPassword">パスワード <span class="required">*</span></label>
+                <input type="password" id="adminPassword" name="password" required minlength="6">
+                <small style="color: var(--text-muted); font-size: 12px;">6文字以上で入力してください</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="adminDisplayName">氏名 <span class="required">*</span></label>
+                <input type="text" id="adminDisplayName" name="displayName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adminCompany">会社名・組織名 <span class="required">*</span></label>
+                <input type="text" id="adminCompany" name="company" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adminDepartment">部署名</label>
+                <input type="text" id="adminDepartment" name="department">
+            </div>
+            
+            <div class="form-group">
+                <label for="adminPhone">電話番号</label>
+                <input type="tel" id="adminPhone" name="phone">
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-full">管理者アカウントを作成</button>
+            </div>
+            
+            <div id="register-message" class="message hidden"></div>
+        </form>
+
+        <div class="footer">
+            <p><a href="index.html" class="link">← メインページに戻る</a></p>
+            <p style="margin-top: 10px; color: var(--text-muted); font-size: 14px;">
+                既にアカウントをお持ちの場合は、<a href="index.html" class="link">こちら</a>からログインしてください
+            </p>
+        </div>
+    </div>
+
+    <script src="js/tenant-settings.js"></script>
+    <script src="js/admin-register.js"></script>
+</body>
+</html>

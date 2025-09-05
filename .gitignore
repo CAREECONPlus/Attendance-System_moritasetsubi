@@ -1,0 +1,22 @@
+# 環境変数ファイル
+.env
+.env.local
+.env.production
+
+# Firebase設定ファイル（本番用）
+js/config.prod.js
+
+# ログファイル
+*.log
+
+# 一時ファイル
+.DS_Store
+Thumbs.db
+
+# IDE設定ファイル
+.vscode/
+.idea/
+
+# Node.js（もし使用する場合）
+node_modules/
+npm-debug.log*

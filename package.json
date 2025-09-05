@@ -1,0 +1,34 @@
+{
+  "name": "attendance-system-firebase",
+  "version": "1.0.0",
+  "description": "Firebase対応のモダンな勤怠管理システム。リアルタイムデータ同期、CSV出力、管理者・従業員の権限管理機能を搭載。",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve",
+    "start": "npm run build && npx serve",
+    "build": "npm run build:config",
+    "build:config": "node scripts/build-config.js",
+    "production": "npm run build && echo 'Production build complete. Deploy files to your web server.'"
+  },
+  "dependencies": {
+    "firebase": "^9.22.0"
+  },
+  "keywords": [
+    "attendance",
+    "firebase",
+    "javascript",
+    "html",
+    "css",
+    "firestore",
+    "authentication"
+  ],
+  "author": "CAREECONPlus",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CAREECONPlus/attendance-system-firebase.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

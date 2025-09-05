@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠管理システム</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon追加 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    
+    <!-- Firebase v8 SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase設定 -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase.js"></script>
+    
+    <!-- セキュリティとエラーハンドリング -->
+    <script src="js/error-handler.js"></script>
+    
+    <!-- 不足関数の補完 -->
+    <script src="js/missing-functions.js"></script>
+    
+    <!-- 招待システム -->
+    <script src="js/invite-system.js"></script>
+    <script src="js/invite-admin.js"></script>
+    
+    <!-- テナント管理 -->
+    <script src="js/tenant.js"></script>
+    
+    <!-- システムのJavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/tenant-settings.js"></script>
+    <script src="js/employee.js"></script>
+    <script src="js/admin.js"></script>
+
+    <style>
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 勤怠ボタンの状態別色設定（強制適用） */
+        #clock-in-btn,
+        #clock-out-btn, 
+        #break-start-btn,
+        #break-end-btn {
+            transition: all 0.3s ease !important;
+            border: none !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 18px !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-shadow: var(--shadow-sm) !important;
+            min-width: 120px !important;
+        }
+
+        /* 出勤ボタン - 待機状態（青） */
+        #clock-in-btn:not(:disabled) {
+            background: linear-gradient(135deg, #007bff, #0056b3) !important;
+            color: white !important;
+        }
+
+        /* 出勤ボタン - 出勤済み状態（緑） */
+        #clock-in-btn:disabled {
+            background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+            color: white !important;
+            opacity: 0.85 !important;
+        }
+
+        /* 退勤ボタン - 有効状態（赤） */
+        #clock-out-btn:not(:disabled) {
+            background: linear-gradient(135deg, #dc3545, #c82333) !important;
+            color: white !important;
+        }
+
+        /* 退勤ボタン - 無効状態（グレー） */
+        #clock-out-btn:disabled {
+            background: #6c757d !important;
+            color: white !important;
+            opacity: 0.6 !important;
+        }
+
+        /* 休憩開始ボタン - 有効状態（黄色） */
+        #break-start-btn:not(:disabled) {
+            background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+            color: black !important;
+        }
+
+        /* 休憩開始ボタン - 休憩中状態（水色） */
+        #break-start-btn.break-active {
+            background: linear-gradient(135deg, #17a2b8, #138496) !important;
+            color: white !important;
+            opacity: 0.85 !important;
+        }
+
+        /* 休憩開始ボタン - 無効状態（グレー） */
+        #break-start-btn:disabled:not(.break-active) {
+            background: #6c757d !important;
+            color: white !important;
+            opacity: 0.6 !important;
+        }
+
+        /* 休憩終了ボタン - 有効状態（オレンジ） */
+        #break-end-btn:not(:disabled) {
+            background: linear-gradient(135deg, #fd7e14, #e8650e) !important;
+            color: white !important;
+        }
+
+        /* 休憩終了ボタン - 無効状態（グレー） */
+        #break-end-btn:disabled {
+            background: #6c757d !important;
+            color: white !important;
+            opacity: 0.6 !important;
+        }
+
+        /* ホバー効果（有効なボタンのみ） */
+        .clock-btn:not(:disabled):hover {
+            transform: translateY(-2px) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        /* 無効ボタンの統一スタイル */
+        .clock-btn:disabled {
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+
+        /* 処理中ボタンのスタイル */
+        .clock-btn.processing {
+            opacity: 0.7 !important;
+            cursor: wait !important;
+            pointer-events: none !important;
+        }
+
+        /* 状態表示の強化 */
+        .status-working {
+            background: rgba(40, 167, 69, 0.1) !important;
+            color: #28a745 !important;
+            border-left: 4px solid #28a745 !important;
+            padding: 15px !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .status-break {
+            background: rgba(255, 193, 7, 0.1) !important;
+            color: #ffc107 !important;
+            border-left: 4px solid #ffc107 !important;
+            padding: 15px !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .status-completed {
+            background: rgba(23, 162, 184, 0.1) !important;
+            color: #17a2b8 !important;
+            border-left: 4px solid #17a2b8 !important;
+            padding: 15px !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .status-waiting {
+            background: rgba(108, 117, 125, 0.1) !important;
+            color: #6c757d !important;
+            border-left: 4px solid #6c757d !important;
+            padding: 15px !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+
+        /* 管理者登録依頼フォームスタイル */
+        .form-description {
+            color: #6c757d !important;
+            margin-bottom: 20px !important;
+            line-height: 1.5 !important;
+            font-size: 14px !important;
+        }
+
+        .required {
+            color: #dc3545 !important;
+            font-weight: 600 !important;
+        }
+
+        .message {
+            padding: 12px 15px !important;
+            border-radius: 6px !important;
+            margin: 15px 0 !important;
+            font-weight: 600 !important;
+        }
+
+        .message.success {
+            background: #d4edda !important;
+            color: #155724 !important;
+            border: 1px solid #c3e6cb !important;
+        }
+
+        .message.error {
+            background: #f8d7da !important;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb !important;
+        }
+
+        #submitAdminRequest:disabled {
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* 招待リンク管理スタイル */
+        .invite-section {
+            padding: 20px 0;
+        }
+        
+        .invite-header {
+            margin-bottom: 30px;
+        }
+        
+        .invite-description {
+            color: #6c757d;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        
+        .invite-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .invite-card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .invite-card-header h4 {
+            margin: 0;
+            color: #495057;
+            font-size: 16px;
+        }
+        
+        .invite-card-body {
+            padding: 20px;
+        }
+        
+        .invite-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .invite-info-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .invite-info-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .invite-info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .btn-large {
+            padding: 12px 24px !important;
+            font-size: 16px !important;
+            width: 100%;
+        }
+        
+        .generated-invite-section {
+            margin-top: 20px;
+        }
+        
+        .invite-link-container {
+            margin-bottom: 20px;
+        }
+        
+        .invite-link-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .invite-link-display {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .invite-link-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .invite-instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .invite-instructions p {
+            margin: 0 0 10px 0;
+            color: #0056b3;
+            font-weight: 600;
+        }
+        
+        .invite-instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #495057;
+        }
+        
+        .invite-instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .invite-history-section {
+            margin-top: 40px;
+        }
+        
+        .invite-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .invite-history-header h4 {
+            margin: 0;
+            color: #495057;
+        }
+        
+        .invite-history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .invite-history-table th,
+        .invite-history-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .invite-history-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .invite-history-table td {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .invite-status-active {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .invite-status-expired {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .invite-status-disabled {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        /* 小画面対応 */
+        @media (max-width: 480px) {
+            #clock-in-btn,
+            #clock-out-btn, 
+            #break-start-btn,
+            #break-end-btn {
+                padding: 14px 8px !important;
+                font-size: 16px !important;
+                min-width: 80px !important;
+            }
+            
+            .admin-notice {
+                font-size: 13px !important;
+                padding: 12px !important;
+            }
+            
+            .invite-info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .invite-link-display {
+                flex-direction: column;
+            }
+            
+            .invite-history-table {
+                font-size: 12px;
+            }
+        }
+
+        /* ==================== 現場管理用CSS ==================== */
+
+        /* 現場管理セクション */
+        .site-management-section {
+            padding: 20px 0;
+        }
+
+        .site-management-header {
+            margin-bottom: 30px;
+        }
+
+        .site-management-header h3 {
+            margin: 0 0 10px 0;
+            color: var(--careecon-blue);
+        }
+
+        .site-management-description {
+            color: #666;
+            margin: 0;
+        }
+
+        /* 現場カード */
+        .site-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .site-card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .site-card-header h4 {
+            margin: 0;
+            color: var(--careecon-blue);
+            font-size: 16px;
+        }
+
+        .site-card-body {
+            padding: 20px;
+        }
+
+        /* フォームスタイル */
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        /* 現場一覧テーブル */
+        .site-list-section {
+            margin-top: 30px;
+        }
+
+        .site-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .site-list-header h4 {
+            margin: 0;
+            color: var(--careecon-blue);
+        }
+
+        .site-list-container {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .site-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .site-list-table th,
+        .site-list-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .site-list-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .site-list-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .site-name {
+            font-weight: 600;
+            color: var(--careecon-blue);
+        }
+
+        .site-address {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .site-created {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .site-usage {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* アクションボタン */
+        .site-actions {
+            white-space: nowrap;
+        }
+
+        .site-actions .btn {
+            margin-right: 5px;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* エラー・情報表示 */
+        .no-data,
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .site-list-table {
+                font-size: 14px;
+            }
+
+            .site-list-table th,
+            .site-list-table td {
+                padding: 8px;
+            }
+
+            .site-actions .btn {
+                display: block;
+                margin: 2px 0;
+                width: 100%;
+            }
+        }
+
+        /* ==================== ソート機能用CSS ==================== */
+
+        /* ソートコントロール */
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 10px;
+        }
+
+        .sort-controls select {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        /* ソート可能なテーブルヘッダー */
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        .sortable:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sortable.active {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* ソートインジケーター */
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        .sort-indicator::after {
+            content: "⇅";
+        }
+
+        .sortable.active .sort-indicator {
+            opacity: 1;
+        }
+
+        .sortable.active.asc .sort-indicator::after {
+            content: "↑";
+            color: #4caf50;
+        }
+
+        .sortable.active.desc .sort-indicator::after {
+            content: "↓";
+            color: #f44336;
+        }
+
+        /* ソートされた列のハイライト */
+        .attendance-table tbody tr td.sorted-column {
+            background-color: #f8f9fa;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .sort-controls {
+                flex-direction: column;
+                gap: 5px;
+                margin: 10px 0;
+            }
+
+            .sort-controls select {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        /* ==================== モーダル用CSS ==================== */
+
+        /* モーダル基本スタイル */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        /* モーダルオーバーレイ */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        /* モーダルコンテンツ */
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1002;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* モーダルヘッダー */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
+
+        /* モーダルボディ */
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* フォーム行 */
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* フォームグループ */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .form-group input[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+        /* モーダルフッター */
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            gap: 10px;
+        }
+
+        .modal-footer .btn {
+            min-width: 80px;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+            }
+        }
+
+        /* ==================== 管理者依頼タブ用CSS ==================== */
+
+        /* 管理者依頼ヘッダー */
+        .admin-requests-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .admin-requests-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        /* ステータスバッジ */
+        .status-pending {
+            background-color: #ffc107;
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-approved {
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-rejected {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            min-width: 60px;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+            line-height: 1.25;
+            border-radius: 3px;
+        }
+
+        /* 管理者依頼テーブルの調整 */
+        #admin-requests-content .attendance-table th,
+        #admin-requests-content .attendance-table td {
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        #admin-requests-content .attendance-table th:last-child,
+        #admin-requests-content .attendance-table td:last-child {
+            text-align: center;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .admin-requests-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .action-buttons {
+                justify-content: center;
+            }
+
+            .action-buttons .btn {
+                min-width: 50px;
+            }
+        }
+
+        /* 🆕 複数現場表示用スタイル */
+        .multi-site-section {
+            margin: 30px 0;
+        }
+
+        .site-attendance-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .site-attendance-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .site-attendance-card.working {
+            border-left: 4px solid #28a745;
+        }
+
+        .site-attendance-card.break {
+            border-left: 4px solid #ffc107;
+        }
+
+        .site-attendance-card.completed {
+            border-left: 4px solid #6c757d;
+            opacity: 0.8;
+        }
+
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .site-header h4 {
+            margin: 0;
+            color: #495057;
+            font-size: 18px;
+        }
+
+        .site-status {
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .site-attendance-card.working .site-status {
+            background: #28a745;
+        }
+
+        .site-attendance-card.break .site-status {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .site-attendance-card.completed .site-status {
+            background: #6c757d;
+        }
+
+        .site-details {
+            padding: 15px 20px;
+        }
+
+        .time-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .time-info span {
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .working-indicator {
+            color: #28a745 !important;
+            font-weight: 500;
+        }
+
+        .site-notes {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .site-actions {
+            padding: 0 20px 15px;
+        }
+
+        .switch-site-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .switch-site-btn:hover {
+            background: #0056b3;
+        }
+
+        .no-sites {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        /* 複数現場表示のレスポンシブ対応 */
+        @media (max-width: 768px) {
+            .time-info {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .site-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+        /* 🆕 短時間再出勤確認モーダル */
+        .reclock-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .reclock-modal-overlay.show {
+            opacity: 1;
+        }
+
+        .reclock-modal {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 480px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .reclock-modal-overlay.show .reclock-modal {
+            transform: translateY(0);
+        }
+
+        .reclock-modal-header {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+        }
+
+        .reclock-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .reclock-modal-body {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .reclock-modal-body p {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .reclock-modal-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .last-work-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .last-work-info p {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .last-work-info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .reclock-modal-footer {
+            padding: 20px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            background: #f8f9fa;
+        }
+
+        .reclock-modal-footer .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .reclock-modal-footer .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* モーダルのレスポンシブ対応 */
+        @media (max-width: 480px) {
+            .reclock-modal {
+                width: 95%;
+                margin: 20px;
+            }
+
+            .reclock-modal-header {
+                padding: 16px 20px;
+            }
+
+            .reclock-modal-header h3 {
+                font-size: 18px;
+            }
+
+            .reclock-modal-body {
+                padding: 20px;
+            }
+
+            .reclock-modal-footer {
+                padding: 16px 20px;
+                flex-direction: column;
+            }
+
+            .reclock-modal-footer .btn {
+                min-width: auto;
+            }
+        }
+
+        /* 🆕 従業員管理用スタイル */
+        .employee-management-section {
+            padding: 20px 0;
+        }
+
+        .employee-management-header {
+            margin-bottom: 30px;
+        }
+
+        .employee-management-description {
+            color: #6c757d;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .employee-list-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .employee-list-header {
+            background: #f8f9fa;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .employee-list-header h4 {
+            margin: 0;
+            color: #495057;
+            font-size: 18px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .employee-search {
+            padding: 20px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status-filter {
+            min-width: 150px;
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .employee-list-container {
+            overflow-x: auto;
+        }
+
+        .employee-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .employee-list-table th {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
+        }
+
+        .employee-list-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .employee-list-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading-cell {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .employee-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .employee-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .employee-status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .employee-actions .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-deactivate {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .btn-activate {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+
+        /* 従業員管理のレスポンシブ対応 */
+        @media (max-width: 768px) {
+            .employee-list-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .employee-search {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .search-input,
+            .status-filter {
+                width: 100%;
+            }
+
+            .employee-actions {
+                justify-content: center;
+            }
+
+            .employee-list-table {
+                font-size: 14px;
+            }
+
+            .employee-list-table th,
+            .employee-list-table td {
+                padding: 8px 12px;
+            }
+        }
+
+        /* テナント情報表示用スタイル */
+        .tenant-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tenant-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .tenant-id {
+            font-size: 11px;
+            color: #666;
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- ログインページ -->
+    <div id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                <h1>勤怠管理システム</h1>
+                
+                <!-- 招待情報表示 -->
+                <div id="invite-info" class="invite-info hidden">
+                    <div class="invite-welcome">
+                        <h2>従業員登録</h2>
+                        <p>「<span id="company-name-display"></span>」への招待を受けました</p>
+                    </div>
+                </div>
+
+                <!-- 従業員登録フォーム -->
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label for="register-name">氏名 <span class="required">*</span></label>
+                        <input type="text" id="register-name" name="name" required maxlength="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">メールアドレス <span class="required">*</span></label>
+                        <input type="email" id="register-email" name="email" autocomplete="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">パスワード <span class="required">*</span></label>
+                        <input type="password" id="register-password" name="password" autocomplete="new-password" required minlength="6">
+                        <small class="form-hint">6文字以上で入力してください</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password-confirm">パスワード確認 <span class="required">*</span></label>
+                        <input type="password" id="register-password-confirm" name="passwordConfirm" autocomplete="new-password" required minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-full">登録</button>
+                    </div>
+                    
+                    <div id="register-error-message" class="error-text hidden"></div>
+                    <div id="register-success-message" class="success-text hidden"></div>
+                </form>
+
+                <!-- ログインフォーム -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">メールアドレス</label>
+                        <input type="email" id="email" name="email" autocomplete="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">パスワード</label>
+                        <input type="password" id="password" name="password" autocomplete="current-password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-full">ログイン</button>
+                    </div>
+                    
+                    <div id="error-message" class="error-text hidden"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 従業員画面 -->
+    <div id="employee-page" class="page hidden">
+        <div class="container">
+            <header class="app-header">
+                <h1>勤怠管理システム</h1>
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <button class="btn btn-secondary btn-small" id="logout-btn">ログアウト</button>
+                </div>
+            </header>
+
+            <main class="employee-main">
+                <!-- 現在時刻表示 -->
+                <div class="date-display">
+                    <div class="date" id="current-date">日付読み込み中...</div>
+                    <div class="time" id="current-time">時刻読み込み中...</div>
+                </div>
+
+                <!-- 勤務状況 -->
+                <div id="clock-status" class="clock-status">
+                    <div class="status-waiting">出勤ボタンを押してください</div>
+                </div>
+
+                <!-- 出退勤・休憩ボタン -->
+                <div class="clock-buttons">
+                    <div class="button-row">
+                        <button class="btn btn-primary clock-btn" id="clock-in-btn">出勤</button>
+                        <button class="btn btn-secondary clock-btn" id="clock-out-btn" disabled>退勤</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="btn btn-warning clock-btn" id="break-start-btn" disabled>休憩開始</button>
+                        <button class="btn btn-warning clock-btn" id="break-end-btn" disabled>休憩終了</button>
+                    </div>
+                </div>
+
+                <!-- 現場名入力 -->
+                <div class="site-selection">
+                    <div class="form-group">
+                        <label for="site-name">🏢 現場名：</label>
+                        <select id="site-name" required>
+                            <option value="">現場を選択してください</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- メモ -->
+                <div class="form-group">
+                    <label for="work-notes">📝 メモ：</label>
+                    <textarea id="work-notes" placeholder="作業内容を記入（任意）" rows="3" maxlength="500"></textarea>
+                    <div class="form-hint">
+                        <small>💡 作業内容や特記事項を記録できます（任意）</small>
+                    </div>
+                </div>
+
+                <!-- 🆕 複数現場対応：今日の現場別勤務状況 -->
+                <section class="multi-site-section">
+                    <div id="multi-site-attendance">
+                        <div class="loading-message">🔄 現場情報を読み込み中...</div>
+                    </div>
+                </section>
+
+                <!-- 直近3日間の記録 -->
+                <section class="recent-records">
+                    <h3>📋 直近3日間の記録</h3>
+                    <div id="recent-list">
+                        <div class="loading-message">🔄 記録を読み込み中...</div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- 管理者画面 -->
+    <div id="admin-page" class="page hidden">
+        <div class="container">
+            <header class="app-header">
+                <h1>勤怠管理システム</h1>
+                <div class="user-info">
+                    <span id="admin-user-name"></span>
+                    <button id="admin-logout-btn" class="btn btn-secondary btn-small">ログアウト</button>
+                </div>
+            </header>
+
+            <main class="admin-main">
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="daily">日別表示</button>
+                    <button class="tab-btn" data-tab="monthly">月別表示</button>
+                    <button class="tab-btn" data-tab="employee">従業員別</button>
+                    <button class="tab-btn" data-tab="site">現場別</button>
+                    <button class="tab-btn" data-tab="site-management">現場管理</button>
+                    <button class="tab-btn" data-tab="invite">従業員招待</button>
+                    <button class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;">従業員管理</button>
+                    <button class="tab-btn" data-tab="admin-requests" id="admin-requests-tab" style="display: none;">管理者依頼</button>
+                </div>
+
+                <div class="filter-row">
+                    <div class="date-filter">
+                        <label class="filter-label">日付:</label>
+                        <input type="date" id="filter-date">
+                    </div>
+                    <div class="month-filter hidden">
+                        <label class="filter-label">月:</label>
+                        <input type="month" id="filter-month">
+                    </div>
+                    <div class="employee-filter hidden">
+                        <label class="filter-label">従業員:</label>
+                        <select id="filter-employee">
+                            <option value="">全員</option>
+                        </select>
+                    </div>
+                    <div class="site-filter hidden">
+                        <label class="filter-label">現場:</label>
+                        <select id="filter-site">
+                            <option value="">全ての現場</option>
+                        </select>
+                    </div>
+                    <div class="sort-controls">
+                        <label class="filter-label">並び順:</label>
+                        <select id="sort-field">
+                            <option value="date">日付順</option>
+                            <option value="userName">従業員名順</option>
+                            <option value="siteName">現場名順</option>
+                            <option value="startTime">出勤時刻順</option>
+                        </select>
+                        <select id="sort-direction">
+                            <option value="asc">昇順 ↑</option>
+                            <option value="desc">降順 ↓</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="export-csv" class="btn btn-primary">CSV出力</button>
+                    </div>
+                </div>
+
+                <div class="attendance-table-container">
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="userName">
+                                    従業員名 <span class="sort-indicator" data-sort="userName"></span>
+                                </th>
+                                <th class="sortable" data-sort="date">
+                                    日付 <span class="sort-indicator" data-sort="date"></span>
+                                </th>
+                                <th class="sortable" data-sort="siteName">
+                                    現場名 <span class="sort-indicator" data-sort="siteName"></span>
+                                </th>
+                                <th class="sortable" data-sort="startTime">
+                                    出勤時間 <span class="sort-indicator" data-sort="startTime"></span>
+                                </th>
+                                <th class="sortable" data-sort="endTime">
+                                    退勤時間 <span class="sort-indicator" data-sort="endTime"></span>
+                                </th>
+                                <th>休憩時間</th>
+                                <th>実稼働時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-data">
+                            <!-- 勤怠データが表示されます -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 勤怠データ編集モーダル -->
+                <div id="edit-attendance-modal" class="modal hidden">
+                    <div class="modal-overlay" onclick="closeEditModal()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📝 勤怠データ編集</h3>
+                            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="edit-attendance-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="edit-employee-name">従業員名</label>
+                                        <input type="text" id="edit-employee-name" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="edit-date">日付 *</label>
+                                        <input type="date" id="edit-date" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="edit-site-name">現場名 *</label>
+                                        <input type="text" id="edit-site-name" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="edit-start-time">出勤時間 *</label>
+                                        <input type="time" id="edit-start-time" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="edit-end-time">退勤時間</label>
+                                        <input type="time" id="edit-end-time">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="edit-break-duration">休憩時間（分）</label>
+                                        <input type="number" id="edit-break-duration" min="0" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="edit-notes">メモ</label>
+                                        <textarea id="edit-notes" rows="3" placeholder="作業内容や特記事項"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" onclick="deleteAttendanceRecord()">🗑️ 削除</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
+                            <button type="button" class="btn btn-primary" onclick="saveAttendanceRecord()">💾 保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 従業員招待管理セクション -->
+                <div id="invite-content" class="tab-content hidden">
+                    <div class="invite-section">
+                        <div class="invite-header">
+                            <h3>📨 従業員招待リンク生成</h3>
+                            <p class="invite-description">従業員が登録に使用する招待リンクを生成できます。</p>
+                        </div>
+                        
+                        <div class="invite-generator">
+                            <div class="invite-card">
+                                <div class="invite-card-header">
+                                    <h4>🔗 新しい招待リンクを生成</h4>
+                                </div>
+                                <div class="invite-card-body">
+                                    <div class="invite-info-grid">
+                                        <div class="invite-info-item">
+                                            <div class="invite-info-label">有効期限</div>
+                                            <div class="invite-info-value">7日間</div>
+                                        </div>
+                                        <div class="invite-info-item">
+                                            <div class="invite-info-label">利用可能回数</div>
+                                            <div class="invite-info-value">制限なし</div>
+                                        </div>
+                                    </div>
+                                    <button id="generate-invite-btn" class="btn btn-primary btn-large">
+                                        🎫 招待リンクを生成
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 生成された招待リンク表示エリア -->
+                        <div id="generated-invite-section" class="generated-invite-section hidden">
+                            <div class="invite-card">
+                                <div class="invite-card-header">
+                                    <h4>✅ 招待リンクが生成されました</h4>
+                                </div>
+                                <div class="invite-card-body">
+                                    <div class="invite-link-container">
+                                        <div class="invite-link-label">生成された招待リンク:</div>
+                                        <div class="invite-link-display">
+                                            <input type="text" id="generated-invite-link" readonly class="invite-link-input">
+                                            <button id="copy-invite-link" class="btn btn-secondary">📋 コピー</button>
+                                        </div>
+                                    </div>
+                                    <div class="invite-instructions">
+                                        <p><strong>📌 使用方法:</strong></p>
+                                        <ol>
+                                            <li>上記のリンクをコピーして従業員に送信してください</li>
+                                            <li>従業員がリンクをクリックすると、自動的に貴社の登録画面が表示されます</li>
+                                            <li>リンクの有効期限は7日間です</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 招待リンク履歴 -->
+                        <div class="invite-history-section">
+                            <div class="invite-history-header">
+                                <h4>📋 招待リンク履歴</h4>
+                                <button id="refresh-invite-history" class="btn btn-secondary btn-small">🔄 更新</button>
+                            </div>
+                            <div class="invite-history-container">
+                                <table class="invite-history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>作成日時</th>
+                                            <th>有効期限</th>
+                                            <th>使用回数</th>
+                                            <th>状態</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="invite-history-data">
+                                        <!-- 招待リンク履歴データが表示されます -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 現場管理セクション -->
+                <div id="site-management-content" class="tab-content hidden">
+                    <div class="site-management-section">
+                        <div class="site-management-header">
+                            <h3>🏢 現場管理</h3>
+                            <p class="site-management-description">従業員が選択できる現場を管理できます。</p>
+                        </div>
+                        
+                        <!-- 新規現場追加 -->
+                        <div class="site-add-section">
+                            <div class="site-card">
+                                <div class="site-card-header">
+                                    <h4>➕ 新しい現場を追加</h4>
+                                </div>
+                                <div class="site-card-body">
+                                    <form id="add-site-form">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="add-site-name">現場名 <span class="required">*</span></label>
+                                                <input type="text" id="add-site-name" name="siteName" required 
+                                                       placeholder="例: 東京本社" maxlength="50">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="add-site-address">住所</label>
+                                                <input type="text" id="add-site-address" name="siteAddress" 
+                                                       placeholder="例: 東京都渋谷区..." maxlength="100">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="add-site-description">説明・備考</label>
+                                                <textarea id="add-site-description" name="siteDescription" 
+                                                          placeholder="現場の詳細情報や注意事項など" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary">
+                                                ✅ 現場を追加
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 現場一覧 -->
+                        <div class="site-list-section">
+                            <div class="site-list-header">
+                                <h4>📋 現場一覧</h4>
+                                <button id="refresh-sites-btn" class="btn btn-secondary btn-small">🔄 更新</button>
+                            </div>
+                            <div class="site-list-container">
+                                <table class="site-list-table">
+                                    <thead>
+                                        <tr>
+                                            <th>現場名</th>
+                                            <th>住所</th>
+                                            <th>作成日</th>
+                                            <th>状態</th>
+                                            <th>使用状況</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="site-list-data">
+                                        <!-- 現場データが表示されます -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🆕 従業員管理セクション -->
+                <div id="employee-management-content" class="tab-content hidden">
+                    <div class="employee-management-section">
+                        <div class="employee-management-header">
+                            <h3>👥 従業員管理</h3>
+                            <p class="employee-management-description">テナント内の従業員アカウントを管理できます。</p>
+                        </div>
+                        
+                        <!-- 従業員一覧 -->
+                        <div class="employee-list-section">
+                            <div class="employee-list-header">
+                                <h4>📋 従業員一覧</h4>
+                                <div class="header-actions">
+                                    <button id="refresh-employees-btn" class="btn btn-secondary btn-small">🔄 更新</button>
+                                    <button id="export-employees-btn" class="btn btn-secondary btn-small">📤 エクスポート</button>
+                                </div>
+                            </div>
+                            <div class="employee-search">
+                                <input type="text" id="employee-search-input" placeholder="🔍 名前またはメールアドレスで検索..." class="search-input">
+                                <select id="employee-status-filter" class="status-filter">
+                                    <option value="">全ステータス</option>
+                                    <option value="active">アクティブ</option>
+                                    <option value="inactive">無効</option>
+                                </select>
+                            </div>
+                            <div class="employee-list-container">
+                                <table class="employee-list-table">
+                                    <thead>
+                                        <tr>
+                                            <th>氏名</th>
+                                            <th>メールアドレス</th>
+                                            <th>テナント</th>
+                                            <th>役割</th>
+                                            <th>登録日</th>
+                                            <th>最終ログイン</th>
+                                            <th>ステータス</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employee-list-data">
+                                        <tr class="loading-row">
+                                            <td colspan="8" class="loading-cell">🔄 従業員データを読み込み中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 管理者登録依頼管理セクション（スーパー管理者のみ表示） -->
+                <div id="admin-requests-content" class="tab-content hidden">
+                    <div class="admin-requests-header">
+                        <h3>管理者登録依頼管理</h3>
+                        <button id="refresh-requests-btn" class="btn btn-secondary">更新</button>
+                    </div>
+                    
+                    <div class="attendance-table-container">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>申請日時</th>
+                                    <th>氏名</th>
+                                    <th>メールアドレス</th>
+                                    <th>会社名</th>
+                                    <th>部署</th>
+                                    <th>ステータス</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-requests-data">
+                                <!-- 管理者登録依頼データが表示されます -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+
+        <!-- 休憩時間追加モーダル -->
+        <div id="break-modal" class="modal hidden">
+            <div class="modal-content">
+                <button class="close-btn" id="close-break-modal">&times;</button>
+                <h2>休憩時間の追加</h2>
+                <form id="break-form">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="break-start">開始時間:</label>
+                            <input type="datetime-local" id="break-start" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="break-end">終了時間:</label>
+                            <input type="datetime-local" id="break-end" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">追加</button>
+                        <button type="button" id="cancel-break" class="btn btn-secondary">キャンセル</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- テナント管理画面（スーパー管理者用） -->
+    <div id="tenant-management-page" class="page hidden">
+        <div class="container">
+            <header class="app-header">
+                <h1>勤怠管理システム - テナント管理</h1>
+                <div class="user-info">
+                    <span id="super-admin-user-name"></span>
+                    <button id="tenant-logout-btn" class="btn btn-secondary btn-small">ログアウト</button>
+                </div>
+            </header>
+
+            <main class="tenant-main">
+                <div id="tenant-list-container">
+                    <div class="loading-message">🔄 テナント情報を読み込み中...</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- テナント選択画面 -->
+    <div id="tenant-selection-page" class="page hidden">
+        <div class="container">
+            <div class="tenant-selection-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🏢 テナント選択</h2>
+                        <p>ご利用のテナントを選択してください</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="tenant-selection-container">
+                            <div class="loading-message">🔄 テナント情報を読み込み中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ページ固有のJavaScript -->
+    <script src="js/login.js"></script>
+    
+    <script>
+        // ページの初期設定
+        document.addEventListener('DOMContentLoaded', function() {
+            // ログインページを表示
+            showPage('login');
+        });
+    </script>
+
+</body>
+</html>
