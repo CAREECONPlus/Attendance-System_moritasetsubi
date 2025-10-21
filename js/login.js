@@ -166,8 +166,6 @@ async function handleLogin(e) {
         submitBtn.textContent = 'ログイン中...';
     }
 
-    console.error('🔐 ログイン開始:', email);
-
     try {
         // 🔄 既存のフラグをクリア（前回の処理が残っている可能性）
         window.isAuthStateChanging = false;
@@ -180,14 +178,12 @@ async function handleLogin(e) {
         showPage('login');
 
         // Firebase認証のみ実行（以降の処理はhandleAuthStateChangeに委譲）
-        console.error('→ Firebase認証開始...');
         await firebase.auth().signInWithEmailAndPassword(email, password);
 
         logger.log('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
-        console.error('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
 
     } catch (error) {
-        console.error('❌ ログインエラー:', error);
+        logger.error('❌ ログインエラー:', error);
 
         let message = 'ログインに失敗しました';
         if (error.code === 'auth/user-not-found') {
@@ -225,15 +221,6 @@ async function handleLogin(e) {
  * 認証状態変化の処理
  */
 async function handleAuthStateChange(user) {
-    console.error('🔄 認証状態変更トリガー:', {
-        hasUser: !!user,
-        userEmail: user?.email,
-        isInitializing: window.isInitializingUser,
-        currentUser: window.currentUser?.email,
-        isLoggingIn: window.isLoggingIn,
-        isAuthStateChanging: window.isAuthStateChanging
-    });
-
     logger.log('🔄 認証状態変更トリガー:', {
         hasUser: !!user,
         userEmail: user?.email,
@@ -245,7 +232,6 @@ async function handleAuthStateChange(user) {
     // 処理中の場合は重複実行を防止
     if (window.isAuthStateChanging) {
         logger.log('🔄 認証状態変更処理中のため、スキップ');
-        console.error('⏸️ 認証状態変更処理中のため、スキップ');
         return;
     }
     
@@ -319,52 +305,36 @@ async function handleAuthStateChange(user) {
     window.isAuthStateChanging = true;
     
     if (user) {
-        console.error('✅ ユーザーあり - 認証処理開始');
         try {
             // 初期化開始フラグ
             window.isInitializingUser = true;
 
             // ローディング表示
-            console.error('→ ローディング表示');
             showLoadingOverlay('システムを初期化中...');
 
             // ユーザー情報の取得開始
             // ユーザーのテナント情報を取得
-            console.error('→ テナント情報取得開始:', user.email);
             logger.log('🔍 テナント情報取得開始:', user.email);
             const userTenantId = await determineUserTenant(user.email);
-            console.error('→ テナント情報取得完了:', userTenantId);
             logger.log('📋 テナント情報取得結果:', userTenantId);
             
             // テナント対応のユーザーデータ取得
             let userData;
             let userDoc;
 
-            console.error('→ ユーザーデータ取得開始');
             if (userTenantId) {
                 // テナント内からユーザーデータを取得
-                console.error('→ テナント内ユーザーデータ取得開始:', userTenantId);
                 logger.log('🔍 テナント内ユーザーデータ取得開始:', userTenantId);
                 const tenantUsersPath = `tenants/${userTenantId}/users`;
-                console.error('→ パス:', tenantUsersPath, 'UID:', user.uid);
                 userDoc = await firebase.firestore().collection(tenantUsersPath).doc(user.uid).get();
-                console.error('→ テナント内ユーザーデータ取得結果:', userDoc.exists);
                 logger.log('📋 テナント内ユーザーデータ取得結果:', userDoc.exists);
                 
                 // デバッグ: テナント内の全ユーザーを確認
                 if (!userDoc.exists) {
-                    console.error('→ UIDでユーザーが見つからない - フォールバック処理開始');
                     logger.log('🔍 デバッグ: テナント内の全ユーザーを確認');
                     const allUsersSnapshot = await firebase.firestore().collection(tenantUsersPath).get();
-                    console.error('→ テナント内全ユーザー数:', allUsersSnapshot.size);
                     logger.log('📋 テナント内全ユーザー数:', allUsersSnapshot.size);
                     allUsersSnapshot.forEach(doc => {
-                        console.error('→ テナント内ユーザー:', {
-                            id: doc.id,
-                            email: doc.data().email,
-                            uid: doc.data().uid,
-                            role: doc.data().role
-                        });
                         logger.log('📋 テナント内ユーザー:', {
                             id: doc.id,
                             email: doc.data().email,
@@ -375,27 +345,18 @@ async function handleAuthStateChange(user) {
                 }
 
                 if (userDoc.exists) {
-                    console.error('✅ UIDでユーザーデータ取得成功');
                     userData = userDoc.data();
                 } else {
                     // メールアドレスベースで検索して修正
-                    console.error('→ メールアドレスベースで検索開始:', user.email);
                     logger.log('🔍 メールアドレスベースでテナント内ユーザー検索開始');
                     const emailQuerySnapshot = await firebase.firestore()
                         .collection(tenantUsersPath)
                         .where('email', '==', user.email)
                         .get();
 
-                    console.error('→ メールアドレスベース検索結果:', emailQuerySnapshot.size, '件');
-
                     if (!emailQuerySnapshot.empty) {
                         const userDocByEmail = emailQuerySnapshot.docs[0];
                         userData = userDocByEmail.data();
-                        console.error('✅ メールアドレスベース検索成功:', {
-                            foundDocId: userDocByEmail.id,
-                            expectedUID: user.uid,
-                            actualUID: userData.uid
-                        });
                         logger.log('📋 メールアドレスベース検索成功:', {
                             foundDocId: userDocByEmail.id,
                             expectedUID: user.uid,
@@ -404,7 +365,6 @@ async function handleAuthStateChange(user) {
 
                         // UIDが一致しない場合は修正
                         if (userData.uid !== user.uid) {
-                            console.error('→ UIDが一致しない - データ修正開始');
                             logger.log('🔄 UIDが一致しないため、データを修正します');
 
                             // 新しいドキュメントを正しいUIDで作成
@@ -419,25 +379,19 @@ async function handleAuthStateChange(user) {
                             // 古いドキュメントを削除
                             await firebase.firestore().collection(tenantUsersPath).doc(userDocByEmail.id).delete();
 
-                            console.error('✅ UID修正完了');
                             logger.log('✅ テナント内ユーザーデータのUID修正完了');
                         }
                     } else {
                         // フォールバック: 従来のusersコレクションから取得
-                        console.error('→ メールアドレスでも見つからない - legacyコレクション検索開始');
                         logger.log('🔍 フォールバック: 従来のusersコレクション取得開始');
                         userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                        console.error('→ legacyコレクション検索結果:', userDoc.exists);
                         logger.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
                         if (userDoc.exists) {
                             userData = userDoc.data();
-                            console.error('✅ legacyコレクションからデータ取得成功');
                         } else {
-                            console.error('❌ legacyコレクションにも見つからない - global_usersから作成を試みます');
-
                             // global_usersコレクションからデータを取得して、テナント内に作成
                             if (userTenantId) {
-                                console.error('→ global_usersからデータ取得開始');
+                                logger.log('🔍 global_usersからデータ取得開始');
                                 const normalizedEmail = user.email.toLowerCase();
                                 const globalUserDoc = await firebase.firestore()
                                     .collection('global_users')
@@ -446,7 +400,7 @@ async function handleAuthStateChange(user) {
 
                                 if (globalUserDoc.exists) {
                                     const globalUserData = globalUserDoc.data();
-                                    console.error('✅ global_usersからデータ取得成功:', globalUserData);
+                                    logger.log('✅ global_usersからデータ取得:', globalUserData);
 
                                     // テナント内のusersコレクションに作成
                                     const newUserData = {
@@ -461,16 +415,16 @@ async function handleAuthStateChange(user) {
                                         autoCreatedFrom: 'global_users'
                                     };
 
-                                    console.error('→ テナント内にユーザーデータを作成中:', tenantUsersPath);
+                                    logger.log('🔧 テナント内にユーザーデータを作成中');
                                     await firebase.firestore()
                                         .collection(tenantUsersPath)
                                         .doc(user.uid)
                                         .set(newUserData);
 
                                     userData = newUserData;
-                                    console.error('✅ テナント内にユーザーデータを作成完了');
+                                    logger.log('✅ テナント内にユーザーデータを作成完了');
                                 } else {
-                                    console.error('❌ global_usersにもデータが見つかりません');
+                                    logger.log('❌ global_usersにもデータが見つかりません');
                                 }
                             }
                         }
@@ -486,12 +440,6 @@ async function handleAuthStateChange(user) {
                 }
             }
             
-            console.error('→ 最終ユーザーデータ確認:', {
-                hasUserData: !!userData,
-                userEmail: userData?.email,
-                userRole: userData?.role,
-                userTenantId: userData?.tenantId
-            });
             logger.log('📋 最終ユーザーデータ確認:', {
                 hasUserData: !!userData,
                 userEmail: userData?.email,
@@ -501,7 +449,6 @@ async function handleAuthStateChange(user) {
 
             // Legacy usersコレクションからの自動移行処理
             if (userData && !userTenantId) {
-                console.error('🔄 Legacy移行処理開始 - テナントシステムに移行します');
                 logger.log('🔄 Legacy usersコレクションのユーザーをテナントシステムに移行します');
                 
                 // dx5アカウント専用のテナントIDを生成
@@ -578,11 +525,9 @@ async function handleAuthStateChange(user) {
             }
             
             if (userData) {
-                console.error('✅ ユーザーデータ取得成功');
                 logger.log('✅ ユーザーデータ取得成功 - ロール決定開始');
 
                 // ユーザーのロールを決定
-                console.error('→ ユーザーロール:', userData.role);
                 let userRole = userData.role || 'employee';
                 
                 // dxconsulting.branu2@gmail.comは自動的にsuper_adminに設定
@@ -704,92 +649,55 @@ async function handleAuthStateChange(user) {
                     userRole
                 });
 
-                // デバッグ用にコンソールにも出力（本番環境でも確認できるように）
-                console.error('🔍 ページ遷移デバッグ:', {
-                    isOnLoginPage,
-                    isOnEmployeePage,
-                    isOnAdminPage,
-                    userRole,
-                    currentUser: window.currentUser
-                });
-
                 // ページ遷移の必要性を判定
                 const needsPageTransition = isOnLoginPage ||
                                           (userRole === 'admin' && !isOnAdminPage) ||
                                           (userRole === 'super_admin' && !isOnAdminPage) ||
                                           (userRole === 'employee' && !isOnEmployeePage);
 
-                console.error('🔍 ページ遷移判定:', { needsPageTransition });
-
                 if (needsPageTransition) {
                     logger.log('🔄 ページ遷移を実行します...');
-                    console.error('🔄 ページ遷移を実行します...');
 
                     if (userRole === 'admin' || userRole === 'super_admin') {
-                        console.error('→ 管理者ページへ遷移');
                         showPage('admin');
                         // 少し遅延してから管理者ページ初期化
                         setTimeout(() => {
                             if (typeof initAdminPage === 'function') {
                                 logger.log('🔧 管理者ページ初期化実行');
-                                console.error('🔧 管理者ページ初期化実行');
                                 initAdminPage();
-                            } else {
-                                console.error('❌ initAdminPage関数が見つかりません');
                             }
                         }, 300);
                     } else {
-                        console.error('→ 従業員ページへ遷移');
                         showPage('employee');
                         // 少し遅延してから従業員ページ初期化
                         setTimeout(() => {
                             if (typeof initEmployeePage === 'function') {
                                 logger.log('🔧 従業員ページ初期化実行');
-                                console.error('🔧 従業員ページ初期化実行');
                                 initEmployeePage();
-                            } else {
-                                console.error('❌ initEmployeePage関数が見つかりません');
                             }
                         }, 300);
                     }
                 } else {
                     logger.log('✅ ページ遷移は不要です（既に適切なページにいます）');
-                    console.error('✅ ページ遷移スキップ: 既に適切なページにいます');
                 }
             } else {
-                console.error('❌ ユーザーデータが見つかりません - サインアウト実行');
-                console.error('📋 検索条件:', {
-                    userEmail: user.email,
-                    userUID: user.uid,
-                    searchedTenantId: userTenantId
-                });
                 logger.log('❌ ユーザーデータが見つかりません - サインアウト実行');
                 logger.log('📋 検索条件:', {
                     userEmail: user.email,
                     userUID: user.uid,
                     searchedTenantId: userTenantId
                 });
-                console.error('🚨 サインアウトを実行します');
                 await firebase.auth().signOut();
-                console.error('✅ サインアウト完了');
             }
         } catch (error) {
-            console.error('❌ 認証処理中にエラー発生:', error);
-            console.error('📋 エラー詳細:', {
-                code: error.code,
-                message: error.message,
-                stack: error.stack
-            });
             logger.error('❌ 認証処理中にエラー発生:', error);
 
             // 重大なエラーの場合のみサインアウト
             if (error.code === 'permission-denied' || error.code === 'unauthorized') {
                 logger.log('🔐 権限エラーのためサインアウト実行');
-                console.error('🔐 権限エラーのためサインアウト実行');
                 await firebase.auth().signOut();
             } else {
                 logger.log('⚠️ 一時的なエラーの可能性 - セッション維持');
-                console.error('⚠️ 一時的なエラーの可能性 - セッション維持');
                 // セッションを維持してリトライ可能にする
                 window.isInitializingUser = false;
                 window.isLoggingIn = false;
