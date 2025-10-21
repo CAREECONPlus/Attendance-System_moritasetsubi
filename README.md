@@ -40,14 +40,18 @@
 
 ### 技術スタック
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Backend**: Firebase (Authentication, Firestore)
+- **Backend**: Firebase v8.10.1 (Authentication, Firestore) - CDN経由で読み込み
 - **Hosting**: GitHub Pages
 - **Email**: EmailJS
 
+**注**: このプロジェクトはビルドステップ不要のシンプルな構成です。Firebase SDKはCDN経由で読み込むため、npm依存関係にFirebaseは含まれていません。
+
 ## 🔧 セットアップ
 
+このプロジェクトはNode.jsのビルドステップが不要です。すべてのファイルをそのままWebサーバーにデプロイできます。
+
 ### 1. Firebase設定
-`js/firebase.js`にFirebase設定を記述
+`js/config.js`にFirebase設定を記述（環境変数から自動生成する場合は`npm run build:config`を実行）
 
 ### 2. EmailJS設定
 `js/email-config.js`のEmailJS設定値を更新
