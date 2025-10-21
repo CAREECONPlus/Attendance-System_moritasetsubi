@@ -353,10 +353,18 @@ async function handleAuthStateChange(user) {
                 
                 // デバッグ: テナント内の全ユーザーを確認
                 if (!userDoc.exists) {
+                    console.error('→ UIDでユーザーが見つからない - フォールバック処理開始');
                     logger.log('🔍 デバッグ: テナント内の全ユーザーを確認');
                     const allUsersSnapshot = await firebase.firestore().collection(tenantUsersPath).get();
+                    console.error('→ テナント内全ユーザー数:', allUsersSnapshot.size);
                     logger.log('📋 テナント内全ユーザー数:', allUsersSnapshot.size);
                     allUsersSnapshot.forEach(doc => {
+                        console.error('→ テナント内ユーザー:', {
+                            id: doc.id,
+                            email: doc.data().email,
+                            uid: doc.data().uid,
+                            role: doc.data().role
+                        });
                         logger.log('📋 テナント内ユーザー:', {
                             id: doc.id,
                             email: doc.data().email,
@@ -365,51 +373,67 @@ async function handleAuthStateChange(user) {
                         });
                     });
                 }
-                
+
                 if (userDoc.exists) {
+                    console.error('✅ UIDでユーザーデータ取得成功');
                     userData = userDoc.data();
                 } else {
                     // メールアドレスベースで検索して修正
+                    console.error('→ メールアドレスベースで検索開始:', user.email);
                     logger.log('🔍 メールアドレスベースでテナント内ユーザー検索開始');
                     const emailQuerySnapshot = await firebase.firestore()
                         .collection(tenantUsersPath)
                         .where('email', '==', user.email)
                         .get();
-                    
+
+                    console.error('→ メールアドレスベース検索結果:', emailQuerySnapshot.size, '件');
+
                     if (!emailQuerySnapshot.empty) {
                         const userDocByEmail = emailQuerySnapshot.docs[0];
                         userData = userDocByEmail.data();
+                        console.error('✅ メールアドレスベース検索成功:', {
+                            foundDocId: userDocByEmail.id,
+                            expectedUID: user.uid,
+                            actualUID: userData.uid
+                        });
                         logger.log('📋 メールアドレスベース検索成功:', {
                             foundDocId: userDocByEmail.id,
                             expectedUID: user.uid,
                             actualUID: userData.uid
                         });
-                        
+
                         // UIDが一致しない場合は修正
                         if (userData.uid !== user.uid) {
+                            console.error('→ UIDが一致しない - データ修正開始');
                             logger.log('🔄 UIDが一致しないため、データを修正します');
-                            
+
                             // 新しいドキュメントを正しいUIDで作成
                             const updatedData = {
                                 ...userData,
                                 uid: user.uid,
                                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                             };
-                            
+
                             await firebase.firestore().collection(tenantUsersPath).doc(user.uid).set(updatedData);
-                            
+
                             // 古いドキュメントを削除
                             await firebase.firestore().collection(tenantUsersPath).doc(userDocByEmail.id).delete();
-                            
+
+                            console.error('✅ UID修正完了');
                             logger.log('✅ テナント内ユーザーデータのUID修正完了');
                         }
                     } else {
                         // フォールバック: 従来のusersコレクションから取得
+                        console.error('→ メールアドレスでも見つからない - legacyコレクション検索開始');
                         logger.log('🔍 フォールバック: 従来のusersコレクション取得開始');
                         userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                        console.error('→ legacyコレクション検索結果:', userDoc.exists);
                         logger.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
                         if (userDoc.exists) {
                             userData = userDoc.data();
+                            console.error('✅ legacyコレクションからデータ取得成功');
+                        } else {
+                            console.error('❌ legacyコレクションにも見つからない');
                         }
                     }
                 }
@@ -423,15 +447,22 @@ async function handleAuthStateChange(user) {
                 }
             }
             
+            console.error('→ 最終ユーザーデータ確認:', {
+                hasUserData: !!userData,
+                userEmail: userData?.email,
+                userRole: userData?.role,
+                userTenantId: userData?.tenantId
+            });
             logger.log('📋 最終ユーザーデータ確認:', {
                 hasUserData: !!userData,
                 userEmail: userData?.email,
                 userRole: userData?.role,
                 userTenantId: userData?.tenantId
             });
-            
+
             // Legacy usersコレクションからの自動移行処理
             if (userData && !userTenantId) {
+                console.error('🔄 Legacy移行処理開始 - テナントシステムに移行します');
                 logger.log('🔄 Legacy usersコレクションのユーザーをテナントシステムに移行します');
                 
                 // dx5アカウント専用のテナントIDを生成
