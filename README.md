@@ -4,8 +4,8 @@
 
 ## 🚀 デモ
 
-- **従業員画面**: https://careeconplus.github.io/Attendance-System/
-- **管理者登録**: https://careeconplus.github.io/Attendance-System/admin-register.html
+- **従業員画面**: https://careeconplus.github.io/Attendance-System_moritasetsubi/
+- **管理者登録**: https://careeconplus.github.io/Attendance-System_moritasetsubi/admin-register.html
 
 ## 📋 機能
 
