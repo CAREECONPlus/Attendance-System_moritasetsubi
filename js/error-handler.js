@@ -205,7 +205,7 @@ class ErrorHandler {
 
     handleLowSeverityIncident(incident) {
         // ログ記録のみ
-        console.warn('セキュリティインシデント記録:', incident);
+        logger.warn('セキュリティインシデント記録:', incident);
     }
 
     notifyUser(errorInfo) {
@@ -239,7 +239,7 @@ class ErrorHandler {
         if (this.shouldReportToServer(errorInfo)) {
             // 実装例：Firebase Functionsへの報告
             // この機能は必要に応じて実装
-            console.log('サーバー報告対象エラー:', errorInfo);
+            logger.log('サーバー報告対象エラー:', errorInfo);
         }
     }
 
@@ -314,4 +314,4 @@ if (typeof showError === 'function') {
     };
 }
 
-console.log('🛡️ グローバルエラーハンドラー初期化完了');
+logger.log('🛡️ グローバルエラーハンドラー初期化完了');

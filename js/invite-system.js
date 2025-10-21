@@ -25,7 +25,7 @@ async function validateInviteToken(inviteToken) {
             throw new Error('Firebase が初期化されていません');
         }
         
-        console.log('🔍 招待トークン検証開始:', inviteToken);
+        logger.log('🔍 招待トークン検証開始:', inviteToken);
         
         // グローバルのinvite_codesコレクションから検索
         const inviteRef = await firebase.firestore()
@@ -34,7 +34,7 @@ async function validateInviteToken(inviteToken) {
             .where('active', '==', true)
             .get();
         
-        console.log('📋 招待コード検索結果:', {
+        logger.log('📋 招待コード検索結果:', {
             empty: inviteRef.empty,
             size: inviteRef.size
         });
@@ -44,7 +44,7 @@ async function validateInviteToken(inviteToken) {
         }
         
         const inviteData = inviteRef.docs[0].data();
-        console.log('📄 招待データ:', {
+        logger.log('📄 招待データ:', {
             tenantId: inviteData.tenantId,
             companyName: inviteData.companyName,
             expiresAt: inviteData.expiresAt,
@@ -62,7 +62,7 @@ async function validateInviteToken(inviteToken) {
             throw new Error('招待トークンの使用回数上限に達しています');
         }
         
-        console.log('✅ 招待トークン検証成功');
+        logger.log('✅ 招待トークン検証成功');
         
         return {
             valid: true,
@@ -196,7 +196,7 @@ function waitForFirebaseInit() {
  * 招待リンクの初期化処理
  */
 async function initInviteSystem() {
-    console.log('🎫 招待システムを初期化中...');
+    logger.log('🎫 招待システムを初期化中...');
     
     setupInviteStyles();
     
@@ -205,7 +205,7 @@ async function initInviteSystem() {
     const registerForm = document.getElementById('registerForm');
     const inviteInfo = document.getElementById('invite-info');
     
-    console.log('🔍 URLから招待トークンを確認:', inviteToken);
+    logger.log('🔍 URLから招待トークンを確認:', inviteToken);
     
     if (inviteToken) {
         await waitForFirebaseInit();

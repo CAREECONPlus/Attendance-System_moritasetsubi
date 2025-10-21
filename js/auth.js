@@ -88,7 +88,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 await firebaseAuth.updateCurrentUser(user);
             } catch (error) {
                 // 手動更新が失敗した場合でも、リスナーで同期を待つ
-                console.log('Manual updateCurrentUser failed, waiting for auth state change:', error);
+                logger.log('Manual updateCurrentUser failed, waiting for auth state change:', error);
             }
         });
         
@@ -136,7 +136,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 });
             } catch (globalWriteError) {
                 // global_users の失敗は致命的ではないので、処理を継続
-                console.warn('Global usersの保存に失敗しましたが、テナントユーザー登録は完了しました', globalWriteError);
+                logger.warn('Global usersの保存に失敗しましたが、テナントユーザー登録は完了しました', globalWriteError);
             }
 
             // 3. 招待コードの使用回数を更新
@@ -147,7 +147,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 });
             } catch (inviteUpdateError) {
                 // 招待コード更新の失敗は致命的ではないので、警告のみ
-                console.warn('招待コードの更新に失敗しましたが、ユーザー登録は完了しました');
+                logger.warn('招待コードの更新に失敗しましたが、ユーザー登録は完了しました');
             }
             
         } catch (firestoreError) {
@@ -155,9 +155,9 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
 
             // ロールバック: Firebase Authで作成されたユーザーを削除
             try {
-                console.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
+                logger.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
                 await user.delete();
-                console.log('孤児アカウントの削除に成功しました');
+                logger.log('孤児アカウントの削除に成功しました');
             } catch (deleteError) {
                 console.error('⚠️ 重大なエラー: ユーザーアカウントの削除に失敗しました', {
                     userId: user.uid,
@@ -226,9 +226,9 @@ async function registerUser(email, password, displayName, role = 'employee') {
 
             // ロールバック: Firebase Authで作成されたユーザーを削除
             try {
-                console.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
+                logger.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
                 await user.delete();
-                console.log('孤児アカウントの削除に成功しました');
+                logger.log('孤児アカウントの削除に成功しました');
             } catch (deleteError) {
                 console.error('⚠️ 重大なエラー: ユーザーアカウントの削除に失敗しました', {
                     userId: user.uid,
