@@ -51,7 +51,7 @@
 
 ### 2. EmailJS設定
 `js/email-config.js`のEmailJS設定値を更新
-詳細は`EMAIL_SETUP.md`を参照
+詳細は`docs/EMAIL_SETUP.md`を参照
 
 ### 3. Firestore セキュリティルール
 `firestore.rules`をFirebaseコンソールにデプロイ
