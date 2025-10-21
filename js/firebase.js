@@ -233,7 +233,11 @@ if (isFirebaseInitialized) {
     //     } else {
     //     }
     // });
-    logger.log('🔧 Firebase初期化完了 - 認証監視はlogin.jsに委譲');
+
+    // loggerが利用可能な場合のみログ出力（防御的プログラミング）
+    if (typeof window.logger !== 'undefined' && window.logger.log) {
+        window.logger.log('🔧 Firebase初期化完了 - 認証監視はlogin.jsに委譲');
+    }
 }
 
 /**
