@@ -319,28 +319,36 @@ async function handleAuthStateChange(user) {
     window.isAuthStateChanging = true;
     
     if (user) {
+        console.error('✅ ユーザーあり - 認証処理開始');
         try {
             // 初期化開始フラグ
             window.isInitializingUser = true;
-            
+
             // ローディング表示
+            console.error('→ ローディング表示');
             showLoadingOverlay('システムを初期化中...');
-            
+
             // ユーザー情報の取得開始
             // ユーザーのテナント情報を取得
+            console.error('→ テナント情報取得開始:', user.email);
             logger.log('🔍 テナント情報取得開始:', user.email);
             const userTenantId = await determineUserTenant(user.email);
+            console.error('→ テナント情報取得完了:', userTenantId);
             logger.log('📋 テナント情報取得結果:', userTenantId);
             
             // テナント対応のユーザーデータ取得
             let userData;
             let userDoc;
-            
+
+            console.error('→ ユーザーデータ取得開始');
             if (userTenantId) {
                 // テナント内からユーザーデータを取得
+                console.error('→ テナント内ユーザーデータ取得開始:', userTenantId);
                 logger.log('🔍 テナント内ユーザーデータ取得開始:', userTenantId);
                 const tenantUsersPath = `tenants/${userTenantId}/users`;
+                console.error('→ パス:', tenantUsersPath, 'UID:', user.uid);
                 userDoc = await firebase.firestore().collection(tenantUsersPath).doc(user.uid).get();
+                console.error('→ テナント内ユーザーデータ取得結果:', userDoc.exists);
                 logger.log('📋 テナント内ユーザーデータ取得結果:', userDoc.exists);
                 
                 // デバッグ: テナント内の全ユーザーを確認
@@ -500,9 +508,11 @@ async function handleAuthStateChange(user) {
             }
             
             if (userData) {
+                console.error('✅ ユーザーデータ取得成功');
                 logger.log('✅ ユーザーデータ取得成功 - ロール決定開始');
-                
+
                 // ユーザーのロールを決定
+                console.error('→ ユーザーロール:', userData.role);
                 let userRole = userData.role || 'employee';
                 
                 // dxconsulting.branu2@gmail.comは自動的にsuper_adminに設定
@@ -677,13 +687,21 @@ async function handleAuthStateChange(user) {
                     console.error('✅ ページ遷移スキップ: 既に適切なページにいます');
                 }
             } else {
+                console.error('❌ ユーザーデータが見つかりません - サインアウト実行');
+                console.error('📋 検索条件:', {
+                    userEmail: user.email,
+                    userUID: user.uid,
+                    searchedTenantId: userTenantId
+                });
                 logger.log('❌ ユーザーデータが見つかりません - サインアウト実行');
                 logger.log('📋 検索条件:', {
                     userEmail: user.email,
                     userUID: user.uid,
                     searchedTenantId: userTenantId
                 });
+                console.error('🚨 サインアウトを実行します');
                 await firebase.auth().signOut();
+                console.error('✅ サインアウト完了');
             }
         } catch (error) {
             console.error('❌ 認証処理中にエラー発生:', error);
