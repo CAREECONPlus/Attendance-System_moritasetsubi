@@ -326,7 +326,6 @@ async function determineUserTenant(userEmail) {
         // 🔧 メールアドレスを小文字に統一（保存時と同じ形式で検索）
         const normalizedEmail = userEmail.toLowerCase();
 
-        console.error('🔍 determineUserTenant開始:', normalizedEmail);
         logger.log('🔍 determineUserTenant開始:', {
             originalEmail: userEmail,
             normalizedEmail: normalizedEmail
@@ -338,10 +337,6 @@ async function determineUserTenant(userEmail) {
             .doc(normalizedEmail)
             .get();
 
-        console.error('📋 global_users検索結果:', {
-            exists: globalUserDoc.exists,
-            data: globalUserDoc.exists ? globalUserDoc.data() : null
-        });
         logger.log('📋 global_users検索結果:', {
             exists: globalUserDoc.exists,
             searchedEmail: normalizedEmail,
@@ -350,16 +345,14 @@ async function determineUserTenant(userEmail) {
 
         if (globalUserDoc.exists) {
             const userData = globalUserDoc.data();
-            console.error('✅ テナントID取得成功:', userData.tenantId);
             logger.log('✅ テナントID取得成功:', userData.tenantId);
             return userData.tenantId;
         }
 
-        console.error('❌ global_usersにユーザーデータが見つかりません');
         logger.log('❌ global_usersにユーザーデータが見つかりません');
         return null;
     } catch (error) {
-        console.error('❌ determineUserTenant エラー:', error);
+        logger.error('❌ determineUserTenant エラー:', error);
         return null;
     }
 }
