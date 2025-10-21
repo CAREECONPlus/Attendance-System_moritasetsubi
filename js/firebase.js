@@ -1,7 +1,9 @@
 
 /**
- * 勤怠管理システム - Firebase初期化 (v8 SDK対応版・修正版)
- * 権限エラー解決のためオフライン機能を一時的に無効化
+ * 勤怠管理システム - Firebase初期化 (v8 SDK対応版)
+ *
+ * Firebase Authentication と Cloud Firestore の初期化を行います。
+ * オフライン機能と自動接続テストは意図的に無効化しています（詳細はコード内を参照）。
  */
 
 // Firebase設定 - 環境に応じて設定を取得
@@ -27,51 +29,41 @@ try {
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    
-    // 🔧 オフライン機能を一時的に無効化（権限問題回避のため）
-    /*
-    db.enablePersistence({
-        synchronizeTabs: true
-    }).catch((err) => {
-        if (err.code === 'failed-precondition') {
-        } else if (err.code === 'unimplemented') {
-        }
-    });
-    */
-    
-    // 🆕 Firestore設定を簡略化
-    
+
+    /**
+     * 📝 オフライン機能について
+     *
+     * enablePersistence()は意図的に無効化しています。
+     *
+     * 理由:
+     * - マルチタブ環境での権限エラー（failed-precondition）が頻繁に発生
+     * - GitHub Pagesなどの静的ホスティング環境では不要
+     * - ネットワーク接続が前提の勤怠管理システムであるため影響は限定的
+     *
+     * 将来的にPWA対応を検討する場合は、Service Workerと組み合わせて実装することを推奨
+     */
+
     // グローバルスコープにエクスポート
     window.db = db;
     window.auth = auth;
     window.firebase = firebase;
     
     isFirebaseInitialized = true;
-    
-    // 🔇 接続テストを無効化（誤検知防止のため）
-    // TODO: より適切なテスト方法に改良予定
-    /*
-    setTimeout(async () => {
-        try {
-            
-            // 最もシンプルなテスト（read権限で動作）
-            const testDoc = db.collection('_test').doc('connection-test');
-            await testDoc.get();
-            
-            
-        } catch (testError) {
-            
-            // 詳細なエラー情報を表示
-            if (testError.code === 'permission-denied') {
-                showFirestoreRuleError();
-            } else if (testError.code === 'unavailable') {
-                showFirestoreUnavailableError();
-            } else {
-            }
-        }
-    }, 1000); // より早い段階でテスト
-    */
-    
+
+    /**
+     * 📝 自動接続テストについて
+     *
+     * 初期化時の自動接続テストは意図的に無効化しています。
+     *
+     * 理由:
+     * - 初期化直後のテストは誤検知を引き起こす可能性が高い
+     * - ユーザーが未ログインの状態では権限エラーが発生する（期待される動作）
+     * - 実際の使用時にエラーが発生すれば、各機能のエラーハンドリングで対応可能
+     *
+     * デバッグ用には window.testFirestore() 関数を用意しています。
+     * ブラウザコンソールで実行可能: await testFirestore()
+     */
+
 } catch (initError) {
     
     // より詳細なエラー情報

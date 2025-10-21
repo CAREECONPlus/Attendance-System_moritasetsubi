@@ -259,9 +259,17 @@ function accessTenant(tenantId) {
 
 /**
  * テナント設定編集
+ *
+ * @param {string} tenantId - テナントID
+ *
+ * 📝 将来の実装予定:
+ * - テナント名の編集
+ * - テナント設定（業務時間、休憩時間など）の編集
+ * - サイト（作業場所）の一括管理
+ * - モーダルUIでの編集フォーム
  */
 function editTenant(tenantId) {
-    // TODO: テナント設定編集モーダルを実装
+    // 現在は準備中メッセージを表示
     showInfo('テナント設定編集機能は準備中です');
 }
 
