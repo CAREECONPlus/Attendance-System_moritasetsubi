@@ -433,7 +433,46 @@ async function handleAuthStateChange(user) {
                             userData = userDoc.data();
                             console.error('✅ legacyコレクションからデータ取得成功');
                         } else {
-                            console.error('❌ legacyコレクションにも見つからない');
+                            console.error('❌ legacyコレクションにも見つからない - global_usersから作成を試みます');
+
+                            // global_usersコレクションからデータを取得して、テナント内に作成
+                            if (userTenantId) {
+                                console.error('→ global_usersからデータ取得開始');
+                                const normalizedEmail = user.email.toLowerCase();
+                                const globalUserDoc = await firebase.firestore()
+                                    .collection('global_users')
+                                    .doc(normalizedEmail)
+                                    .get();
+
+                                if (globalUserDoc.exists) {
+                                    const globalUserData = globalUserDoc.data();
+                                    console.error('✅ global_usersからデータ取得成功:', globalUserData);
+
+                                    // テナント内のusersコレクションに作成
+                                    const newUserData = {
+                                        uid: user.uid,
+                                        email: user.email,
+                                        displayName: globalUserData.displayName || user.displayName || 'User',
+                                        role: globalUserData.role || 'employee',
+                                        isActive: true,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        autoCreated: true,
+                                        autoCreatedFrom: 'global_users'
+                                    };
+
+                                    console.error('→ テナント内にユーザーデータを作成中:', tenantUsersPath);
+                                    await firebase.firestore()
+                                        .collection(tenantUsersPath)
+                                        .doc(user.uid)
+                                        .set(newUserData);
+
+                                    userData = newUserData;
+                                    console.error('✅ テナント内にユーザーデータを作成完了');
+                                } else {
+                                    console.error('❌ global_usersにもデータが見つかりません');
+                                }
+                            }
                         }
                     }
                 }
