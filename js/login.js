@@ -149,15 +149,15 @@ async function initLogin() {
  */
 async function handleLogin(e) {
     e.preventDefault();
-    
+
     const email = document.getElementById('email')?.value?.trim();
     const password = document.getElementById('password')?.value?.trim();
-    
+
     if (!email || !password) {
         showError('メールアドレスとパスワードを入力してください');
         return;
     }
-    
+
     // ローディング表示
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn?.textContent;
@@ -165,25 +165,30 @@ async function handleLogin(e) {
         submitBtn.disabled = true;
         submitBtn.textContent = 'ログイン中...';
     }
-    
+
+    console.error('🔐 ログイン開始:', email);
+
     try {
         // 🔄 既存のフラグをクリア（前回の処理が残っている可能性）
         window.isAuthStateChanging = false;
         window.isInitializingUser = false;
         window.isLoggingIn = true;
-        
+
         logger.log('🔐 ログイン処理開始:', email);
-        
+
         // 明示的にログインページを表示
         showPage('login');
-        
+
         // Firebase認証のみ実行（以降の処理はhandleAuthStateChangeに委譲）
+        console.error('→ Firebase認証開始...');
         await firebase.auth().signInWithEmailAndPassword(email, password);
-        
+
         logger.log('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
-        
+        console.error('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
+
     } catch (error) {
-        
+        console.error('❌ ログインエラー:', error);
+
         let message = 'ログインに失敗しました';
         if (error.code === 'auth/user-not-found') {
             message = 'ユーザーが見つかりません';
@@ -194,7 +199,7 @@ async function handleLogin(e) {
         } else if (error.code === 'auth/too-many-requests') {
             message = 'ログイン試行回数が多すぎます。しばらく時間をおいてから再試行してください';
         }
-        
+
         showError(message);
     } finally {
         // エラー時のみフラグをクリア（成功時はhandleAuthStateChangeでクリア）
@@ -204,13 +209,13 @@ async function handleLogin(e) {
             window.isInitializingUser = false;
         }
         hideLoadingOverlay();
-        
+
         // ローディング解除
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText || 'ログイン';
         }
-        
+
         logger.log('🔧 ログイン処理完了 - 成功時はhandleAuthStateChangeでフラグクリア');
     }
 }
@@ -220,6 +225,15 @@ async function handleLogin(e) {
  * 認証状態変化の処理
  */
 async function handleAuthStateChange(user) {
+    console.error('🔄 認証状態変更トリガー:', {
+        hasUser: !!user,
+        userEmail: user?.email,
+        isInitializing: window.isInitializingUser,
+        currentUser: window.currentUser?.email,
+        isLoggingIn: window.isLoggingIn,
+        isAuthStateChanging: window.isAuthStateChanging
+    });
+
     logger.log('🔄 認証状態変更トリガー:', {
         hasUser: !!user,
         userEmail: user?.email,
@@ -227,10 +241,11 @@ async function handleAuthStateChange(user) {
         currentUser: window.currentUser?.email,
         isLoggingIn: window.isLoggingIn
     });
-    
+
     // 処理中の場合は重複実行を防止
     if (window.isAuthStateChanging) {
         logger.log('🔄 認証状態変更処理中のため、スキップ');
+        console.error('⏸️ 認証状態変更処理中のため、スキップ');
         return;
     }
     
@@ -595,49 +610,71 @@ async function handleAuthStateChange(user) {
                 
                 // ログイン成功時の画面遷移
                 // 現在のページをチェック（より確実な判定）
-                const isOnLoginPage = document.getElementById('login-page') && 
+                const isOnLoginPage = document.getElementById('login-page') &&
                                      !document.getElementById('login-page').classList.contains('hidden');
-                const isOnEmployeePage = document.getElementById('employee-page') && 
+                const isOnEmployeePage = document.getElementById('employee-page') &&
                                         !document.getElementById('employee-page').classList.contains('hidden');
-                const isOnAdminPage = document.getElementById('admin-page') && 
+                const isOnAdminPage = document.getElementById('admin-page') &&
                                      !document.getElementById('admin-page').classList.contains('hidden');
-                
+
                 logger.log('📄 現在のページ状態:', {
                     isOnLoginPage,
                     isOnEmployeePage,
                     isOnAdminPage,
                     userRole
                 });
-                
+
+                // デバッグ用にコンソールにも出力（本番環境でも確認できるように）
+                console.error('🔍 ページ遷移デバッグ:', {
+                    isOnLoginPage,
+                    isOnEmployeePage,
+                    isOnAdminPage,
+                    userRole,
+                    currentUser: window.currentUser
+                });
+
                 // ページ遷移の必要性を判定
-                const needsPageTransition = isOnLoginPage || 
+                const needsPageTransition = isOnLoginPage ||
                                           (userRole === 'admin' && !isOnAdminPage) ||
+                                          (userRole === 'super_admin' && !isOnAdminPage) ||
                                           (userRole === 'employee' && !isOnEmployeePage);
-                
+
+                console.error('🔍 ページ遷移判定:', { needsPageTransition });
+
                 if (needsPageTransition) {
                     logger.log('🔄 ページ遷移を実行します...');
-                    
+                    console.error('🔄 ページ遷移を実行します...');
+
                     if (userRole === 'admin' || userRole === 'super_admin') {
+                        console.error('→ 管理者ページへ遷移');
                         showPage('admin');
                         // 少し遅延してから管理者ページ初期化
                         setTimeout(() => {
                             if (typeof initAdminPage === 'function') {
                                 logger.log('🔧 管理者ページ初期化実行');
+                                console.error('🔧 管理者ページ初期化実行');
                                 initAdminPage();
+                            } else {
+                                console.error('❌ initAdminPage関数が見つかりません');
                             }
                         }, 300);
                     } else {
+                        console.error('→ 従業員ページへ遷移');
                         showPage('employee');
                         // 少し遅延してから従業員ページ初期化
                         setTimeout(() => {
                             if (typeof initEmployeePage === 'function') {
                                 logger.log('🔧 従業員ページ初期化実行');
+                                console.error('🔧 従業員ページ初期化実行');
                                 initEmployeePage();
+                            } else {
+                                console.error('❌ initEmployeePage関数が見つかりません');
                             }
                         }, 300);
                     }
                 } else {
                     logger.log('✅ ページ遷移は不要です（既に適切なページにいます）');
+                    console.error('✅ ページ遷移スキップ: 既に適切なページにいます');
                 }
             } else {
                 logger.log('❌ ユーザーデータが見つかりません - サインアウト実行');
@@ -655,13 +692,16 @@ async function handleAuthStateChange(user) {
                 message: error.message,
                 stack: error.stack
             });
-            
+            logger.error('❌ 認証処理中にエラー発生:', error);
+
             // 重大なエラーの場合のみサインアウト
             if (error.code === 'permission-denied' || error.code === 'unauthorized') {
                 logger.log('🔐 権限エラーのためサインアウト実行');
+                console.error('🔐 権限エラーのためサインアウト実行');
                 await firebase.auth().signOut();
             } else {
                 logger.log('⚠️ 一時的なエラーの可能性 - セッション維持');
+                console.error('⚠️ 一時的なエラーの可能性 - セッション維持');
                 // セッションを維持してリトライ可能にする
                 window.isInitializingUser = false;
                 window.isLoggingIn = false;
@@ -718,20 +758,24 @@ function showError(message) {
  * DOM読み込み完了時の初期化
  */
 document.addEventListener('DOMContentLoaded', async () => {
-    
+
     // 初期状態では全ページを非表示
     document.querySelectorAll('#login-page, #employee-page, #admin-page, #admin-request-page')
         .forEach(el => el.classList.add('hidden'));
-    
+
     // テナント初期化
     try {
         await initializeTenant();
     } catch (error) {
     }
-    
+
     // 少し遅延させてFirebase初期化を確実に待つ
     setTimeout(() => {
         initLogin();
+        // Firebase認証状態が確定するまでログインページを表示
+        if (!firebase.auth().currentUser) {
+            showPage('login');
+        }
     }, 500);
 });
 
