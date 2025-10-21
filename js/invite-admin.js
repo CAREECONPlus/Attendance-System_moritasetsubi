@@ -7,20 +7,20 @@
  * 招待リンク生成機能の初期化
  */
 function initInviteAdmin() {
-    console.log('initInviteAdmin: 招待機能を初期化中...');
+    logger.log('initInviteAdmin: 招待機能を初期化中...');
     
     // 招待リンク生成ボタン
     const generateBtn = document.getElementById('generate-invite-btn');
-    console.log('generate-invite-btn要素:', generateBtn);
+    logger.log('generate-invite-btn要素:', generateBtn);
     if (generateBtn) {
         generateBtn.addEventListener('click', generateInviteLink);
-        console.log('招待リンク生成ボタンにイベントリスナーを追加しました');
-        console.log('ボタンのdisplay:', window.getComputedStyle(generateBtn).display);
-        console.log('ボタンのvisibility:', window.getComputedStyle(generateBtn).visibility);
-        console.log('ボタンの親要素:', generateBtn.parentElement);
-        console.log('親要素のdisplay:', window.getComputedStyle(generateBtn.parentElement).display);
+        logger.log('招待リンク生成ボタンにイベントリスナーを追加しました');
+        logger.log('ボタンのdisplay:', window.getComputedStyle(generateBtn).display);
+        logger.log('ボタンのvisibility:', window.getComputedStyle(generateBtn).visibility);
+        logger.log('ボタンの親要素:', generateBtn.parentElement);
+        logger.log('親要素のdisplay:', window.getComputedStyle(generateBtn.parentElement).display);
     } else {
-        console.warn('generate-invite-btn要素が見つかりません');
+        logger.warn('generate-invite-btn要素が見つかりません');
     }
     
     // 招待リンクコピーボタン
@@ -64,31 +64,31 @@ async function generateInviteLink() {
         generateBtn.textContent = '生成中...';
         
         // 現在のユーザーとテナント情報を取得
-        console.log('generateInviteLink: ユーザー情報取得中...');
+        logger.log('generateInviteLink: ユーザー情報取得中...');
         
         let currentTenantId;
         
         // まずwindow.currentUserのtenantIdを確認
         if (window.currentUser && window.currentUser.tenantId) {
             currentTenantId = window.currentUser.tenantId;
-            console.log('generateInviteLink: window.currentUser.tenantIdを使用:', currentTenantId);
+            logger.log('generateInviteLink: window.currentUser.tenantIdを使用:', currentTenantId);
         }
         // 次に関数から取得を試行
         else if (typeof getCurrentTenantId === 'function') {
             currentTenantId = getCurrentTenantId();
-            console.log('generateInviteLink: getCurrentTenantId()を使用:', currentTenantId);
+            logger.log('generateInviteLink: getCurrentTenantId()を使用:', currentTenantId);
         } else if (window.getCurrentTenantId) {
             currentTenantId = window.getCurrentTenantId();
-            console.log('generateInviteLink: window.getCurrentTenantId()を使用:', currentTenantId);
+            logger.log('generateInviteLink: window.getCurrentTenantId()を使用:', currentTenantId);
         }
         // 最後にURLからテナントIDを取得
         else {
             const urlParams = new URLSearchParams(window.location.search);
             currentTenantId = urlParams.get('tenant');
-            console.log('generateInviteLink: URLパラメータからtenantIdを取得:', currentTenantId);
+            logger.log('generateInviteLink: URLパラメータからtenantIdを取得:', currentTenantId);
         }
         
-        console.log('generateInviteLink: 最終的なcurrentTenantId:', currentTenantId);
+        logger.log('generateInviteLink: 最終的なcurrentTenantId:', currentTenantId);
         
         if (!currentTenantId) {
             throw new Error('テナント情報が取得できません');
@@ -249,45 +249,45 @@ async function loadInviteHistory() {
         historyContainer.innerHTML = '<tr><td colspan="5" style="text-align: center;">🔄 読み込み中...</td></tr>';
         
         // 現在のユーザーとテナント情報を取得
-        console.log('loadInviteHistory: ユーザー情報取得中...');
+        logger.log('loadInviteHistory: ユーザー情報取得中...');
         let currentUser = window.currentUser;
         if (!currentUser || typeof currentUser.tenantId === 'undefined') {
             currentUser = window.getCurrentUser();
         }
-        console.log('currentUser:', currentUser);
-        console.log('currentUser type:', typeof currentUser);
-        console.log('currentUser properties:', currentUser ? Object.keys(currentUser) : 'null');
+        logger.log('currentUser:', currentUser);
+        logger.log('currentUser type:', typeof currentUser);
+        logger.log('currentUser properties:', currentUser ? Object.keys(currentUser) : 'null');
         
         let currentTenantId;
         
         // まずwindow.currentUserのtenantIdを確認
         if (window.currentUser && window.currentUser.tenantId) {
             currentTenantId = window.currentUser.tenantId;
-            console.log('loadInviteHistory: window.currentUser.tenantIdを使用:', currentTenantId);
+            logger.log('loadInviteHistory: window.currentUser.tenantIdを使用:', currentTenantId);
         }
         // 次に関数から取得を試行
         else if (typeof getCurrentTenantId === 'function') {
             currentTenantId = getCurrentTenantId();
-            console.log('loadInviteHistory: getCurrentTenantId()を使用:', currentTenantId);
+            logger.log('loadInviteHistory: getCurrentTenantId()を使用:', currentTenantId);
         } else if (window.getCurrentTenantId) {
             currentTenantId = window.getCurrentTenantId();
-            console.log('loadInviteHistory: window.getCurrentTenantId()を使用:', currentTenantId);
+            logger.log('loadInviteHistory: window.getCurrentTenantId()を使用:', currentTenantId);
         }
         // 最後にURLからテナントIDを取得
         else {
             const urlParams = new URLSearchParams(window.location.search);
             currentTenantId = urlParams.get('tenant');
-            console.log('loadInviteHistory: URLパラメータからtenantIdを取得:', currentTenantId);
+            logger.log('loadInviteHistory: URLパラメータからtenantIdを取得:', currentTenantId);
         }
         
-        console.log('loadInviteHistory: 最終的なcurrentTenantId:', currentTenantId);
+        logger.log('loadInviteHistory: 最終的なcurrentTenantId:', currentTenantId);
         
         if (!currentTenantId) {
             throw new Error('テナント情報が取得できません');
         }
         
         // テナントの招待コードを取得
-        console.log('loadInviteHistory: Firestoreクエリ実行中...');
+        logger.log('loadInviteHistory: Firestoreクエリ実行中...');
         let inviteSnapshot;
         
         try {
@@ -299,9 +299,9 @@ async function loadInviteHistory() {
                 .limit(50);
             
             inviteSnapshot = await inviteQuery.get();
-            console.log('loadInviteHistory: 複合インデックスクエリ成功');
+            logger.log('loadInviteHistory: 複合インデックスクエリ成功');
         } catch (indexError) {
-            console.warn('loadInviteHistory: 複合インデックスクエリ失敗、単純クエリにフォールバック:', indexError);
+            logger.warn('loadInviteHistory: 複合インデックスクエリ失敗、単純クエリにフォールバック:', indexError);
             
             // フォールバック: ソートなしのクエリ
             const simpleQuery = firebase.firestore()
@@ -310,7 +310,7 @@ async function loadInviteHistory() {
                 .limit(50);
             
             inviteSnapshot = await simpleQuery.get();
-            console.log('loadInviteHistory: 単純クエリ成功');
+            logger.log('loadInviteHistory: 単純クエリ成功');
         }
         
         if (inviteSnapshot.empty) {
@@ -337,7 +337,7 @@ async function loadInviteHistory() {
             return dateB - dateA;
         });
         
-        console.log('loadInviteHistory: 招待データ数:', inviteData.length);
+        logger.log('loadInviteHistory: 招待データ数:', inviteData.length);
         
         inviteData.forEach(invite => {
             const data = invite.data;
@@ -374,7 +374,7 @@ async function loadInviteHistory() {
         });
         
         historyContainer.innerHTML = historyRows.join('');
-        console.log('loadInviteHistory: 履歴表示完了');
+        logger.log('loadInviteHistory: 履歴表示完了');
         
     } catch (error) {
         console.error('loadInviteHistory: エラーが発生しました:', error);

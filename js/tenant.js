@@ -259,9 +259,17 @@ function accessTenant(tenantId) {
 
 /**
  * テナント設定編集
+ *
+ * @param {string} tenantId - テナントID
+ *
+ * 📝 将来の実装予定:
+ * - テナント名の編集
+ * - テナント設定（業務時間、休憩時間など）の編集
+ * - サイト（作業場所）の一括管理
+ * - モーダルUIでの編集フォーム
  */
 function editTenant(tenantId) {
-    // TODO: テナント設定編集モーダルを実装
+    // 現在は準備中メッセージを表示
     showInfo('テナント設定編集機能は準備中です');
 }
 
@@ -283,7 +291,7 @@ async function initializeTenant() {
         if (tenantId) {
             // 認証前はテナントIDを保存してFirestoreアクセスを回避
             if (!firebase.auth().currentUser) {
-                console.log('🔄 未認証状態 - テナントID保存:', tenantId);
+                logger.log('🔄 未認証状態 - テナントID保存:', tenantId);
                 // URLパラメータは保持してFirestoreアクセスは認証後に延期
                 return { id: tenantId, deferred: true };
             }
@@ -293,7 +301,7 @@ async function initializeTenant() {
             if (tenantInfo) {
                 return tenantInfo;
             } else {
-                console.log('⚠️ 無効なテナントID:', tenantId);
+                logger.log('⚠️ 無効なテナントID:', tenantId);
                 // 認証済みで無効なテナントの場合のみパラメータを削除
                 const url = new URL(window.location);
                 url.searchParams.delete('tenant');
@@ -318,7 +326,7 @@ async function determineUserTenant(userEmail) {
         // 🔧 メールアドレスを小文字に統一（保存時と同じ形式で検索）
         const normalizedEmail = userEmail.toLowerCase();
         
-        console.log('🔍 determineUserTenant開始:', {
+        logger.log('🔍 determineUserTenant開始:', {
             originalEmail: userEmail,
             normalizedEmail: normalizedEmail
         });
@@ -329,7 +337,7 @@ async function determineUserTenant(userEmail) {
             .doc(normalizedEmail)
             .get();
         
-        console.log('📋 global_users検索結果:', {
+        logger.log('📋 global_users検索結果:', {
             exists: globalUserDoc.exists,
             searchedEmail: normalizedEmail,
             data: globalUserDoc.exists ? globalUserDoc.data() : null
@@ -337,11 +345,11 @@ async function determineUserTenant(userEmail) {
         
         if (globalUserDoc.exists) {
             const userData = globalUserDoc.data();
-            console.log('✅ テナントID取得成功:', userData.tenantId);
+            logger.log('✅ テナントID取得成功:', userData.tenantId);
             return userData.tenantId;
         }
         
-        console.log('❌ global_usersにユーザーデータが見つかりません');
+        logger.log('❌ global_usersにユーザーデータが見つかりません');
         return null;
     } catch (error) {
         console.error('❌ determineUserTenant エラー:', error);
@@ -369,7 +377,7 @@ function generateSuccessUrl(tenantId) {
         }
     }
     
-    console.log('🔗 リダイレクトURL生成:', url.toString());
+    logger.log('🔗 リダイレクトURL生成:', url.toString());
     return url.toString();
 }
 

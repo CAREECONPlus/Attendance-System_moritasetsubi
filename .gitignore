@@ -6,6 +6,10 @@
 # Firebase設定ファイル（本番用）
 js/config.prod.js
 
+# 注意: js/config.jsは現在リポジトリにコミット済み
+# Firebase APIキーは制限付き（HTTPリファラーとFirestoreルールで保護）
+# プロジェクト固有の設定を使用する場合は、js/config.jsをローカルで編集してください
+
 # ログファイル
 *.log
 

@@ -10,9 +10,6 @@
     "build:config": "node scripts/build-config.js",
     "production": "npm run build && echo 'Production build complete. Deploy files to your web server.'"
   },
-  "dependencies": {
-    "firebase": "^9.22.0"
-  },
   "keywords": [
     "attendance",
     "firebase",
@@ -30,5 +27,7 @@
   },
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "devDependencies": {},
+  "note": "Firebase SDK v8.10.1 is loaded via CDN in HTML files. No npm dependencies required for runtime."
 }

@@ -77,24 +77,24 @@ async function initLogin() {
                     
                     // テナント不一致チェックを緩和
                     if (urlTenant && parsedUser.tenantId && urlTenant !== parsedUser.tenantId) {
-                        console.log('⚠️ URL テナントとローカルテナントが異なります:', {
+                        logger.log('⚠️ URL テナントとローカルテナントが異なります:', {
                             urlTenant,
                             savedTenant: parsedUser.tenantId
                         });
                         // 異なるテナントでも認証状態は保持し、後でチェック
                         window.currentUser = parsedUser;
-                        console.log('🔄 認証状態を保持してテナント確認を延期');
+                        logger.log('🔄 認証状態を保持してテナント確認を延期');
                     } else {
                         window.currentUser = parsedUser;
-                        console.log('✅ 認証状態をlocalStorageから復元しました:', window.currentUser.email);
+                        logger.log('✅ 認証状態をlocalStorageから復元しました:', window.currentUser.email);
                     }
                 } else {
-                    console.warn('⚠️ 不正なlocalStorageデータ形式を検出 - クリアします');
+                    logger.warn('⚠️ 不正なlocalStorageデータ形式を検出 - クリアします');
                     localStorage.removeItem('currentUser');
                 }
             }
         } catch (error) {
-            console.warn('localStorage認証状態の復元に失敗:', error);
+            logger.warn('localStorage認証状態の復元に失敗:', error);
             localStorage.removeItem('currentUser');
         }
         
@@ -114,7 +114,7 @@ async function initLogin() {
         const authRedirect = localStorage.getItem('authRedirect');
         if (authRedirect && window.currentUser) {
             localStorage.removeItem('authRedirect');
-            console.log('🚀 リダイレクト後の迅速ページ遷移を実行');
+            logger.log('🚀 リダイレクト後の迅速ページ遷移を実行');
             
             const userRole = window.currentUser.role;
             if (userRole === 'admin' || userRole === 'super_admin') {
@@ -172,7 +172,7 @@ async function handleLogin(e) {
         window.isInitializingUser = false;
         window.isLoggingIn = true;
         
-        console.log('🔐 ログイン処理開始:', email);
+        logger.log('🔐 ログイン処理開始:', email);
         
         // 明示的にログインページを表示
         showPage('login');
@@ -180,7 +180,7 @@ async function handleLogin(e) {
         // Firebase認証のみ実行（以降の処理はhandleAuthStateChangeに委譲）
         await firebase.auth().signInWithEmailAndPassword(email, password);
         
-        console.log('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
+        logger.log('✅ Firebase認証成功 - handleAuthStateChangeを待機中...');
         
     } catch (error) {
         
@@ -211,7 +211,7 @@ async function handleLogin(e) {
             submitBtn.textContent = originalText || 'ログイン';
         }
         
-        console.log('🔧 ログイン処理完了 - 成功時はhandleAuthStateChangeでフラグクリア');
+        logger.log('🔧 ログイン処理完了 - 成功時はhandleAuthStateChangeでフラグクリア');
     }
 }
 
@@ -220,7 +220,7 @@ async function handleLogin(e) {
  * 認証状態変化の処理
  */
 async function handleAuthStateChange(user) {
-    console.log('🔄 認証状態変更トリガー:', {
+    logger.log('🔄 認証状態変更トリガー:', {
         hasUser: !!user,
         userEmail: user?.email,
         isInitializing: window.isInitializingUser,
@@ -230,7 +230,7 @@ async function handleAuthStateChange(user) {
     
     // 処理中の場合は重複実行を防止
     if (window.isAuthStateChanging) {
-        console.log('🔄 認証状態変更処理中のため、スキップ');
+        logger.log('🔄 認証状態変更処理中のため、スキップ');
         return;
     }
     
@@ -241,7 +241,7 @@ async function handleAuthStateChange(user) {
                                   window.currentUser.uid === user.uid;
         
         if (!isValidCurrentUser) {
-            console.log('⚠️ 不正な認証状態を検出 - 再処理します:', typeof window.currentUser);
+            logger.log('⚠️ 不正な認証状態を検出 - 再処理します:', typeof window.currentUser);
             // 不正な状態をクリアして再処理
             window.currentUser = null;
             localStorage.removeItem('currentUser');
@@ -251,14 +251,14 @@ async function handleAuthStateChange(user) {
                                  !document.getElementById('login-page').classList.contains('hidden');
             
             if (isOnLoginPage) {
-                console.log('🔄 認証済みユーザーをログインページから遷移させます');
+                logger.log('🔄 認証済みユーザーをログインページから遷移させます');
                 
                 // テナント情報の再確認と必要に応じてリダイレクト
                 const currentTenantFromUrl = getTenantFromURL();
                 const userTenantId = window.currentUser.tenantId;
                 
                 if (userTenantId && (!currentTenantFromUrl || currentTenantFromUrl !== userTenantId)) {
-                    console.log('🔄 テナント不一致のためリダイレクト:', {
+                    logger.log('🔄 テナント不一致のためリダイレクト:', {
                         urlTenant: currentTenantFromUrl,
                         userTenant: userTenantId
                     });
@@ -273,7 +273,7 @@ async function handleAuthStateChange(user) {
                     showPage('admin');
                     setTimeout(() => {
                         if (typeof initAdminPage === 'function') {
-                            console.log('🔧 管理者ページ初期化実行');
+                            logger.log('🔧 管理者ページ初期化実行');
                             initAdminPage();
                         }
                     }, 300);
@@ -281,7 +281,7 @@ async function handleAuthStateChange(user) {
                     showPage('employee');
                     setTimeout(() => {
                         if (typeof initEmployeePage === 'function') {
-                            console.log('🔧 従業員ページ初期化実行');
+                            logger.log('🔧 従業員ページ初期化実行');
                             initEmployeePage();
                         }
                     }, 300);
@@ -289,7 +289,7 @@ async function handleAuthStateChange(user) {
                 return;
             }
             
-            console.log('🔄 認証状態変更をスキップ: 既に適切なページにいます');
+            logger.log('🔄 認証状態変更をスキップ: 既に適切なページにいます');
             return;
         }
     }
@@ -297,7 +297,7 @@ async function handleAuthStateChange(user) {
     // 重複実行防止のためのタイムスタンプチェック
     const now = Date.now();
     if (window.lastAuthStateChange && (now - window.lastAuthStateChange) < 1000) {
-        console.log('🔄 認証状態変更を短時間内でスキップ');
+        logger.log('🔄 認証状態変更を短時間内でスキップ');
         return;
     }
     window.lastAuthStateChange = now;
@@ -313,9 +313,9 @@ async function handleAuthStateChange(user) {
             
             // ユーザー情報の取得開始
             // ユーザーのテナント情報を取得
-            console.log('🔍 テナント情報取得開始:', user.email);
+            logger.log('🔍 テナント情報取得開始:', user.email);
             const userTenantId = await determineUserTenant(user.email);
-            console.log('📋 テナント情報取得結果:', userTenantId);
+            logger.log('📋 テナント情報取得結果:', userTenantId);
             
             // テナント対応のユーザーデータ取得
             let userData;
@@ -323,18 +323,18 @@ async function handleAuthStateChange(user) {
             
             if (userTenantId) {
                 // テナント内からユーザーデータを取得
-                console.log('🔍 テナント内ユーザーデータ取得開始:', userTenantId);
+                logger.log('🔍 テナント内ユーザーデータ取得開始:', userTenantId);
                 const tenantUsersPath = `tenants/${userTenantId}/users`;
                 userDoc = await firebase.firestore().collection(tenantUsersPath).doc(user.uid).get();
-                console.log('📋 テナント内ユーザーデータ取得結果:', userDoc.exists);
+                logger.log('📋 テナント内ユーザーデータ取得結果:', userDoc.exists);
                 
                 // デバッグ: テナント内の全ユーザーを確認
                 if (!userDoc.exists) {
-                    console.log('🔍 デバッグ: テナント内の全ユーザーを確認');
+                    logger.log('🔍 デバッグ: テナント内の全ユーザーを確認');
                     const allUsersSnapshot = await firebase.firestore().collection(tenantUsersPath).get();
-                    console.log('📋 テナント内全ユーザー数:', allUsersSnapshot.size);
+                    logger.log('📋 テナント内全ユーザー数:', allUsersSnapshot.size);
                     allUsersSnapshot.forEach(doc => {
-                        console.log('📋 テナント内ユーザー:', {
+                        logger.log('📋 テナント内ユーザー:', {
                             id: doc.id,
                             email: doc.data().email,
                             uid: doc.data().uid,
@@ -347,7 +347,7 @@ async function handleAuthStateChange(user) {
                     userData = userDoc.data();
                 } else {
                     // メールアドレスベースで検索して修正
-                    console.log('🔍 メールアドレスベースでテナント内ユーザー検索開始');
+                    logger.log('🔍 メールアドレスベースでテナント内ユーザー検索開始');
                     const emailQuerySnapshot = await firebase.firestore()
                         .collection(tenantUsersPath)
                         .where('email', '==', user.email)
@@ -356,7 +356,7 @@ async function handleAuthStateChange(user) {
                     if (!emailQuerySnapshot.empty) {
                         const userDocByEmail = emailQuerySnapshot.docs[0];
                         userData = userDocByEmail.data();
-                        console.log('📋 メールアドレスベース検索成功:', {
+                        logger.log('📋 メールアドレスベース検索成功:', {
                             foundDocId: userDocByEmail.id,
                             expectedUID: user.uid,
                             actualUID: userData.uid
@@ -364,7 +364,7 @@ async function handleAuthStateChange(user) {
                         
                         // UIDが一致しない場合は修正
                         if (userData.uid !== user.uid) {
-                            console.log('🔄 UIDが一致しないため、データを修正します');
+                            logger.log('🔄 UIDが一致しないため、データを修正します');
                             
                             // 新しいドキュメントを正しいUIDで作成
                             const updatedData = {
@@ -378,13 +378,13 @@ async function handleAuthStateChange(user) {
                             // 古いドキュメントを削除
                             await firebase.firestore().collection(tenantUsersPath).doc(userDocByEmail.id).delete();
                             
-                            console.log('✅ テナント内ユーザーデータのUID修正完了');
+                            logger.log('✅ テナント内ユーザーデータのUID修正完了');
                         }
                     } else {
                         // フォールバック: 従来のusersコレクションから取得
-                        console.log('🔍 フォールバック: 従来のusersコレクション取得開始');
+                        logger.log('🔍 フォールバック: 従来のusersコレクション取得開始');
                         userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                        console.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
+                        logger.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
                         if (userDoc.exists) {
                             userData = userDoc.data();
                         }
@@ -392,15 +392,15 @@ async function handleAuthStateChange(user) {
                 }
             } else {
                 // テナント未設定の場合は従来のusersコレクションから取得
-                console.log('🔍 テナント未設定: 従来のusersコレクション取得開始');
+                logger.log('🔍 テナント未設定: 従来のusersコレクション取得開始');
                 userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                console.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
+                logger.log('📋 従来のusersコレクション取得結果:', userDoc.exists);
                 if (userDoc.exists) {
                     userData = userDoc.data();
                 }
             }
             
-            console.log('📋 最終ユーザーデータ確認:', {
+            logger.log('📋 最終ユーザーデータ確認:', {
                 hasUserData: !!userData,
                 userEmail: userData?.email,
                 userRole: userData?.role,
@@ -409,7 +409,7 @@ async function handleAuthStateChange(user) {
             
             // Legacy usersコレクションからの自動移行処理
             if (userData && !userTenantId) {
-                console.log('🔄 Legacy usersコレクションのユーザーをテナントシステムに移行します');
+                logger.log('🔄 Legacy usersコレクションのユーザーをテナントシステムに移行します');
                 
                 // dx5アカウント専用のテナントIDを生成
                 const legacyTenantId = `legacy-${userData.email.split('@')[0]}`;
@@ -458,12 +458,12 @@ async function handleAuthStateChange(user) {
                 userTenantId = legacyTenantId;
                 userData.tenantId = legacyTenantId;
                 
-                console.log('✅ Legacy usersコレクションからの移行完了:', legacyTenantId);
+                logger.log('✅ Legacy usersコレクションからの移行完了:', legacyTenantId);
             }
             
             // UIDの不一致をチェックし、必要に応じて更新
             if (userData && userData.uid === 'pending-uid') {
-                console.log('🔄 UIDが未設定のため、global_usersを更新します');
+                logger.log('🔄 UIDが未設定のため、global_usersを更新します');
                 
                 // global_usersのUIDを更新
                 const normalizedEmail = user.email.toLowerCase();
@@ -480,12 +480,12 @@ async function handleAuthStateChange(user) {
                     });
                 }
                 
-                console.log('✅ UID更新完了:', user.uid);
+                logger.log('✅ UID更新完了:', user.uid);
                 userData.uid = user.uid;
             }
             
             if (userData) {
-                console.log('✅ ユーザーデータ取得成功 - ロール決定開始');
+                logger.log('✅ ユーザーデータ取得成功 - ロール決定開始');
                 
                 // ユーザーのロールを決定
                 let userRole = userData.role || 'employee';
@@ -513,9 +513,9 @@ async function handleAuthStateChange(user) {
                 // localStorage に認証状態を保存（テナント情報含む）
                 try {
                     localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
-                    console.log('💾 ユーザー情報をlocalStorageに保存:', window.currentUser.email);
+                    logger.log('💾 ユーザー情報をlocalStorageに保存:', window.currentUser.email);
                 } catch (error) {
-                    console.warn('⚠️ localStorageへの保存に失敗:', error);
+                    logger.warn('⚠️ localStorageへの保存に失敗:', error);
                 }
                 
                 // テナント情報を設定（権限エラー対策）
@@ -530,9 +530,9 @@ async function handleAuthStateChange(user) {
                         const tenantInfo = await window.loadTenantInfo(finalTenantId);
                         if (tenantInfo) {
                             window.currentTenant = tenantInfo;
-                            console.log('🏢 テナント情報設定完了:', finalTenantId);
+                            logger.log('🏢 テナント情報設定完了:', finalTenantId);
                         } else {
-                            console.warn('⚠️ テナント情報が見つかりません:', finalTenantId);
+                            logger.warn('⚠️ テナント情報が見つかりません:', finalTenantId);
                         }
                     } catch (error) {
                         console.error('🚨 テナント情報設定エラー:', error);
@@ -542,30 +542,30 @@ async function handleAuthStateChange(user) {
                 // ロール別のテナント処理とリダイレクト判定を分離
                 if (userRole === 'super_admin') {
                     // スーパー管理者：テナントパラメータがあればそれを保持、なければリダイレクトしない
-                    console.log('🔑 スーパー管理者：テナントパラメータ保持');
+                    logger.log('🔑 スーパー管理者：テナントパラメータ保持');
                 } else if (userRole === 'admin') {
                     // 通常管理者：テナントパラメータがあればそれを保持、なければ自分のテナントにリダイレクト
                     if (!currentTenantFromUrl && userTenantId) {
-                        console.log('🔄 管理者テナントリダイレクト準備中...');
+                        logger.log('🔄 管理者テナントリダイレクト準備中...');
                         shouldRedirect = true;
                         redirectUrl = generateSuccessUrl(userTenantId);
                     } else {
-                        console.log('🔑 管理者：テナントパラメータ保持');
+                        logger.log('🔑 管理者：テナントパラメータ保持');
                     }
                 } else if (userTenantId) {
                     // 一般ユーザー：必ず自分のテナントにリダイレクト
-                    console.log('🔍 テナント判定:', {
+                    logger.log('🔍 テナント判定:', {
                         userTenantId,
                         currentTenantFromUrl,
                         isMatch: currentTenantFromUrl === userTenantId
                     });
                     
                     if (!currentTenantFromUrl || currentTenantFromUrl !== userTenantId) {
-                        console.log('🔄 テナントリダイレクト準備中...');
+                        logger.log('🔄 テナントリダイレクト準備中...');
                         shouldRedirect = true;
                         redirectUrl = generateSuccessUrl(userTenantId);
                     } else {
-                        console.log('✅ テナントURL一致 - リダイレクトなし');
+                        logger.log('✅ テナントURL一致 - リダイレクトなし');
                     }
                 }
                 
@@ -579,16 +579,16 @@ async function handleAuthStateChange(user) {
                         };
                         localStorage.setItem('currentUser', JSON.stringify(updatedUser));
                         localStorage.setItem('authRedirect', 'true'); // リダイレクトフラグ
-                        console.log('💾 リダイレクト前に認証状態を保存:', updatedUser.email);
+                        logger.log('💾 リダイレクト前に認証状態を保存:', updatedUser.email);
                     } catch (error) {
-                        console.warn('⚠️ リダイレクト前の状態保存に失敗:', error);
+                        logger.warn('⚠️ リダイレクト前の状態保存に失敗:', error);
                     }
                     
                     window.isAuthStateChanging = false;
                     window.isInitializingUser = false;
                     window.isLoggingIn = false;
                     hideLoadingOverlay();
-                    console.log('🔄 テナントリダイレクト実行:', redirectUrl);
+                    logger.log('🔄 テナントリダイレクト実行:', redirectUrl);
                     window.location.href = redirectUrl;
                     return;
                 }
@@ -602,7 +602,7 @@ async function handleAuthStateChange(user) {
                 const isOnAdminPage = document.getElementById('admin-page') && 
                                      !document.getElementById('admin-page').classList.contains('hidden');
                 
-                console.log('📄 現在のページ状態:', {
+                logger.log('📄 現在のページ状態:', {
                     isOnLoginPage,
                     isOnEmployeePage,
                     isOnAdminPage,
@@ -615,14 +615,14 @@ async function handleAuthStateChange(user) {
                                           (userRole === 'employee' && !isOnEmployeePage);
                 
                 if (needsPageTransition) {
-                    console.log('🔄 ページ遷移を実行します...');
+                    logger.log('🔄 ページ遷移を実行します...');
                     
                     if (userRole === 'admin' || userRole === 'super_admin') {
                         showPage('admin');
                         // 少し遅延してから管理者ページ初期化
                         setTimeout(() => {
                             if (typeof initAdminPage === 'function') {
-                                console.log('🔧 管理者ページ初期化実行');
+                                logger.log('🔧 管理者ページ初期化実行');
                                 initAdminPage();
                             }
                         }, 300);
@@ -631,17 +631,17 @@ async function handleAuthStateChange(user) {
                         // 少し遅延してから従業員ページ初期化
                         setTimeout(() => {
                             if (typeof initEmployeePage === 'function') {
-                                console.log('🔧 従業員ページ初期化実行');
+                                logger.log('🔧 従業員ページ初期化実行');
                                 initEmployeePage();
                             }
                         }, 300);
                     }
                 } else {
-                    console.log('✅ ページ遷移は不要です（既に適切なページにいます）');
+                    logger.log('✅ ページ遷移は不要です（既に適切なページにいます）');
                 }
             } else {
-                console.log('❌ ユーザーデータが見つかりません - サインアウト実行');
-                console.log('📋 検索条件:', {
+                logger.log('❌ ユーザーデータが見つかりません - サインアウト実行');
+                logger.log('📋 検索条件:', {
                     userEmail: user.email,
                     userUID: user.uid,
                     searchedTenantId: userTenantId
@@ -658,10 +658,10 @@ async function handleAuthStateChange(user) {
             
             // 重大なエラーの場合のみサインアウト
             if (error.code === 'permission-denied' || error.code === 'unauthorized') {
-                console.log('🔐 権限エラーのためサインアウト実行');
+                logger.log('🔐 権限エラーのためサインアウト実行');
                 await firebase.auth().signOut();
             } else {
-                console.log('⚠️ 一時的なエラーの可能性 - セッション維持');
+                logger.log('⚠️ 一時的なエラーの可能性 - セッション維持');
                 // セッションを維持してリトライ可能にする
                 window.isInitializingUser = false;
                 window.isLoggingIn = false;
@@ -673,7 +673,7 @@ async function handleAuthStateChange(user) {
             window.isInitializingUser = false;
             window.isLoggingIn = false;
             hideLoadingOverlay();
-            console.log('🔧 認証状態変更処理完了 - フラグクリア');
+            logger.log('🔧 認証状態変更処理完了 - フラグクリア');
         }
     } else {
         // ログアウト状態
@@ -783,12 +783,12 @@ async function ensureTenantInfo(tenantId) {
             const tenantInfo = await window.loadTenantInfo(tenantId);
             if (tenantInfo) {
                 window.currentTenant = tenantInfo;
-                console.log('🏢 テナント情報を確保しました:', tenantId);
+                logger.log('🏢 テナント情報を確保しました:', tenantId);
             } else {
-                console.warn('⚠️ テナント情報が見つかりません:', tenantId);
+                logger.warn('⚠️ テナント情報が見つかりません:', tenantId);
             }
         } else {
-            console.warn('⚠️ loadTenantInfo関数が利用できません');
+            logger.warn('⚠️ loadTenantInfo関数が利用できません');
         }
     } catch (error) {
         console.error('❌ テナント情報確保エラー:', error);

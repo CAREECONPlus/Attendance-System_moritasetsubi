@@ -1,9 +1,18 @@
 
 /**
  * 勤怠管理システム - Firebase認証機能 (v8 SDK対応版)
- * 
+ *
  * このファイルには、Firebase Authenticationを使用した
  * ログイン、登録、ログアウト、認証状態管理の機能が含まれています。
+ *
+ * 【エラーハンドリング戦略】
+ * ユーザー登録時のトランザクション整合性を保証するため、以下の手順を実施：
+ * 1. Firebase Authでユーザー作成
+ * 2. Firestoreにユーザー情報を保存
+ * 3. Firestore保存失敗時は、作成されたユーザーを削除（ロールバック）
+ *
+ * これにより「Firebase Authに存在するがFirestoreにデータがない孤児アカウント」の
+ * 発生を防止します。
  */
 
 // Firebase関連の参照を取得（グローバル変数を使用）
@@ -24,11 +33,17 @@ function initAuth() {
 
 /**
  * 招待トークンを使った従業員登録
+ *
  * @param {string} email メールアドレス
  * @param {string} password パスワード
  * @param {string} displayName 表示名
  * @param {string} inviteToken 招待トークン
  * @returns {Object} { success: boolean, user?: User, error?: string }
+ *
+ * @description
+ * この関数はトランザクション整合性を保証します：
+ * - Firestore保存に失敗した場合、Firebase Authで作成されたユーザーを自動削除
+ * - これにより孤児アカウント（認証のみ存在、データなし）の発生を防止
  */
 async function registerEmployeeWithInvite(email, password, displayName, inviteToken) {
     try {
@@ -73,7 +88,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 await firebaseAuth.updateCurrentUser(user);
             } catch (error) {
                 // 手動更新が失敗した場合でも、リスナーで同期を待つ
-                console.log('Manual updateCurrentUser failed, waiting for auth state change:', error);
+                logger.log('Manual updateCurrentUser failed, waiting for auth state change:', error);
             }
         });
         
@@ -121,7 +136,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 });
             } catch (globalWriteError) {
                 // global_users の失敗は致命的ではないので、処理を継続
-                console.warn('Global usersの保存に失敗しましたが、テナントユーザー登録は完了しました', globalWriteError);
+                logger.warn('Global usersの保存に失敗しましたが、テナントユーザー登録は完了しました', globalWriteError);
             }
 
             // 3. 招待コードの使用回数を更新
@@ -132,13 +147,27 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                 });
             } catch (inviteUpdateError) {
                 // 招待コード更新の失敗は致命的ではないので、警告のみ
-                console.warn('招待コードの更新に失敗しましたが、ユーザー登録は完了しました');
+                logger.warn('招待コードの更新に失敗しましたが、ユーザー登録は完了しました');
             }
             
         } catch (firestoreError) {
             console.error('Firestore operation failed:', firestoreError);
-            // ユーザー作成は成功したが、Firestore保存で失敗した場合
-            // ユーザーを削除するかログに記録する
+
+            // ロールバック: Firebase Authで作成されたユーザーを削除
+            try {
+                logger.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
+                await user.delete();
+                logger.log('孤児アカウントの削除に成功しました');
+            } catch (deleteError) {
+                console.error('⚠️ 重大なエラー: ユーザーアカウントの削除に失敗しました', {
+                    userId: user.uid,
+                    email: user.email,
+                    deleteError: deleteError.message,
+                    originalError: firestoreError.message
+                });
+                // 削除失敗は管理者に通知すべき（TODO: 監視システムへの通知を検討）
+            }
+
             throw new Error(`ユーザー情報の保存に失敗しました: ${firestoreError.message}`);
         }
 
@@ -152,11 +181,19 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
 
 /**
  * メールアドレスとパスワードでユーザー登録
+ *
  * @param {string} email メールアドレス
  * @param {string} password パスワード
  * @param {string} displayName 表示名
  * @param {string} role ユーザーの役割（'admin' または 'employee'）
  * @returns {Object} { success: boolean, user?: User, error?: string }
+ *
+ * @description
+ * この関数はトランザクション整合性を保証します：
+ * - Firestore保存に失敗した場合、Firebase Authで作成されたユーザーを自動削除
+ * - これにより孤児アカウント（認証のみ存在、データなし）の発生を防止
+ *
+ * @security セキュリティ上、adminまたはsuper_adminロールは自動的にemployeeに変更されます
  */
 async function registerUser(email, password, displayName, role = 'employee') {
     // セキュリティ: 通常の登録では管理者権限を付与しない
@@ -167,25 +204,45 @@ async function registerUser(email, password, displayName, role = 'employee') {
         // Firebase Authenticationでユーザー作成
         const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
-        
+
         // ユーザープロフィールを更新
         await user.updateProfile({
             displayName: displayName
         });
-        
+
         // Firestoreにユーザー情報を保存（テナント対応）
-        const userCollection = window.getUserCollection ? window.getUserCollection() : firestoreDb.collection('users');
-        await userCollection.doc(user.uid).set({
-            email: email,
-            displayName: displayName,
-            role: role,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            siteHistory: []
-        });
-        
+        try {
+            const userCollection = window.getUserCollection ? window.getUserCollection() : firestoreDb.collection('users');
+            await userCollection.doc(user.uid).set({
+                email: email,
+                displayName: displayName,
+                role: role,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                siteHistory: []
+            });
+        } catch (firestoreError) {
+            console.error('Firestore operation failed:', firestoreError);
+
+            // ロールバック: Firebase Authで作成されたユーザーを削除
+            try {
+                logger.warn('Firestore保存に失敗したため、作成されたユーザーアカウントを削除します...');
+                await user.delete();
+                logger.log('孤児アカウントの削除に成功しました');
+            } catch (deleteError) {
+                console.error('⚠️ 重大なエラー: ユーザーアカウントの削除に失敗しました', {
+                    userId: user.uid,
+                    email: user.email,
+                    deleteError: deleteError.message,
+                    originalError: firestoreError.message
+                });
+            }
+
+            throw new Error(`ユーザー情報の保存に失敗しました: ${firestoreError.message}`);
+        }
+
         return { success: true, user: user };
-        
+
     } catch (error) {
         return { success: false, error: error.message };
     }

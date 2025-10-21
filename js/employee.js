@@ -263,7 +263,7 @@ async function checkSiteLimit(userId, siteName) {
         if (!activeSnapshot.empty) {
             // 同一現場で未完了の勤務がある場合
             const activeRecord = activeSnapshot.docs[0].data();
-            console.log('🚨 同一現場で未完了の勤務を検出:', siteName);
+            logger.log('🚨 同一現場で未完了の勤務を検出:', siteName);
             
             // グローバル変数を更新
             todayAttendanceData = {
@@ -296,7 +296,7 @@ async function checkSiteLimit(userId, siteName) {
                 const timeThreshold = 60; // 1時間以内の再出勤は確認が必要
                 
                 if (timeDifference <= timeThreshold) {
-                    console.log('⚠️ 短時間での再出勤を検出:', siteName, `${Math.round(timeDifference)}分前に退勤`);
+                    logger.log('⚠️ 短時間での再出勤を検出:', siteName, `${Math.round(timeDifference)}分前に退勤`);
                     
                     return {
                         canClockIn: false,
@@ -485,7 +485,7 @@ function displayMultiSiteAttendance(sites) {
 // 🆕 現場切り替え機能
 async function switchToSite(attendanceId, siteName) {
     try {
-        console.log('🔄 現場切り替え開始:', siteName);
+        logger.log('🔄 現場切り替え開始:', siteName);
         
         // 指定された勤怠レコードを取得
         const doc = await getAttendanceCollection().doc(attendanceId).get();
@@ -514,7 +514,7 @@ async function switchToSite(attendanceId, siteName) {
         }
         
         alert(`${siteName}に切り替えました`);
-        console.log('✅ 現場切り替え完了:', siteName);
+        logger.log('✅ 現場切り替え完了:', siteName);
         
     } catch (error) {
         console.error('❌ 現場切り替えエラー:', error);
@@ -619,11 +619,11 @@ async function loadSiteOptions() {
         }
         
         const sites = await window.getTenantSites(tenantId);
-        console.log('loadSiteOptions - 取得した現場データ:', sites);
+        logger.log('loadSiteOptions - 取得した現場データ:', sites);
         
         const siteSelect = document.getElementById('site-name');
-        console.log('loadSiteOptions - セレクト要素:', siteSelect);
-        console.log('loadSiteOptions - 現在のオプション数:', siteSelect?.children.length);
+        logger.log('loadSiteOptions - セレクト要素:', siteSelect);
+        logger.log('loadSiteOptions - 現在のオプション数:', siteSelect?.children.length);
         
         if (siteSelect && sites && sites.length > 0) {
             // 既存のオプションをクリア（最初の1つ「現場を選択してください」のみ残す）
@@ -741,11 +741,11 @@ async function handleClockIn() {
                 // 短時間再出勤の確認モーダルを表示
                 const userConfirmed = await showReClockInModal(siteCheck);
                 if (!userConfirmed) {
-                    console.log('ユーザーが再出勤をキャンセルしました');
+                    logger.log('ユーザーが再出勤をキャンセルしました');
                     restoreButton();
                     return;
                 }
-                console.log('ユーザーが再出勤を承認しました');
+                logger.log('ユーザーが再出勤を承認しました');
             }
         }
         
@@ -1166,7 +1166,7 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
 
 // 最近の記録を安全に読み込み（直近3日間のみ）
 async function loadRecentRecordsSafely() {
-    console.log('loadRecentRecordsSafely called');
+    logger.log('loadRecentRecordsSafely called');
     
     const recentList = document.getElementById('recent-list');
     if (!recentList) {
@@ -1176,12 +1176,12 @@ async function loadRecentRecordsSafely() {
     
     try {
         if (!currentUser) {
-            console.log('currentUser not set, showing welcome message');
+            logger.log('currentUser not set, showing welcome message');
             showWelcomeMessage();
             return;
         }
         
-        console.log('Loading records for user:', currentUser.uid);
+        logger.log('Loading records for user:', currentUser.uid);
         
         // 直近3日間の日付範囲を計算
         const today = getTodayJST();
@@ -1196,20 +1196,20 @@ async function loadRecentRecordsSafely() {
             .limit(20); // 多めに取得してクライアント側でフィルター
         
         const snapshot = await query.get();
-        console.log('Query completed, docs found:', snapshot.size);
+        logger.log('Query completed, docs found:', snapshot.size);
         
         // クライアント側で直近3日間でフィルター
         const filteredDocs = [];
         snapshot.docs.forEach(doc => {
             const data = doc.data();
             const recordDate = data.date;
-            console.log('Processing record:', { id: doc.id, date: recordDate });
+            logger.log('Processing record:', { id: doc.id, date: recordDate });
             if (recordDate && recordDate >= threeDaysAgoString && recordDate <= today) {
                 filteredDocs.push(doc);
             }
         });
         
-        console.log('Filtered docs:', filteredDocs.length);
+        logger.log('Filtered docs:', filteredDocs.length);
         
         // 擬似的なsnapshot作成
         const filteredSnapshot = {
@@ -1219,12 +1219,12 @@ async function loadRecentRecordsSafely() {
         };
         
         if (filteredSnapshot.empty) {
-            console.log('No recent records found, showing welcome message');
+            logger.log('No recent records found, showing welcome message');
             showWelcomeMessage();
             return;
         }
         
-        console.log('Displaying records');
+        logger.log('Displaying records');
         displayRecentRecords(filteredSnapshot);
         
     } catch (error) {
@@ -1463,7 +1463,7 @@ async function adminResetEmployeeAttendance(userId, targetDate) {
             targetDate = getTodayJST();
         }
         
-        console.log('🔄 管理者による勤怠状態リセット開始:', userId, targetDate);
+        logger.log('🔄 管理者による勤怠状態リセット開始:', userId, targetDate);
         
         // 対象日の勤怠レコードを取得
         const attendanceQuery = getAttendanceCollection()
@@ -1486,7 +1486,7 @@ async function adminResetEmployeeAttendance(userId, targetDate) {
             
             await Promise.all(updatePromises);
             
-            console.log('✅ 勤怠状態リセット完了:', attendanceSnapshot.docs.length, '件');
+            logger.log('✅ 勤怠状態リセット完了:', attendanceSnapshot.docs.length, '件');
             
             // 管理者ログに記録
             const adminLog = {

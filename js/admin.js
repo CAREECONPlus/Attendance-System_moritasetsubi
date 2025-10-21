@@ -2,7 +2,7 @@
 // テナント対応のFirestoreコレクション取得関数（main.jsの統一関数を使用）
 function getAttendanceCollection() {
     try {
-        console.log('🔍 勤怠コレクション取得開始', {
+        logger.log('🔍 勤怠コレクション取得開始', {
             hasTenantFirestore: !!(window.getTenantFirestore),
             currentUser: window.currentUser,
             currentTenant: window.currentTenant
@@ -10,12 +10,12 @@ function getAttendanceCollection() {
         
         if (window.getTenantFirestore && typeof window.getTenantFirestore === 'function') {
             const collection = window.getTenantFirestore('attendance');
-            console.log('🏢 テナント対応勤怠コレクション取得成功', collection.path);
+            logger.log('🏢 テナント対応勤怠コレクション取得成功', collection.path);
             return collection;
         } else {
-            console.warn('⚠️ テナント対応関数が利用できません - フォールバック');
+            logger.warn('⚠️ テナント対応関数が利用できません - フォールバック');
             const fallbackCollection = firebase.firestore().collection('attendance');
-            console.log('📁 フォールバック勤怠コレクション:', fallbackCollection.path);
+            logger.log('📁 フォールバック勤怠コレクション:', fallbackCollection.path);
             return fallbackCollection;
         }
     } catch (error) {
@@ -63,17 +63,17 @@ function initAdminRequestsManagement() {
  * 管理者依頼タブを表示（スーパー管理者のみ）
  */
 function showAdminRequestsTab() {
-    console.log('showAdminRequestsTab: 管理者依頼タブを表示中...');
-    console.log('showAdminRequestsTab: currentUser:', window.currentUser);
-    console.log('showAdminRequestsTab: user role:', window.currentUser ? window.currentUser.role : 'No user');
+    logger.log('showAdminRequestsTab: 管理者依頼タブを表示中...');
+    logger.log('showAdminRequestsTab: currentUser:', window.currentUser);
+    logger.log('showAdminRequestsTab: user role:', window.currentUser ? window.currentUser.role : 'No user');
     
     // 権限チェック
     if (!window.currentUser || window.currentUser.role !== 'super_admin') {
-        console.log('showAdminRequestsTab: 権限不足でリターン');
+        logger.log('showAdminRequestsTab: 権限不足でリターン');
         return;
     }
     
-    console.log('showAdminRequestsTab: 権限チェック通過');
+    logger.log('showAdminRequestsTab: 権限チェック通過');
     
     // 全てのタブコンテンツを非表示
     document.querySelectorAll('.tab-content, .attendance-table-container').forEach(el => {
@@ -86,7 +86,7 @@ function showAdminRequestsTab() {
     
     // 管理者依頼コンテンツを表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
-    console.log('showAdminRequestsTab: adminRequestsContent要素:', adminRequestsContent);
+    logger.log('showAdminRequestsTab: adminRequestsContent要素:', adminRequestsContent);
     if (adminRequestsContent) {
         adminRequestsContent.classList.remove('hidden');
         adminRequestsContent.style.display = 'block'; // 強制的に表示
@@ -96,11 +96,11 @@ function showAdminRequestsTab() {
         if (tableContainer) {
             tableContainer.classList.remove('hidden');
             tableContainer.style.display = 'block';
-            console.log('showAdminRequestsTab: テーブルコンテナも表示設定');
+            logger.log('showAdminRequestsTab: テーブルコンテナも表示設定');
         }
         
-        console.log('showAdminRequestsTab: コンテンツを表示設定');
-        console.log('showAdminRequestsTab: コンテンツのdisplay:', window.getComputedStyle(adminRequestsContent).display);
+        logger.log('showAdminRequestsTab: コンテンツを表示設定');
+        logger.log('showAdminRequestsTab: コンテンツのdisplay:', window.getComputedStyle(adminRequestsContent).display);
     } else {
         console.error('showAdminRequestsTab: admin-requests-content要素が見つかりません');
     }
@@ -119,7 +119,7 @@ function showAdminRequestsTab() {
 function initEmployeeManagement() {
     // スーパー管理者チェック
     if (!window.currentUser || window.currentUser.role !== 'super_admin') {
-        console.log('従業員管理機能: スーパー管理者のみアクセス可能');
+        logger.log('従業員管理機能: スーパー管理者のみアクセス可能');
         return;
     }
     
@@ -137,11 +137,11 @@ function initEmployeeManagement() {
  * 従業員管理タブを表示（スーパー管理者のみ）
  */
 function showEmployeeManagementTab() {
-    console.log('従業員管理タブを表示中...');
+    logger.log('従業員管理タブを表示中...');
     
     // スーパー管理者権限チェック
     if (!window.currentUser || window.currentUser.role !== 'super_admin') {
-        console.log('従業員管理タブ: スーパー管理者のみアクセス可能');
+        logger.log('従業員管理タブ: スーパー管理者のみアクセス可能');
         alert('この機能はスーパー管理者のみアクセス可能です。');
         return;
     }
@@ -174,7 +174,7 @@ function showEmployeeManagementTab() {
  * 招待管理タブを表示
  */
 function showInviteTab() {
-    console.log('showInviteTab: 招待タブを表示中...');
+    logger.log('showInviteTab: 招待タブを表示中...');
     
     // 全てのタブコンテンツを非表示
     document.querySelectorAll('.tab-content, .attendance-table-container').forEach(el => {
@@ -187,15 +187,15 @@ function showInviteTab() {
     
     // 招待管理コンテンツを表示
     const inviteContent = document.getElementById('invite-content');
-    console.log('invite-content要素:', inviteContent);
+    logger.log('invite-content要素:', inviteContent);
     if (inviteContent) {
         inviteContent.classList.remove('hidden');
         inviteContent.style.display = 'block'; // 強制的に表示
-        console.log('invite-contentのhiddenクラスを削除しました');
-        console.log('invite-contentのスタイル:', window.getComputedStyle(inviteContent).display);
-        console.log('invite-contentのvisibility:', window.getComputedStyle(inviteContent).visibility);
+        logger.log('invite-contentのhiddenクラスを削除しました');
+        logger.log('invite-contentのスタイル:', window.getComputedStyle(inviteContent).display);
+        logger.log('invite-contentのvisibility:', window.getComputedStyle(inviteContent).visibility);
     } else {
-        console.warn('invite-content要素が見つかりません');
+        logger.warn('invite-content要素が見つかりません');
     }
     
     // タブの状態を更新
@@ -205,7 +205,7 @@ function showInviteTab() {
     
     // 招待機能を確実に初期化
     if (typeof initInviteAdmin === 'function') {
-        console.log('showInviteTab内でinitInviteAdminを呼び出し');
+        logger.log('showInviteTab内でinitInviteAdminを呼び出し');
         initInviteAdmin();
     }
     
@@ -220,10 +220,10 @@ function showInviteTab() {
  */
 async function loadAdminRequests() {
     try {
-        console.log('loadAdminRequests: 管理者依頼データを読み込み中...');
+        logger.log('loadAdminRequests: 管理者依頼データを読み込み中...');
         
         const tbody = document.getElementById('admin-requests-data');
-        console.log('loadAdminRequests: tbody要素:', tbody);
+        logger.log('loadAdminRequests: tbody要素:', tbody);
         if (!tbody) {
             console.error('loadAdminRequests: admin-requests-data要素が見つかりません');
             return;
@@ -233,13 +233,13 @@ async function loadAdminRequests() {
         const currentUser = window.currentUser;
         const isSuper = currentUser && currentUser.role === 'super_admin';
         
-        console.log('loadAdminRequests: ユーザー権限確認:', isSuper ? 'スーパー管理者' : '通常管理者');
+        logger.log('loadAdminRequests: ユーザー権限確認:', isSuper ? 'スーパー管理者' : '通常管理者');
         
         let requestsSnapshot;
         
         if (isSuper) {
             // スーパー管理者：全ての依頼を表示
-            console.log('loadAdminRequests: 全ての管理者依頼を取得中...');
+            logger.log('loadAdminRequests: 全ての管理者依頼を取得中...');
             requestsSnapshot = await firebase.firestore()
                 .collection('admin_requests')
                 .orderBy('requestedAt', 'desc')
@@ -247,7 +247,7 @@ async function loadAdminRequests() {
         } else {
             // 通常管理者：自分のテナントの依頼のみ表示
             const tenantId = getCurrentTenantId();
-            console.log('loadAdminRequests: テナント固有の依頼を取得中...', tenantId);
+            logger.log('loadAdminRequests: テナント固有の依頼を取得中...', tenantId);
             
             if (!tenantId) {
                 console.error('loadAdminRequests: テナントIDが取得できません');
@@ -262,12 +262,12 @@ async function loadAdminRequests() {
                 .get();
         }
         
-        console.log('loadAdminRequests: クエリ結果:', requestsSnapshot);
-        console.log('loadAdminRequests: ドキュメント数:', requestsSnapshot.size);
-        console.log('loadAdminRequests: empty:', requestsSnapshot.empty);
+        logger.log('loadAdminRequests: クエリ結果:', requestsSnapshot);
+        logger.log('loadAdminRequests: ドキュメント数:', requestsSnapshot.size);
+        logger.log('loadAdminRequests: empty:', requestsSnapshot.empty);
         
         if (requestsSnapshot.empty) {
-            console.log('loadAdminRequests: 依頼データが見つかりません');
+            logger.log('loadAdminRequests: 依頼データが見つかりません');
             tbody.innerHTML = '<tr><td colspan="7" class="no-data">管理者登録依頼はありません</td></tr>';
             return;
         }
@@ -275,7 +275,7 @@ async function loadAdminRequests() {
         const requests = [];
         requestsSnapshot.forEach(doc => {
             const data = doc.data();
-            console.log('loadAdminRequests: 依頼データ:', doc.id, data);
+            logger.log('loadAdminRequests: 依頼データ:', doc.id, data);
             requests.push({
                 id: doc.id,
                 ...data,
@@ -285,8 +285,8 @@ async function loadAdminRequests() {
             });
         });
         
-        console.log('loadAdminRequests: 処理済み依頼配列:', requests);
-        console.log('loadAdminRequests: テーブルHTMLを生成中...');
+        logger.log('loadAdminRequests: 処理済み依頼配列:', requests);
+        logger.log('loadAdminRequests: テーブルHTMLを生成中...');
         
         tbody.innerHTML = requests.map(request => `
             <tr>
@@ -306,7 +306,7 @@ async function loadAdminRequests() {
             </tr>
         `).join('');
         
-        console.log('loadAdminRequests: テーブル表示完了');
+        logger.log('loadAdminRequests: テーブル表示完了');
         
     } catch (error) {
         console.error('loadAdminRequests: エラーが発生しました:', error);
@@ -338,7 +338,7 @@ async function approveAdminRequest(requestId) {
             return;
         }
 
-        console.log('approveAdminRequest: 依頼を承認中...', requestId);
+        logger.log('approveAdminRequest: 依頼を承認中...', requestId);
 
         // Firestoreでステータスを更新
         await firebase.firestore()
@@ -373,7 +373,7 @@ async function rejectAdminRequest(requestId) {
             return;
         }
 
-        console.log('rejectAdminRequest: 依頼を却下中...', requestId);
+        logger.log('rejectAdminRequest: 依頼を却下中...', requestId);
 
         // Firestoreでステータスを更新
         await firebase.firestore()
@@ -480,7 +480,7 @@ async function approveAdminRequest(requestId) {
             
             // 新しく作成されたユーザーのUIDを保存
             newUserUID = userCredential.user.uid;
-            console.log('✅ 新規ユーザー作成完了:', newUserUID);
+            logger.log('✅ 新規ユーザー作成完了:', newUserUID);
             
             // プロフィール更新
             await userCredential.user.updateProfile({
@@ -489,14 +489,14 @@ async function approveAdminRequest(requestId) {
             
             // 🔄 管理者の認証セッションを復元
             await firebase.auth().signInWithEmailAndPassword(adminEmail, adminPassword);
-            console.log('✅ 管理者認証セッションを復元しました');
+            logger.log('✅ 管理者認証セッションを復元しました');
             
         } catch (authError) {
             
             // メールアドレスが既に使用されている場合の処理
             if (authError.code === 'auth/email-already-in-use') {
                 // 既存アカウントの処理は後続のFirestoreデータ作成で対応
-                console.log('📝 既存アカウントが存在するため、Firestoreデータのみ更新します');
+                logger.log('📝 既存アカウントが存在するため、Firestoreデータのみ更新します');
                 
                 // 既存ユーザーのUIDを取得（管理者認証セッション復元後なので直接は取得できない）
                 // この場合は後でlogin.jsでUIDを更新する必要がある
@@ -541,7 +541,7 @@ async function approveAdminRequest(requestId) {
         // 🔧 メールアドレスを小文字に統一（Firestore検索時の一貫性確保）
         const normalizedEmail = requestData.requesterEmail.toLowerCase();
         
-        console.log('💾 global_users保存開始:', {
+        logger.log('💾 global_users保存開始:', {
             originalEmail: requestData.requesterEmail,
             normalizedEmail: normalizedEmail,
             data: globalUserData
@@ -552,7 +552,7 @@ async function approveAdminRequest(requestId) {
             .doc(normalizedEmail)
             .set(globalUserData);
             
-        console.log('✅ global_users保存完了:', normalizedEmail);
+        logger.log('✅ global_users保存完了:', normalizedEmail);
         
         // テナント内のusersコレクションに管理者データを保存
         const tenantUserData = {
@@ -710,7 +710,7 @@ window.viewRequestDetails = viewRequestDetails;
  * 全てのイベントリスナーを設定し、初期データを読み込みます
  */
 async function initAdminPage() {
-    console.log('initAdminPage (FIRST): 管理者画面を初期化中...');
+    logger.log('initAdminPage (FIRST): 管理者画面を初期化中...');
     
     // 権限チェック
     if (!checkAuth('admin')) return;
@@ -726,7 +726,7 @@ async function initAdminPage() {
                     ...currentFirebaseUser,
                     ...userDoc.data()
                 };
-                console.log('User data loaded from Firestore:', window.currentUser);
+                logger.log('User data loaded from Firestore:', window.currentUser);
             }
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -734,37 +734,37 @@ async function initAdminPage() {
     }
 
     // デバッグ: 現在のユーザー情報を確認
-    console.log('Current user in initAdminPage:', window.currentUser);
-    console.log('User role:', window.currentUser ? window.currentUser.role : 'No role');
+    logger.log('Current user in initAdminPage:', window.currentUser);
+    logger.log('User role:', window.currentUser ? window.currentUser.role : 'No role');
     
     // 管理者依頼タブの表示制御
     const adminRequestsTab = document.getElementById('admin-requests-tab');
     const employeeInviteTab = document.querySelector('[data-tab="invite"]');
     
-    console.log('Admin requests tab:', adminRequestsTab);
-    console.log('Employee invite tab:', employeeInviteTab);
+    logger.log('Admin requests tab:', adminRequestsTab);
+    logger.log('Employee invite tab:', employeeInviteTab);
     
     if (window.currentUser && window.currentUser.role === 'super_admin') {
-        console.log('Setting up super admin tabs...');
+        logger.log('Setting up super admin tabs...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
             adminRequestsTab.style.display = 'block';
-            console.log('Admin requests tab shown');
+            logger.log('Admin requests tab shown');
         }
         if (employeeInviteTab) {
             employeeInviteTab.style.display = 'none';
-            console.log('Employee invite tab hidden');
+            logger.log('Employee invite tab hidden');
         }
     } else {
-        console.log('Setting up regular admin tabs...');
+        logger.log('Setting up regular admin tabs...');
         // 通常管理者：管理者依頼タブを非表示、従業員招待タブを表示
         if (adminRequestsTab) {
             adminRequestsTab.style.display = 'none';
-            console.log('Admin requests tab hidden');
+            logger.log('Admin requests tab hidden');
         }
         if (employeeInviteTab) {
             employeeInviteTab.style.display = 'block';
-            console.log('Employee invite tab shown');
+            logger.log('Employee invite tab shown');
         }
     }
 
@@ -784,14 +784,14 @@ async function initAdminPage() {
     
     // 招待リンク管理機能を初期化（全ての管理者）
     // DOMが完全に読み込まれた後に実行
-    console.log('initInviteAdmin呼び出し前チェック:', typeof initInviteAdmin);
+    logger.log('initInviteAdmin呼び出し前チェック:', typeof initInviteAdmin);
     setTimeout(() => {
-        console.log('setTimeout内でのinitInviteAdminチェック:', typeof initInviteAdmin);
+        logger.log('setTimeout内でのinitInviteAdminチェック:', typeof initInviteAdmin);
         if (typeof initInviteAdmin === 'function') {
-            console.log('initInviteAdminを呼び出し中...');
+            logger.log('initInviteAdminを呼び出し中...');
             initInviteAdmin();
         } else {
-            console.warn('initInviteAdmin関数が見つかりません');
+            logger.warn('initInviteAdmin関数が見つかりません');
         }
     }, 100);
     
@@ -1045,7 +1045,7 @@ async function loadSiteFilterList() {
  */
 async function loadAttendanceDataForSuperAdmin(activeTab) {
     try {
-        console.log('Loading attendance data for super admin');
+        logger.log('Loading attendance data for super admin');
         
         // 全テナントのデータを取得
         const allData = [];
@@ -1106,7 +1106,7 @@ async function loadAttendanceDataForSuperAdmin(activeTab) {
         // 従業員情報を結合
         await enrichAttendanceDataWithUserInfoForSuperAdmin(allData);
         
-        console.log('Super admin loaded records:', allData.length);
+        logger.log('Super admin loaded records:', allData.length);
         
         // グローバル currentData 配列を更新
         currentData = allData;
@@ -1304,14 +1304,14 @@ async function loadBreakDataForRecords(attendanceData) {
                 
                 return record;
             } catch (error) {
-                console.warn(`休憩データ取得失敗 (${record.id}):`, error);
+                logger.warn(`休憩データ取得失敗 (${record.id}):`, error);
                 record.breakTimes = []; // エラー時は空配列
                 return record;
             }
         });
         
         await Promise.all(promises);
-        console.log(`🛑 ${attendanceData.length}件の休憩データを取得しました`);
+        logger.log(`🛑 ${attendanceData.length}件の休憩データを取得しました`);
         
     } catch (error) {
         console.error('❌ 休憩データ取得エラー:', error);
@@ -1411,8 +1411,8 @@ async function exportToCSV() {
             exportBtn.textContent = 'CSV出力中...';
         }
         
-        console.log('📊 CSV出力処理開始');
-        console.log('🔍 システム状態確認:', {
+        logger.log('📊 CSV出力処理開始');
+        logger.log('🔍 システム状態確認:', {
             firebase: typeof firebase,
             firestore: typeof firebase?.firestore,
             auth: typeof firebase?.auth,
@@ -1429,7 +1429,7 @@ async function exportToCSV() {
         
         // 認証状態確認
         const currentUser = window.getCurrentUser ? window.getCurrentUser() : window.currentUser;
-        console.log('👤 認証状態確認:', {
+        logger.log('👤 認証状態確認:', {
             hasGetCurrentUser: typeof window.getCurrentUser === 'function',
             windowCurrentUser: window.currentUser,
             resolvedUser: currentUser
@@ -1444,7 +1444,7 @@ async function exportToCSV() {
             throw new Error('認証状態が不正です。再度ログインしてください。');
         }
         
-        console.log('👤 CSV出力ユーザー:', {
+        logger.log('👤 CSV出力ユーザー:', {
             email: currentUser.email,
             role: currentUser.role,
             tenantId: currentUser.tenantId,
@@ -1453,35 +1453,35 @@ async function exportToCSV() {
         
         // テナント情報確認
         if (!window.currentTenant && currentUser.tenantId) {
-            console.log('🏢 テナント情報を取得中...');
+            logger.log('🏢 テナント情報を取得中...');
             if (typeof window.loadTenantInfo === 'function') {
                 try {
                     const tenantInfo = await window.loadTenantInfo(currentUser.tenantId);
                     if (tenantInfo) {
                         window.currentTenant = tenantInfo;
-                        console.log('✅ テナント情報取得成功:', tenantInfo.companyName);
+                        logger.log('✅ テナント情報取得成功:', tenantInfo.companyName);
                     } else {
-                        console.warn('⚠️ テナント情報が見つかりません:', currentUser.tenantId);
+                        logger.warn('⚠️ テナント情報が見つかりません:', currentUser.tenantId);
                     }
                 } catch (tenantError) {
                     console.error('❌ テナント情報取得エラー:', tenantError);
                 }
             } else {
-                console.warn('⚠️ loadTenantInfo関数が利用できません');
+                logger.warn('⚠️ loadTenantInfo関数が利用できません');
             }
         }
         
-        console.log('📊 フィルタードデータ取得開始...');
+        logger.log('📊 フィルタードデータ取得開始...');
         const data = await getCurrentFilteredData();
         
         if (!data || data.length === 0) {
-            console.log('📭 出力対象データなし');
+            logger.log('📭 出力対象データなし');
             showToast('出力するデータがありません', 'warning');
             return;
         }
         
-        console.log(`📋 CSV出力対象レコード数: ${data.length}`);
-        console.log('📄 CSVコンテンツ生成開始...');
+        logger.log(`📋 CSV出力対象レコード数: ${data.length}`);
+        logger.log('📄 CSVコンテンツ生成開始...');
         
         const csvContent = generateCSVContent(data);
         if (!csvContent) {
@@ -1489,12 +1489,12 @@ async function exportToCSV() {
         }
         
         const filename = generateCSVFilename();
-        console.log('💾 CSVダウンロード実行:', filename);
+        logger.log('💾 CSVダウンロード実行:', filename);
         
         downloadCSV(csvContent, filename);
         
         showToast(`${data.length}件のデータをCSV出力しました`, 'success');
-        console.log('✅ CSV出力完了:', filename);
+        logger.log('✅ CSV出力完了:', filename);
         
     } catch (error) {
         console.error('❌ CSV出力エラー詳細:', {
@@ -1593,8 +1593,8 @@ function generateCSVFilename() {
  */
 async function getCurrentFilteredData() {
     try {
-        console.log('📊 フィルタードデータ取得開始');
-        console.log('🔍 現在の状態:', {
+        logger.log('📊 フィルタードデータ取得開始');
+        logger.log('🔍 現在の状態:', {
             currentUser: window.currentUser,
             currentTenant: window.currentTenant,
             authUser: firebase?.auth()?.currentUser?.email,
@@ -1602,11 +1602,11 @@ async function getCurrentFilteredData() {
         });
         
         const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
-        console.log('📑 アクティブタブ:', activeTab);
+        logger.log('📑 アクティブタブ:', activeTab);
         
         if (!activeTab) {
-            console.warn('⚠️ アクティブタブが見つかりません');
-            console.log('📋 利用可能なタブ:', Array.from(document.querySelectorAll('.tab-btn')).map(tab => ({
+            logger.warn('⚠️ アクティブタブが見つかりません');
+            logger.log('📋 利用可能なタブ:', Array.from(document.querySelectorAll('.tab-btn')).map(tab => ({
                 element: tab,
                 dataTab: tab.getAttribute('data-tab'),
                 active: tab.classList.contains('active')
@@ -1617,9 +1617,9 @@ async function getCurrentFilteredData() {
         // テナント対応の勤怠データコレクション取得
         let query;
         try {
-            console.log('🔍 勤怠コレクション取得試行...');
+            logger.log('🔍 勤怠コレクション取得試行...');
             query = getAttendanceCollection();
-            console.log('✅ 勤怠コレクション取得成功:', {
+            logger.log('✅ 勤怠コレクション取得成功:', {
                 hasQuery: !!query,
                 queryType: typeof query,
                 path: query?.path || 'path不明'
@@ -1635,17 +1635,17 @@ async function getCurrentFilteredData() {
         }
         
         // フィルター条件の適用
-        console.log('🔍 フィルター条件適用開始');
+        logger.log('🔍 フィルター条件適用開始');
         
         if (activeTab === 'daily') {
             const filterDate = getElement('filter-date')?.value;
-            console.log('📅 日別フィルター:', filterDate);
+            logger.log('📅 日別フィルター:', filterDate);
             if (filterDate) {
                 query = query.where('date', '==', filterDate);
             }
         } else if (activeTab === 'monthly') {
             const filterMonth = getElement('filter-month')?.value;
-            console.log('📅 月別フィルター:', filterMonth);
+            logger.log('📅 月別フィルター:', filterMonth);
             if (filterMonth) {
                 const startDate = `${filterMonth}-01`;
                 const endDate = `${filterMonth}-31`;
@@ -1653,13 +1653,13 @@ async function getCurrentFilteredData() {
             }
         } else if (activeTab === 'employee') {
             const employeeId = getElement('filter-employee')?.value;
-            console.log('👤 従業員フィルター:', employeeId);
+            logger.log('👤 従業員フィルター:', employeeId);
             if (employeeId) {
                 query = query.where('userId', '==', employeeId);
             }
         } else if (activeTab === 'site') {
             const siteName = getElement('filter-site')?.value;
-            console.log('🏢 現場フィルター:', siteName);
+            logger.log('🏢 現場フィルター:', siteName);
             if (siteName) {
                 query = query.where('siteName', '==', siteName);
             }
@@ -1668,16 +1668,16 @@ async function getCurrentFilteredData() {
         // ソート条件を追加
         const sortField = getElement('sort-field')?.value || 'date';
         const sortDirection = getElement('sort-direction')?.value || 'desc';
-        console.log('📊 ソート条件:', { sortField, sortDirection });
+        logger.log('📊 ソート条件:', { sortField, sortDirection });
         
         try {
             query = query.orderBy(sortField, sortDirection);
         } catch (sortError) {
-            console.warn('⚠️ ソート条件適用エラー - デフォルトソートを使用:', sortError);
+            logger.warn('⚠️ ソート条件適用エラー - デフォルトソートを使用:', sortError);
             query = query.orderBy('date', 'desc');
         }
         
-        console.log('📥 Firestoreクエリ実行開始', {
+        logger.log('📥 Firestoreクエリ実行開始', {
             queryPath: query.path || 'path不明',
             hasAuth: !!firebase.auth().currentUser,
             authUserEmail: firebase.auth().currentUser?.email
@@ -1686,7 +1686,7 @@ async function getCurrentFilteredData() {
         let querySnapshot;
         try {
             querySnapshot = await query.get();
-            console.log('✅ Firestoreクエリ実行成功', {
+            logger.log('✅ Firestoreクエリ実行成功', {
                 empty: querySnapshot.empty,
                 size: querySnapshot.size,
                 metadata: querySnapshot.metadata
@@ -1722,7 +1722,7 @@ async function getCurrentFilteredData() {
                     ...doc.data()
                 };
             } catch (docError) {
-                console.warn('⚠️ ドキュメントデータ取得エラー:', docError);
+                logger.warn('⚠️ ドキュメントデータ取得エラー:', docError);
                 return {
                     id: doc.id,
                     error: `データ取得エラー: ${docError.message}`
@@ -1730,37 +1730,37 @@ async function getCurrentFilteredData() {
             }
         });
         
-        console.log(`📋 取得した勤怠レコード数: ${data.length}`, {
+        logger.log(`📋 取得した勤怠レコード数: ${data.length}`, {
             firstRecord: data[0] || null,
             sampleFields: data[0] ? Object.keys(data[0]) : []
         });
         
         if (data.length === 0) {
-            console.log('📭 データが見つかりません');
+            logger.log('📭 データが見つかりません');
             return data;
         }
         
         // ユーザー情報とマージ
         try {
-            console.log('👥 ユーザー情報マージ開始');
+            logger.log('👥 ユーザー情報マージ開始');
             await enrichDataWithUserInfo(data);
-            console.log('✅ ユーザー情報マージ完了');
+            logger.log('✅ ユーザー情報マージ完了');
         } catch (userError) {
-            console.warn('⚠️ ユーザー情報マージエラー:', userError);
+            logger.warn('⚠️ ユーザー情報マージエラー:', userError);
             // ユーザー情報取得に失敗してもCSV出力は続行
         }
         
         // 休憩データも取得
         try {
-            console.log('🛑 休憩データ取得開始');
+            logger.log('🛑 休憩データ取得開始');
             await loadBreakDataForRecords(data);
-            console.log('✅ 休憩データ取得完了');
+            logger.log('✅ 休憩データ取得完了');
         } catch (breakError) {
-            console.warn('⚠️ 休憩データ取得エラー:', breakError);
+            logger.warn('⚠️ 休憩データ取得エラー:', breakError);
             // 休憩データ取得に失敗してもCSV出力は続行
         }
         
-        console.log('✅ CSV用データ取得完了');
+        logger.log('✅ CSV用データ取得完了');
         return data;
         
     } catch (error) {
@@ -1786,7 +1786,7 @@ async function enrichDataWithUserInfo(data) {
                 const userDoc = await usersCollection.doc(userId).get();
                 return userDoc.exists ? { id: userId, ...userDoc.data() } : null;
             } catch (error) {
-                console.warn(`ユーザー情報取得失敗 (${userId}):`, error);
+                logger.warn(`ユーザー情報取得失敗 (${userId}):`, error);
                 return null;
             }
         });
@@ -1806,7 +1806,7 @@ async function enrichDataWithUserInfo(data) {
             }
         });
         
-        console.log(`👥 ${users.length}名のユーザー情報をマージしました`);
+        logger.log(`👥 ${users.length}名のユーザー情報をマージしました`);
     } catch (error) {
         console.error('❌ ユーザー情報のマージに失敗:', error);
     }
@@ -4378,7 +4378,7 @@ async function loadAllTenantsEmployeeList() {
             return;
         }
 
-        console.log('全テナント従業員一覧読み込み開始');
+        logger.log('全テナント従業員一覧読み込み開始');
 
         // 全テナントを取得
         const tenantsSnapshot = await firebase.firestore()
@@ -4393,7 +4393,7 @@ async function loadAllTenantsEmployeeList() {
             const tenantId = tenantDoc.id;
             const tenantData = tenantDoc.data();
 
-            console.log(`テナント ${tenantId} の従業員を取得中...`);
+            logger.log(`テナント ${tenantId} の従業員を取得中...`);
 
             // テナント内のユーザーを取得
             const usersSnapshot = await firebase.firestore()
@@ -4423,7 +4423,7 @@ async function loadAllTenantsEmployeeList() {
             });
         }
 
-        console.log('取得した全従業員数:', allEmployees.length);
+        logger.log('取得した全従業員数:', allEmployees.length);
         displayAllTenantsEmployeeList(allEmployees);
 
     } catch (error) {
@@ -4441,7 +4441,7 @@ async function loadEmployeeList() {
             return;
         }
 
-        console.log('従業員一覧読み込み開始:', tenantId);
+        logger.log('従業員一覧読み込み開始:', tenantId);
 
         // テナント内のユーザーを取得
         const usersSnapshot = await firebase.firestore()
@@ -4466,7 +4466,7 @@ async function loadEmployeeList() {
             });
         });
 
-        console.log('取得した従業員数:', employees.length);
+        logger.log('取得した従業員数:', employees.length);
         displayEmployeeList(employees);
 
     } catch (error) {
@@ -4695,7 +4695,7 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
     try {
         const tenantId = window.getCurrentTenantId();
         
-        console.log('従業員削除開始:', employeeId, employeeName);
+        logger.log('従業員削除開始:', employeeId, employeeName);
 
         // 1. テナント内のユーザーデータを削除
         await firebase.firestore()
@@ -4848,7 +4848,7 @@ async function deleteEmployeeFromAllTenants(employeeId, employeeName, employeeEm
 
     try {
         // 1. Firebase Authアカウントを削除（Admin SDKが必要のためスキップ）
-        console.log('Firebase Authアカウントの削除は管理者が手動で実行してください');
+        logger.log('Firebase Authアカウントの削除は管理者が手動で実行してください');
 
         // 2. テナント内のユーザーデータを削除
         await firebase.firestore()
@@ -4936,25 +4936,25 @@ function showEmployeeError(message) {
  * 管理者ページの初期化関数
  */
 async function initAdminPage() {
-    console.log('initAdminPage (SECOND): 管理者画面を初期化中...');
+    logger.log('initAdminPage (SECOND): 管理者画面を初期化中...');
     
     try {
         // 管理者権限チェック
         const authUser = firebase.auth().currentUser;
         if (!authUser) {
-            console.log('initAdminPage (SECOND): Firebase認証ユーザーが見つかりません');
+            logger.log('initAdminPage (SECOND): Firebase認証ユーザーが見つかりません');
             return;
         }
         
         // login.jsで設定された正しいcurrentUserオブジェクトを確認
         if (!window.currentUser) {
-            console.log('initAdminPage (SECOND): window.currentUserが未設定 - 認証状態を確認');
+            logger.log('initAdminPage (SECOND): window.currentUserが未設定 - 認証状態を確認');
             return;
         }
         
         // ユーザーのrole情報を確認
-        console.log('initAdminPage (SECOND): currentUser:', window.currentUser);
-        console.log('initAdminPage (SECOND): user role:', window.currentUser.role);
+        logger.log('initAdminPage (SECOND): currentUser:', window.currentUser);
+        logger.log('initAdminPage (SECOND): user role:', window.currentUser.role);
         
         // 管理者画面の基本設定
         setupAdminPageElements();
@@ -4975,17 +4975,17 @@ async function initAdminPage() {
         try {
             if (window.currentUser && window.currentUser.email) {
                 if (window.currentUser.role) {
-                    console.log('initAdminPage (SECOND): role情報は既に設定済み:', window.currentUser.role);
+                    logger.log('initAdminPage (SECOND): role情報は既に設定済み:', window.currentUser.role);
                 } else {
-                    console.log('initAdminPage (SECOND): Firestoreからrole情報を取得中...');
+                    logger.log('initAdminPage (SECOND): Firestoreからrole情報を取得中...');
                     const userDoc = await firebase.firestore().collection('global_users').doc(window.currentUser.email.toLowerCase()).get();
                     if (userDoc.exists) {
                         const userData = userDoc.data();
                         window.currentUser.role = userData.role;
                         window.currentUser.tenantId = userData.tenantId; // テナントIDも確保
-                        console.log('initAdminPage (SECOND): role情報を取得:', userData.role);
+                        logger.log('initAdminPage (SECOND): role情報を取得:', userData.role);
                     } else {
-                        console.log('initAdminPage (SECOND): global_usersにドキュメントが見つかりません');
+                        logger.log('initAdminPage (SECOND): global_usersにドキュメントが見つかりません');
                     }
                 }
             }
@@ -5022,32 +5022,32 @@ async function setupTabsBasedOnRole() {
     const adminRequestsTab = document.getElementById('admin-requests-tab');
     const employeeInviteTab = document.querySelector('[data-tab="invite"]');
     
-    console.log('initAdminPage (SECOND): タブ制御開始');
-    console.log('initAdminPage (SECOND): final user role:', window.currentUser?.role);
-    console.log('initAdminPage (SECOND): adminRequestsTab:', adminRequestsTab);
-    console.log('initAdminPage (SECOND): employeeInviteTab:', employeeInviteTab);
+    logger.log('initAdminPage (SECOND): タブ制御開始');
+    logger.log('initAdminPage (SECOND): final user role:', window.currentUser?.role);
+    logger.log('initAdminPage (SECOND): adminRequestsTab:', adminRequestsTab);
+    logger.log('initAdminPage (SECOND): employeeInviteTab:', employeeInviteTab);
     
     if (window.currentUser && window.currentUser.role === 'super_admin') {
-        console.log('initAdminPage (SECOND): スーパー管理者として設定中...');
+        logger.log('initAdminPage (SECOND): スーパー管理者として設定中...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
             adminRequestsTab.style.display = 'block';
-            console.log('initAdminPage (SECOND): 管理者依頼タブを表示');
+            logger.log('initAdminPage (SECOND): 管理者依頼タブを表示');
         }
         if (employeeInviteTab) {
             employeeInviteTab.style.display = 'none';
-            console.log('initAdminPage (SECOND): 従業員招待タブを非表示');
+            logger.log('initAdminPage (SECOND): 従業員招待タブを非表示');
         }
     } else {
-        console.log('initAdminPage (SECOND): 通常管理者として設定中...');
+        logger.log('initAdminPage (SECOND): 通常管理者として設定中...');
         // 通常管理者：管理者依頼タブを非表示、従業員招待タブを表示
         if (adminRequestsTab) {
             adminRequestsTab.style.display = 'none';
-            console.log('initAdminPage (SECOND): 管理者依頼タブを非表示');
+            logger.log('initAdminPage (SECOND): 管理者依頼タブを非表示');
         }
         if (employeeInviteTab) {
             employeeInviteTab.style.display = 'block';
-            console.log('initAdminPage (SECOND): 従業員招待タブを表示');
+            logger.log('initAdminPage (SECOND): 従業員招待タブを表示');
         }
     }
 }
@@ -5090,13 +5090,13 @@ function setupAdminPageElements() {
  */
 function initAdminTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
-    console.log('initAdminTabs: タブボタン数:', tabBtns.length);
+    logger.log('initAdminTabs: タブボタン数:', tabBtns.length);
     tabBtns.forEach(btn => {
-        console.log('タブボタン:', btn.getAttribute('data-tab'));
+        logger.log('タブボタン:', btn.getAttribute('data-tab'));
         if (!btn.hasAttribute('data-listener-set')) {
             btn.addEventListener('click', (e) => {
                 const tabName = e.target.getAttribute('data-tab');
-                console.log('タブクリック:', tabName);
+                logger.log('タブクリック:', tabName);
                 if (tabName) {
                     switchTab(tabName);
                 }
@@ -5147,7 +5147,7 @@ function switchTab(tabName) {
             return;
         case 'invite':
             // 招待管理専用の処理
-            console.log('switchTab: inviteタブが選択されました');
+            logger.log('switchTab: inviteタブが選択されました');
             showInviteTab();
             return;
         case 'admin-requests':
@@ -5182,13 +5182,13 @@ function switchTab(tabName) {
     // フィルター行を表示
     const filterRow = document.querySelector('.filter-row');
     if (filterRow) {
-        console.log('🔧 フィルター行を再表示:', {
+        logger.log('🔧 フィルター行を再表示:', {
             hadHiddenClass: filterRow.classList.contains('hidden'),
             currentDisplay: window.getComputedStyle(filterRow).display
         });
         filterRow.classList.remove('hidden');
         filterRow.style.display = 'flex';
-        console.log('✅ フィルター行再表示完了:', window.getComputedStyle(filterRow).display);
+        logger.log('✅ フィルター行再表示完了:', window.getComputedStyle(filterRow).display);
     }
     
     // データを再読み込み
@@ -5836,7 +5836,7 @@ let currentEditingRecordId = null;
  * モーダルのイベントリスナーを設定
  */
 function setupModalEventListeners() {
-    console.log('Setting up modal event listeners...');
+    logger.log('Setting up modal event listeners...');
     
     // 保存ボタン
     const saveBtn = document.querySelector('#edit-attendance-modal .btn-primary');
@@ -5847,14 +5847,14 @@ function setupModalEventListeners() {
         
         newSaveBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            console.log('Save button clicked via event listener');
+            logger.log('Save button clicked via event listener');
             try {
                 await saveAttendanceRecordInternal();
             } catch (error) {
                 console.error('Error in save button handler:', error);
             }
         });
-        console.log('Save button event listener added');
+        logger.log('Save button event listener added');
     }
     
     // 削除ボタン
@@ -5866,14 +5866,14 @@ function setupModalEventListeners() {
         
         newDeleteBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            console.log('Delete button clicked via event listener');
+            logger.log('Delete button clicked via event listener');
             try {
                 await deleteAttendanceRecordInternal();
             } catch (error) {
                 console.error('Error in delete button handler:', error);
             }
         });
-        console.log('Delete button event listener added');
+        logger.log('Delete button event listener added');
     }
     
     // キャンセルボタン
@@ -5885,10 +5885,10 @@ function setupModalEventListeners() {
         
         newCancelBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Cancel button clicked via event listener');
+            logger.log('Cancel button clicked via event listener');
             closeEditModal();
         });
-        console.log('Cancel button event listener added');
+        logger.log('Cancel button event listener added');
     }
 }
 
@@ -5897,9 +5897,9 @@ function setupModalEventListeners() {
  */
 async function editAttendanceRecord(recordId) {
     try {
-        console.log('editAttendanceRecord called with ID:', recordId);
-        console.log('currentData length:', currentData.length);
-        console.log('currentData:', currentData);
+        logger.log('editAttendanceRecord called with ID:', recordId);
+        logger.log('currentData length:', currentData.length);
+        logger.log('currentData:', currentData);
         
         // データが読み込まれていない場合の対応
         if (currentData.length === 0) {
@@ -5909,7 +5909,7 @@ async function editAttendanceRecord(recordId) {
         
         // レコードを検索
         const record = currentData.find(r => r.id === recordId);
-        console.log('Found record:', record);
+        logger.log('Found record:', record);
         
         if (!record) {
             alert('レコードが見つかりません');
@@ -5919,7 +5919,7 @@ async function editAttendanceRecord(recordId) {
         currentEditingRecordId = recordId;
         
         // モーダルのフォームに値を設定
-        console.log('Setting modal form values...');
+        logger.log('Setting modal form values...');
         document.getElementById('edit-employee-name').value = record.userName || record.userEmail || '';
         document.getElementById('edit-date').value = record.date || '';
         document.getElementById('edit-site-name').value = record.siteName || '';
@@ -5929,9 +5929,9 @@ async function editAttendanceRecord(recordId) {
         document.getElementById('edit-notes').value = record.notes || '';
         
         // モーダルを表示
-        console.log('Showing modal...');
+        logger.log('Showing modal...');
         const modal = document.getElementById('edit-attendance-modal');
-        console.log('Modal element:', modal);
+        logger.log('Modal element:', modal);
         
         if (modal) {
             // hiddenクラスを削除
@@ -5943,8 +5943,8 @@ async function editAttendanceRecord(recordId) {
             // ボタンのイベントリスナーを設定
             setupModalEventListeners();
             
-            console.log('Modal display after setting style:', window.getComputedStyle(modal).display);
-            console.log('Modal classList:', modal.classList.toString());
+            logger.log('Modal display after setting style:', window.getComputedStyle(modal).display);
+            logger.log('Modal classList:', modal.classList.toString());
         } else {
             console.error('Modal element not found!');
             alert('編集画面が見つかりません');
@@ -5972,7 +5972,7 @@ function closeEditModal() {
  * 勤怠レコードを保存
  */
 async function saveAttendanceRecord() {
-    console.log('saveAttendanceRecord called (wrapper)');
+    logger.log('saveAttendanceRecord called (wrapper)');
     return await saveAttendanceRecordInternal();
 }
 
@@ -5981,8 +5981,8 @@ async function saveAttendanceRecord() {
  */
 async function saveAttendanceRecordInternal() {
     try {
-        console.log('saveAttendanceRecordInternal called');
-        console.log('currentEditingRecordId:', currentEditingRecordId);
+        logger.log('saveAttendanceRecordInternal called');
+        logger.log('currentEditingRecordId:', currentEditingRecordId);
         
         if (!currentEditingRecordId) {
             alert('編集対象のレコードが見つかりません');
@@ -6057,7 +6057,7 @@ async function saveAttendanceRecordInternal() {
  * 勤怠レコードを削除
  */
 async function deleteAttendanceRecord() {
-    console.log('deleteAttendanceRecord called (wrapper)');
+    logger.log('deleteAttendanceRecord called (wrapper)');
     return await deleteAttendanceRecordInternal();
 }
 
@@ -6066,8 +6066,8 @@ async function deleteAttendanceRecord() {
  */
 async function deleteAttendanceRecordInternal() {
     try {
-        console.log('deleteAttendanceRecordInternal called');
-        console.log('currentEditingRecordId:', currentEditingRecordId);
+        logger.log('deleteAttendanceRecordInternal called');
+        logger.log('currentEditingRecordId:', currentEditingRecordId);
         
         if (!currentEditingRecordId) {
             alert('削除対象のレコードが見つかりません');
