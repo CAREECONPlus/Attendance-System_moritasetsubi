@@ -41,6 +41,7 @@
     <script src="js/tenant-settings.js"></script>
     <script src="js/employee.js"></script>
     <script src="js/expense.js"></script>
+    <script src="js/expense-report.js"></script>
     <script src="js/admin.js"></script>
 
     <style>
@@ -1769,6 +1770,37 @@
                             </div>
                         </div>
 
+                        <!-- フィルターセクション -->
+                        <div class="expense-filter-section">
+                            <div class="expense-filter-row">
+                                <div class="expense-filter-item">
+                                    <label for="expense-month-filter">📅 月別</label>
+                                    <input type="month" id="expense-month-filter" class="filter-input">
+                                </div>
+                                <div class="expense-filter-item">
+                                    <label for="expense-site-filter">🏢 現場別</label>
+                                    <select id="expense-site-filter" class="filter-input">
+                                        <option value="">すべて</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <button id="expense-clear-filter-btn" class="btn btn-secondary btn-small">🔄 クリア</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 合計金額表示 -->
+                        <div class="expense-summary-section">
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">💵 合計金額</div>
+                                <div class="expense-summary-amount" id="expense-total-amount">¥0</div>
+                            </div>
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">📊 表示件数</div>
+                                <div class="expense-summary-count" id="expense-count">0件</div>
+                            </div>
+                        </div>
+
                         <!-- 経費カードグリッド -->
                         <div id="expense-cards-grid" class="expense-cards-grid">
                             <!-- 経費カードがJavaScriptで動的に生成されます -->
@@ -1852,6 +1884,7 @@
                     <button class="tab-btn" data-tab="monthly">月別表示</button>
                     <button class="tab-btn" data-tab="employee">従業員別</button>
                     <button class="tab-btn" data-tab="site">現場別</button>
+                    <button class="tab-btn" data-tab="expense-report">💰 経費集計</button>
                     <button class="tab-btn" data-tab="site-management">現場管理</button>
                     <button class="tab-btn" data-tab="invite">従業員招待</button>
                     <button class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;">従業員管理</button>
@@ -2191,12 +2224,120 @@
                 </div>
 
                 <!-- 管理者登録依頼管理セクション（スーパー管理者のみ表示） -->
+                <!-- 経費集計タブ -->
+                <div id="expense-report-content" class="tab-content hidden">
+                    <div class="expense-report-section">
+                        <div class="expense-report-header">
+                            <h3>💰 経費集計レポート</h3>
+                            <p class="expense-report-description">従業員の経費を集計・分析できます。</p>
+                        </div>
+
+                        <!-- フィルターセクション -->
+                        <div class="expense-report-filter-section">
+                            <div class="expense-report-filter-row">
+                                <div class="expense-filter-item">
+                                    <label for="expense-report-month-filter">📅 対象月</label>
+                                    <input type="month" id="expense-report-month-filter" class="filter-input">
+                                </div>
+                                <div class="expense-filter-item">
+                                    <button id="expense-report-refresh-btn" class="btn btn-primary">🔄 更新</button>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <button id="expense-report-csv-btn" class="btn btn-secondary">📥 CSV出力</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- サマリーカード -->
+                        <div class="expense-report-summary">
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">💵 総経費額</div>
+                                <div class="expense-summary-amount" id="expense-report-total">¥0</div>
+                            </div>
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">📊 登録件数</div>
+                                <div class="expense-summary-count" id="expense-report-count">0件</div>
+                            </div>
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">👥 従業員数</div>
+                                <div class="expense-summary-count" id="expense-report-employees">0名</div>
+                            </div>
+                        </div>
+
+                        <!-- 従業員別集計 -->
+                        <div class="expense-report-table-section">
+                            <h4>👥 従業員別集計</h4>
+                            <div class="attendance-table-container">
+                                <table class="attendance-table">
+                                    <thead>
+                                        <tr>
+                                            <th>従業員</th>
+                                            <th>件数</th>
+                                            <th>駐車場代</th>
+                                            <th>工具代</th>
+                                            <th>高速代</th>
+                                            <th>その他</th>
+                                            <th>合計金額</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expense-report-employee-data">
+                                        <tr><td colspan="7" class="no-data">データを読み込んでいます...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 現場別集計 -->
+                        <div class="expense-report-table-section">
+                            <h4>🏢 現場別集計</h4>
+                            <div class="attendance-table-container">
+                                <table class="attendance-table">
+                                    <thead>
+                                        <tr>
+                                            <th>現場名</th>
+                                            <th>件数</th>
+                                            <th>駐車場代</th>
+                                            <th>工具代</th>
+                                            <th>高速代</th>
+                                            <th>その他</th>
+                                            <th>合計金額</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expense-report-site-data">
+                                        <tr><td colspan="7" class="no-data">データを読み込んでいます...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 月次集計 -->
+                        <div class="expense-report-table-section">
+                            <h4>📅 月次集計（カテゴリー別）</h4>
+                            <div class="attendance-table-container">
+                                <table class="attendance-table">
+                                    <thead>
+                                        <tr>
+                                            <th>カテゴリー</th>
+                                            <th>件数</th>
+                                            <th>合計金額</th>
+                                            <th>割合</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expense-report-category-data">
+                                        <tr><td colspan="4" class="no-data">データを読み込んでいます...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="admin-requests-content" class="tab-content hidden">
                     <div class="admin-requests-header">
                         <h3>管理者登録依頼管理</h3>
                         <button id="refresh-requests-btn" class="btn btn-secondary">更新</button>
                     </div>
-                    
+
                     <div class="attendance-table-container">
                         <table class="attendance-table">
                             <thead>

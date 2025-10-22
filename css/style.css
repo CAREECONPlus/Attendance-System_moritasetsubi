@@ -2419,3 +2419,220 @@ textarea:focus-visible {
         padding: 1rem;
     }
 }
+
+/* フィルターセクション */
+.expense-filter-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+.expense-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.expense-filter-item {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.expense-filter-item label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--careecon-navy);
+}
+
+.filter-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 2px solid var(--careecon-gray);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--careecon-primary-blue);
+    box-shadow: 0 0 0 3px rgba(36, 78, 255, 0.1);
+}
+
+/* 合計金額表示セクション */
+.expense-summary-section {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.expense-summary-card {
+    flex: 1;
+    background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    color: white;
+    text-align: center;
+}
+
+.expense-summary-card:nth-child(2) {
+    background: linear-gradient(135deg, var(--careecon-green), #17B26A);
+}
+
+.expense-summary-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.expense-summary-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.expense-summary-count {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .expense-filter-row {
+        flex-direction: column;
+    }
+
+    .expense-filter-item {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .expense-summary-section {
+        flex-direction: column;
+    }
+
+    .expense-summary-card {
+        padding: 1.25rem;
+    }
+
+    .expense-summary-amount,
+    .expense-summary-count {
+        font-size: 1.75rem;
+    }
+}
+
+/* ========================================
+   管理者用 経費集計レポート
+   ======================================== */
+
+.expense-report-section {
+    padding: 1.5rem;
+}
+
+.expense-report-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.expense-report-header h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+.expense-report-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* 経費レポートフィルター */
+.expense-report-filter-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+.expense-report-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+/* 経費レポートサマリー */
+.expense-report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.expense-report-summary .expense-summary-card:nth-child(3) {
+    background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+}
+
+/* 経費レポートテーブルセクション */
+.expense-report-table-section {
+    margin-bottom: 2.5rem;
+}
+
+.expense-report-table-section h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid var(--careecon-primary-blue);
+}
+
+.expense-report-table-section .attendance-table th {
+    background: linear-gradient(135deg, var(--careecon-background-blue), var(--careecon-white));
+    font-weight: 700;
+    text-align: center;
+}
+
+.expense-report-table-section .attendance-table td {
+    text-align: right;
+}
+
+.expense-report-table-section .attendance-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+}
+
+.expense-report-table-section .attendance-table td:last-child {
+    font-weight: 700;
+    color: var(--careecon-primary-blue);
+    font-size: 1.05em;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .expense-report-filter-row {
+        flex-direction: column;
+    }
+
+    .expense-report-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .expense-report-table-section {
+        overflow-x: auto;
+    }
+}
