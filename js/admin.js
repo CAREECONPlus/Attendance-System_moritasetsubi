@@ -867,13 +867,19 @@ function switchTab(tab) {
         }
         return;
     }
-    
+
     // 従業員招待タブの特別処理
     if (tab === 'invite') {
         showInviteTab();
         return;
     }
-    
+
+    // 経費レポートタブの特別処理
+    if (tab === 'expense-report') {
+        showExpenseReportTab();
+        return;
+    }
+
     // 管理者依頼コンテンツを非表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
     if (adminRequestsContent) {
@@ -6143,6 +6149,53 @@ async function deleteAttendanceRecordFromFirestore(recordId, tenantId) {
     }
 }
 
+/**
+ * 経費レポートタブを表示
+ */
+function showExpenseReportTab() {
+    // すべてのタブボタンから active を削除
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // 経費レポートタブボタンに active を追加
+    const expenseReportBtn = document.querySelector('[data-tab="expense-report"]');
+    if (expenseReportBtn) {
+        expenseReportBtn.classList.add('active');
+    }
+
+    // すべてのコンテンツを非表示
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    // フィルター行を非表示
+    const filterRow = document.querySelector('.filter-row');
+    if (filterRow) filterRow.style.display = 'none';
+
+    // 勤怠テーブルコンテナを非表示
+    const attendanceContainer = document.querySelector('.attendance-table-container');
+    if (attendanceContainer) {
+        attendanceContainer.classList.add('hidden');
+    }
+
+    // 経費レポートコンテンツを表示
+    const expenseReportContent = document.getElementById('expense-report-content');
+    if (expenseReportContent) {
+        expenseReportContent.classList.remove('hidden');
+    }
+
+    // 経費レポート機能を初期化
+    if (typeof window.initExpenseReport === 'function') {
+        window.initExpenseReport();
+    }
+
+    // 経費レポートデータを読み込み
+    if (typeof window.loadExpenseReport === 'function') {
+        window.loadExpenseReport();
+    }
+}
+
 // グローバルスコープに関数をエクスポート
 window.initAdminPage = initAdminPage;
 window.switchTab = switchTab;
@@ -6156,4 +6209,5 @@ window.approveAdminRequest = approveAdminRequest;
 window.rejectAdminRequest = rejectAdminRequest;
 window.viewRequestDetails = viewRequestDetails;
 window.currentData = currentData;
+window.showExpenseReportTab = showExpenseReportTab;
 
