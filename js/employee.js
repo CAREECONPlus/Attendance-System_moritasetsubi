@@ -1726,8 +1726,11 @@ function switchEmployeeTab(tabName) {
         loadEmployeeSiteList();
     }
 
-    // 経費精算タブを開いた時、経費一覧を読み込む
+    // 経費精算タブを開いた時、初期化と経費一覧を読み込む
     if (tabName === 'expense-management') {
+        if (typeof initExpenseManagement === 'function') {
+            initExpenseManagement();
+        }
         if (typeof loadExpenseList === 'function') {
             loadExpenseList();
         }
