@@ -68,38 +68,72 @@ function initExpenseManagement() {
  */
 async function openExpenseModal() {
     try {
+        console.log('openExpenseModal: 開始');
+
+        // モーダル要素を取得
+        const modal = document.getElementById('expense-modal');
+        console.log('expense-modal要素:', modal);
+
+        if (!modal) {
+            console.error('expense-modal要素が見つかりません');
+            alert('経費モーダル要素が見つかりません。ページをリロードしてください。');
+            return;
+        }
+
         // モーダルタイトルを設定
-        document.getElementById('expense-modal-title').textContent = '💰 経費を追加';
+        const modalTitle = document.getElementById('expense-modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = '💰 経費を追加';
+        }
 
         // フォームをリセット
-        document.getElementById('expense-form').reset();
-        document.getElementById('expense-id').value = '';
+        const form = document.getElementById('expense-form');
+        if (form) {
+            form.reset();
+        }
+
+        const expenseId = document.getElementById('expense-id');
+        if (expenseId) {
+            expenseId.value = '';
+        }
 
         // 今日の日付をデフォルト設定
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('expense-date').value = today;
+        const dateInput = document.getElementById('expense-date');
+        if (dateInput) {
+            dateInput.value = today;
+        }
 
         // 現場リストを読み込む
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
-        if (tenantId) {
-            const sites = await window.getTenantSites(tenantId);
-            const siteSelect = document.getElementById('expense-site-name');
-            siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
+        console.log('tenantId:', tenantId);
 
-            sites.filter(s => s.active).forEach(site => {
-                const option = document.createElement('option');
-                option.value = site.name;
-                option.textContent = site.name;
-                siteSelect.appendChild(option);
-            });
+        if (tenantId && typeof window.getTenantSites === 'function') {
+            const sites = await window.getTenantSites(tenantId);
+            console.log('現場リスト:', sites);
+
+            const siteSelect = document.getElementById('expense-site-name');
+            if (siteSelect) {
+                siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
+
+                sites.filter(s => s.active).forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.name;
+                    option.textContent = site.name;
+                    siteSelect.appendChild(option);
+                });
+            }
         }
 
         // モーダルを表示
-        document.getElementById('expense-modal').classList.remove('hidden');
+        console.log('モーダル表示前のclasses:', modal.classList);
+        modal.classList.remove('hidden');
+        console.log('モーダル表示後のclasses:', modal.classList);
+        console.log('openExpenseModal: 完了');
 
     } catch (error) {
         console.error('モーダル表示エラー:', error);
-        alert('モーダルの表示に失敗しました');
+        alert('モーダルの表示に失敗しました: ' + error.message);
     }
 }
 
