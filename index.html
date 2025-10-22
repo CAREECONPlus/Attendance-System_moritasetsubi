@@ -1597,6 +1597,14 @@
                                 <option value="">現場を選択してください</option>
                             </select>
                         </div>
+
+                        <!-- 最近使った現場（履歴） -->
+                        <div id="site-history-section" class="site-history-section" style="display: none;">
+                            <label class="site-history-label">⏱️ 最近使った現場:</label>
+                            <div id="site-history-buttons" class="site-history-buttons">
+                                <!-- 履歴ボタンがJavaScriptで動的に生成されます -->
+                            </div>
+                        </div>
                     </div>
 
                     <!-- メモ -->
@@ -1668,22 +1676,11 @@
                                 <h4>📋 現場一覧</h4>
                                 <button id="employee-refresh-sites-btn" class="btn btn-secondary btn-small">🔄 更新</button>
                             </div>
-                            <div class="site-list-container">
-                                <table class="site-list-table">
-                                    <thead>
-                                        <tr>
-                                            <th>現場名</th>
-                                            <th>住所</th>
-                                            <th>作成日</th>
-                                            <th>状態</th>
-                                            <th>使用状況</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="employee-site-list-data">
-                                        <!-- 現場データが表示されます -->
-                                    </tbody>
-                                </table>
+
+                            <!-- 現場カードグリッド -->
+                            <div id="employee-site-cards-grid" class="site-cards-grid">
+                                <!-- 現場カードがJavaScriptで動的に生成されます -->
+                                <div class="loading-message">読み込み中...</div>
                             </div>
                         </div>
                     </div>
