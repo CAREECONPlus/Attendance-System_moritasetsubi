@@ -1552,62 +1552,143 @@
             </header>
 
             <main class="employee-main">
-                <!-- 現在時刻表示 -->
-                <div class="date-display">
-                    <div class="date" id="current-date">日付読み込み中...</div>
-                    <div class="time" id="current-time">時刻読み込み中...</div>
+                <!-- タブナビゲーション -->
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="attendance">勤怠打刻</button>
+                    <button class="tab-btn" data-tab="employee-site-management">現場管理</button>
                 </div>
 
-                <!-- 勤務状況 -->
-                <div id="clock-status" class="clock-status">
-                    <div class="status-waiting">出勤ボタンを押してください</div>
-                </div>
-
-                <!-- 出退勤・休憩ボタン -->
-                <div class="clock-buttons">
-                    <div class="button-row">
-                        <button class="btn btn-primary clock-btn" id="clock-in-btn">出勤</button>
-                        <button class="btn btn-secondary clock-btn" id="clock-out-btn" disabled>退勤</button>
+                <!-- 勤怠打刻タブ -->
+                <div id="attendance-content" class="tab-content">
+                    <!-- 現在時刻表示 -->
+                    <div class="date-display">
+                        <div class="date" id="current-date">日付読み込み中...</div>
+                        <div class="time" id="current-time">時刻読み込み中...</div>
                     </div>
-                    <div class="button-row">
-                        <button class="btn btn-warning clock-btn" id="break-start-btn" disabled>休憩開始</button>
-                        <button class="btn btn-warning clock-btn" id="break-end-btn" disabled>休憩終了</button>
-                    </div>
-                </div>
 
-                <!-- 現場名入力 -->
-                <div class="site-selection">
+                    <!-- 勤務状況 -->
+                    <div id="clock-status" class="clock-status">
+                        <div class="status-waiting">出勤ボタンを押してください</div>
+                    </div>
+
+                    <!-- 出退勤・休憩ボタン -->
+                    <div class="clock-buttons">
+                        <div class="button-row">
+                            <button class="btn btn-primary clock-btn" id="clock-in-btn">出勤</button>
+                            <button class="btn btn-secondary clock-btn" id="clock-out-btn" disabled>退勤</button>
+                        </div>
+                        <div class="button-row">
+                            <button class="btn btn-warning clock-btn" id="break-start-btn" disabled>休憩開始</button>
+                            <button class="btn btn-warning clock-btn" id="break-end-btn" disabled>休憩終了</button>
+                        </div>
+                    </div>
+
+                    <!-- 現場名入力 -->
+                    <div class="site-selection">
+                        <div class="form-group">
+                            <label for="site-name">🏢 現場名：</label>
+                            <select id="site-name" required>
+                                <option value="">現場を選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- メモ -->
                     <div class="form-group">
-                        <label for="site-name">🏢 現場名：</label>
-                        <select id="site-name" required>
-                            <option value="">現場を選択してください</option>
-                        </select>
+                        <label for="work-notes">📝 メモ：</label>
+                        <textarea id="work-notes" placeholder="作業内容を記入（任意）" rows="3" maxlength="500"></textarea>
+                        <div class="form-hint">
+                            <small>💡 作業内容や特記事項を記録できます（任意）</small>
+                        </div>
                     </div>
+
+                    <!-- 🆕 複数現場対応：今日の現場別勤務状況 -->
+                    <section class="multi-site-section">
+                        <div id="multi-site-attendance">
+                            <div class="loading-message">🔄 現場情報を読み込み中...</div>
+                        </div>
+                    </section>
+
+                    <!-- 直近3日間の記録 -->
+                    <section class="recent-records">
+                        <h3>📋 直近3日間の記録</h3>
+                        <div id="recent-list">
+                            <div class="loading-message">🔄 記録を読み込み中...</div>
+                        </div>
+                    </section>
                 </div>
 
-                <!-- メモ -->
-                <div class="form-group">
-                    <label for="work-notes">📝 メモ：</label>
-                    <textarea id="work-notes" placeholder="作業内容を記入（任意）" rows="3" maxlength="500"></textarea>
-                    <div class="form-hint">
-                        <small>💡 作業内容や特記事項を記録できます（任意）</small>
+                <!-- 現場管理タブ -->
+                <div id="employee-site-management-content" class="tab-content hidden">
+                    <div class="site-management-section">
+                        <div class="site-management-header">
+                            <h3>🏢 現場管理</h3>
+                            <p class="site-management-description">勤怠打刻で選択できる現場を管理できます。</p>
+                        </div>
+
+                        <!-- 新規現場追加 -->
+                        <div class="site-add-section">
+                            <div class="site-card">
+                                <div class="site-card-header">
+                                    <h4>➕ 新しい現場を追加</h4>
+                                </div>
+                                <div class="site-card-body">
+                                    <form id="employee-add-site-form">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="employee-add-site-name">現場名 <span class="required">*</span></label>
+                                                <input type="text" id="employee-add-site-name" name="siteName" required
+                                                       placeholder="例: 東京本社" maxlength="50">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="employee-add-site-address">住所</label>
+                                                <input type="text" id="employee-add-site-address" name="siteAddress"
+                                                       placeholder="例: 東京都渋谷区..." maxlength="100">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="employee-add-site-description">説明・備考</label>
+                                                <textarea id="employee-add-site-description" name="siteDescription"
+                                                          placeholder="現場の詳細情報や注意事項など" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary">
+                                                ✅ 現場を追加
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 現場一覧 -->
+                        <div class="site-list-section">
+                            <div class="site-list-header">
+                                <h4>📋 現場一覧</h4>
+                                <button id="employee-refresh-sites-btn" class="btn btn-secondary btn-small">🔄 更新</button>
+                            </div>
+                            <div class="site-list-container">
+                                <table class="site-list-table">
+                                    <thead>
+                                        <tr>
+                                            <th>現場名</th>
+                                            <th>住所</th>
+                                            <th>作成日</th>
+                                            <th>状態</th>
+                                            <th>使用状況</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employee-site-list-data">
+                                        <!-- 現場データが表示されます -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- 🆕 複数現場対応：今日の現場別勤務状況 -->
-                <section class="multi-site-section">
-                    <div id="multi-site-attendance">
-                        <div class="loading-message">🔄 現場情報を読み込み中...</div>
-                    </div>
-                </section>
-
-                <!-- 直近3日間の記録 -->
-                <section class="recent-records">
-                    <h3>📋 直近3日間の記録</h3>
-                    <div id="recent-list">
-                        <div class="loading-message">🔄 記録を読み込み中...</div>
-                    </div>
-                </section>
             </main>
         </div>
     </div>
