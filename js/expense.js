@@ -257,8 +257,6 @@ async function loadExpenseList() {
             .doc(tenantId)
             .collection('expenses')
             .where('userId', '==', currentUser.uid)
-            .orderBy('date', 'desc')
-            .limit(200)
             .get();
 
         if (snapshot.empty) {
@@ -273,10 +271,17 @@ async function loadExpenseList() {
             return;
         }
 
-        // 経費データを配列に変換
+        // 経費データを配列に変換してソート（クライアント側）
         let expenses = [];
         snapshot.forEach(doc => {
             expenses.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 日付降順でソート
+        expenses.sort((a, b) => {
+            const dateA = a.date || '';
+            const dateB = b.date || '';
+            return dateB.localeCompare(dateA);
         });
 
         // フィルターを適用

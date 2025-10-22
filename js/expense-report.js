@@ -43,23 +43,28 @@ async function loadExpenseReport() {
         const monthFilter = document.getElementById('expense-report-month-filter')?.value || '';
 
         // 経費データを取得
-        let query = firebase.firestore()
+        const snapshot = await firebase.firestore()
             .collection('tenants')
             .doc(tenantId)
             .collection('expenses')
-            .orderBy('date', 'desc');
-
-        const snapshot = await query.get();
+            .get();
 
         if (snapshot.empty) {
             showNoExpenseData();
             return;
         }
 
-        // 経費データを配列に変換
+        // 経費データを配列に変換してソート（クライアント側）
         let expenses = [];
         snapshot.forEach(doc => {
             expenses.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 日付降順でソート
+        expenses.sort((a, b) => {
+            const dateA = a.date || '';
+            const dateB = b.date || '';
+            return dateB.localeCompare(dateA);
         });
 
         // 月フィルターを適用
@@ -294,23 +299,28 @@ async function exportExpenseReportCSV() {
         const monthFilter = document.getElementById('expense-report-month-filter')?.value || '';
 
         // 経費データを取得
-        let query = firebase.firestore()
+        const snapshot = await firebase.firestore()
             .collection('tenants')
             .doc(tenantId)
             .collection('expenses')
-            .orderBy('date', 'desc');
-
-        const snapshot = await query.get();
+            .get();
 
         if (snapshot.empty) {
             alert('出力するデータがありません');
             return;
         }
 
-        // 経費データを配列に変換
+        // 経費データを配列に変換してソート（クライアント側）
         let expenses = [];
         snapshot.forEach(doc => {
             expenses.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 日付降順でソート
+        expenses.sort((a, b) => {
+            const dateA = a.date || '';
+            const dateB = b.date || '';
+            return dateB.localeCompare(dateA);
         });
 
         // 月フィルターを適用
