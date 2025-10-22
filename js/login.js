@@ -759,6 +759,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('#login-page, #employee-page, #admin-page, #admin-request-page')
         .forEach(el => el.classList.add('hidden'));
 
+    // ログインページを初期表示（真っ白にならないように）
+    showPage('login');
+
     // テナント初期化
     try {
         await initializeTenant();
@@ -768,11 +771,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 少し遅延させてFirebase初期化を確実に待つ
     setTimeout(() => {
         initLogin();
-        // Firebase認証状態が確定するまでログインページを表示
-        if (!firebase.auth().currentUser) {
-            showPage('login');
-        }
-    }, 500);
+    }, 300);
 });
 
 /**
