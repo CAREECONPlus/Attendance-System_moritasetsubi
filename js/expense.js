@@ -68,14 +68,9 @@ function initExpenseManagement() {
  */
 async function openExpenseModal() {
     try {
-        console.log('openExpenseModal: 開始');
-
         // モーダル要素を取得
         const modal = document.getElementById('expense-modal');
-        console.log('expense-modal要素:', modal);
-
         if (!modal) {
-            console.error('expense-modal要素が見つかりません');
             alert('経費モーダル要素が見つかりません。ページをリロードしてください。');
             return;
         }
@@ -106,12 +101,8 @@ async function openExpenseModal() {
 
         // 現場リストを読み込む
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
-        console.log('tenantId:', tenantId);
-
         if (tenantId && typeof window.getTenantSites === 'function') {
             const sites = await window.getTenantSites(tenantId);
-            console.log('現場リスト:', sites);
-
             const siteSelect = document.getElementById('expense-site-name');
             if (siteSelect) {
                 siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
@@ -126,10 +117,7 @@ async function openExpenseModal() {
         }
 
         // モーダルを表示
-        console.log('モーダル表示前のclasses:', modal.classList);
         modal.classList.remove('hidden');
-        console.log('モーダル表示後のclasses:', modal.classList);
-        console.log('openExpenseModal: 完了');
 
     } catch (error) {
         console.error('モーダル表示エラー:', error);
