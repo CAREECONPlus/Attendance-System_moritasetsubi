@@ -2174,3 +2174,248 @@ textarea:focus-visible {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
 }
+
+/* ========================================
+   経費精算機能
+   ======================================== */
+
+/* 経費管理セクション */
+.expense-management-section {
+    padding: 1.5rem;
+}
+
+.expense-management-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.expense-management-header h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+.expense-management-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* 経費追加ボタンセクション */
+.expense-add-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.btn-large {
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
+}
+
+/* 経費一覧ヘッダー */
+.expense-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+.expense-list-header h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin: 0;
+}
+
+.expense-list-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* 経費カードグリッド */
+.expense-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+/* 個別の経費カード */
+.expense-card-item {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.expense-card-item:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    border-color: var(--careecon-primary-blue);
+}
+
+/* 経費カードヘッダー */
+.expense-card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.expense-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin: 0;
+    flex: 1;
+}
+
+.expense-card-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--careecon-primary-blue);
+    white-space: nowrap;
+}
+
+/* 経費カード本文 */
+.expense-card-body-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.expense-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.expense-info-icon {
+    font-size: 1rem;
+    min-width: 1.25rem;
+    opacity: 0.8;
+}
+
+.expense-info-text {
+    color: var(--text-primary);
+    flex: 1;
+    word-break: break-word;
+}
+
+.expense-info-text.secondary {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* 経費項目バッジ */
+.expense-category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.expense-category-badge.parking {
+    background: rgba(244, 78, 255, 0.1);
+    color: var(--careecon-primary-blue);
+}
+
+.expense-category-badge.tools {
+    background: rgba(29, 206, 133, 0.1);
+    color: var(--careecon-green);
+}
+
+.expense-category-badge.highway {
+    background: rgba(255, 206, 44, 0.1);
+    color: var(--careecon-yellow);
+}
+
+.expense-category-badge.other {
+    background: rgba(130, 136, 157, 0.1);
+    color: var(--careecon-gray);
+}
+
+/* 経費カードフッター */
+.expense-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--careecon-gray-blue);
+    flex-wrap: wrap;
+}
+
+.expense-card-footer .btn {
+    flex: 1;
+    min-width: calc(50% - 0.375rem);
+}
+
+/* データなし表示 */
+.no-expenses {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.no-expenses-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.no-expenses h4 {
+    font-size: 1.25rem;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .expense-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .expense-card-header-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .expense-card-amount {
+        font-size: 1.25rem;
+    }
+
+    .expense-card-footer {
+        flex-direction: column;
+    }
+
+    .expense-card-footer .btn {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .expense-list-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .expense-management-section {
+        padding: 1rem;
+    }
+
+    .expense-card-item {
+        padding: 1rem;
+    }
+}

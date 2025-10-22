@@ -1619,6 +1619,11 @@ async function initEmployeePage() {
         // 従業員用現場管理機能の初期化
         initEmployeeSiteManagement();
 
+        // 経費精算機能の初期化
+        if (typeof initExpenseManagement === 'function') {
+            initExpenseManagement();
+        }
+
         // 最近の記録を読み込み
         setTimeout(() => {
             loadRecentRecordsSafely();
@@ -1734,6 +1739,13 @@ function switchEmployeeTab(tabName) {
     // 現場管理タブを開いた時、現場一覧を読み込む
     if (tabName === 'employee-site-management') {
         loadEmployeeSiteList();
+    }
+
+    // 経費精算タブを開いた時、経費一覧を読み込む
+    if (tabName === 'expense-management') {
+        if (typeof loadExpenseList === 'function') {
+            loadExpenseList();
+        }
     }
 }
 
