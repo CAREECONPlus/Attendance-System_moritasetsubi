@@ -1553,13 +1553,19 @@
 
             <main class="employee-main">
                 <!-- タブナビゲーション -->
-                <div class="admin-tabs">
-                    <button class="tab-btn active" data-tab="attendance">勤怠打刻</button>
-                    <button class="tab-btn" data-tab="employee-site-management">現場管理</button>
+                <div class="employee-tabs">
+                    <button class="employee-tab-btn active" data-tab="attendance">
+                        <span class="tab-icon">⏰</span>
+                        <span class="tab-label">勤怠打刻</span>
+                    </button>
+                    <button class="employee-tab-btn" data-tab="employee-site-management">
+                        <span class="tab-icon">🏢</span>
+                        <span class="tab-label">現場管理</span>
+                    </button>
                 </div>
 
                 <!-- 勤怠打刻タブ -->
-                <div id="attendance-content" class="tab-content">
+                <div id="attendance-content" class="employee-tab-content active">
                     <!-- 現在時刻表示 -->
                     <div class="date-display">
                         <div class="date" id="current-date">日付読み込み中...</div>
@@ -1619,7 +1625,7 @@
                 </div>
 
                 <!-- 現場管理タブ -->
-                <div id="employee-site-management-content" class="tab-content hidden">
+                <div id="employee-site-management-content" class="employee-tab-content">
                     <div class="site-management-section">
                         <div class="site-management-header">
                             <h3>🏢 現場管理</h3>

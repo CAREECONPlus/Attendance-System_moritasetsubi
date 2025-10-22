@@ -1633,7 +1633,7 @@ function setupEmployeeEventListeners() {
  * 従業員ページのタブ切り替え設定
  */
 function setupEmployeeTabSwitching() {
-    const tabButtons = document.querySelectorAll('#employee-page .tab-btn');
+    const tabButtons = document.querySelectorAll('.employee-tab-btn');
 
     tabButtons.forEach(button => {
         if (!button.hasAttribute('data-listener-set')) {
@@ -1651,17 +1651,17 @@ function setupEmployeeTabSwitching() {
  */
 function switchEmployeeTab(tabName) {
     // 全てのタブボタンとコンテンツを取得
-    const tabButtons = document.querySelectorAll('#employee-page .tab-btn');
-    const tabContents = document.querySelectorAll('#employee-page .tab-content');
+    const tabButtons = document.querySelectorAll('.employee-tab-btn');
+    const tabContents = document.querySelectorAll('.employee-tab-content');
 
     // 全てのタブボタンからactiveクラスを削除
     tabButtons.forEach(btn => btn.classList.remove('active'));
 
-    // 全てのタブコンテンツを非表示
-    tabContents.forEach(content => content.classList.add('hidden'));
+    // 全てのタブコンテンツからactiveクラスを削除
+    tabContents.forEach(content => content.classList.remove('active'));
 
     // クリックされたタブボタンをアクティブに
-    const activeButton = document.querySelector(`#employee-page .tab-btn[data-tab="${tabName}"]`);
+    const activeButton = document.querySelector(`.employee-tab-btn[data-tab="${tabName}"]`);
     if (activeButton) {
         activeButton.classList.add('active');
     }
@@ -1669,7 +1669,7 @@ function switchEmployeeTab(tabName) {
     // 対応するタブコンテンツを表示
     const targetContent = document.getElementById(`${tabName}-content`);
     if (targetContent) {
-        targetContent.classList.remove('hidden');
+        targetContent.classList.add('active');
     }
 
     // 現場管理タブを開いた時、現場一覧を読み込む
