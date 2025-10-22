@@ -37,6 +37,30 @@ function initExpenseManagement() {
         expenseForm.addEventListener('submit', saveExpense);
         expenseForm.setAttribute('data-listener-set', 'true');
     }
+
+    // 月別フィルターのイベント
+    const monthFilter = document.getElementById('expense-month-filter');
+    if (monthFilter && !monthFilter.hasAttribute('data-listener-set')) {
+        monthFilter.addEventListener('change', loadExpenseList);
+        monthFilter.setAttribute('data-listener-set', 'true');
+    }
+
+    // 現場別フィルターのイベント
+    const siteFilter = document.getElementById('expense-site-filter');
+    if (siteFilter && !siteFilter.hasAttribute('data-listener-set')) {
+        siteFilter.addEventListener('change', loadExpenseList);
+        siteFilter.setAttribute('data-listener-set', 'true');
+    }
+
+    // フィルタークリアボタンのイベント
+    const clearFilterBtn = document.getElementById('expense-clear-filter-btn');
+    if (clearFilterBtn && !clearFilterBtn.hasAttribute('data-listener-set')) {
+        clearFilterBtn.addEventListener('click', clearExpenseFilters);
+        clearFilterBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    // 現場フィルターのリストを読み込む
+    loadExpenseSiteFilter();
 }
 
 /**
@@ -223,6 +247,10 @@ async function loadExpenseList() {
         const expensesGrid = document.getElementById('expense-cards-grid');
         if (!expensesGrid) return;
 
+        // フィルター値を取得
+        const monthFilter = document.getElementById('expense-month-filter')?.value || '';
+        const siteFilter = document.getElementById('expense-site-filter')?.value || '';
+
         // 経費データを取得（ユーザーのデータのみ）
         const snapshot = await firebase.firestore()
             .collection('tenants')
@@ -230,7 +258,7 @@ async function loadExpenseList() {
             .collection('expenses')
             .where('userId', '==', currentUser.uid)
             .orderBy('date', 'desc')
-            .limit(50)
+            .limit(200)
             .get();
 
         if (snapshot.empty) {
@@ -241,15 +269,47 @@ async function loadExpenseList() {
                     <p>「経費を追加」ボタンから記録を始めましょう</p>
                 </div>
             `;
+            updateExpenseSummary(0, 0);
             return;
         }
 
-        // 経費カードを生成
-        const expenses = [];
+        // 経費データを配列に変換
+        let expenses = [];
         snapshot.forEach(doc => {
             expenses.push({ id: doc.id, ...doc.data() });
         });
 
+        // フィルターを適用
+        if (monthFilter) {
+            expenses = expenses.filter(expense => {
+                return expense.date && expense.date.startsWith(monthFilter);
+            });
+        }
+
+        if (siteFilter) {
+            expenses = expenses.filter(expense => {
+                return expense.siteName === siteFilter;
+            });
+        }
+
+        // フィルター後のデータが空の場合
+        if (expenses.length === 0) {
+            expensesGrid.innerHTML = `
+                <div class="no-expenses">
+                    <div class="no-expenses-icon">🔍</div>
+                    <h4>該当する経費がありません</h4>
+                    <p>フィルター条件を変更してください</p>
+                </div>
+            `;
+            updateExpenseSummary(0, 0);
+            return;
+        }
+
+        // 合計金額を計算
+        const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+        updateExpenseSummary(totalAmount, expenses.length);
+
+        // 経費カードを生成
         const expenseCards = expenses.map(expense => {
             const categoryName = getCategoryDisplayName(expense.category);
             const formattedAmount = expense.amount.toLocaleString('ja-JP');
@@ -305,6 +365,7 @@ async function loadExpenseList() {
         if (expensesGrid) {
             expensesGrid.innerHTML = '<div class="error">経費一覧の読み込みに失敗しました</div>';
         }
+        updateExpenseSummary(0, 0);
     }
 }
 
@@ -347,6 +408,64 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+/**
+ * 合計金額と件数を表示
+ */
+function updateExpenseSummary(totalAmount, count) {
+    const totalAmountEl = document.getElementById('expense-total-amount');
+    const countEl = document.getElementById('expense-count');
+
+    if (totalAmountEl) {
+        totalAmountEl.textContent = '¥' + totalAmount.toLocaleString('ja-JP');
+    }
+
+    if (countEl) {
+        countEl.textContent = count + '件';
+    }
+}
+
+/**
+ * 現場フィルターのリストを読み込む
+ */
+async function loadExpenseSiteFilter() {
+    try {
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId) return;
+
+        const siteFilter = document.getElementById('expense-site-filter');
+        if (!siteFilter) return;
+
+        // 現場リストを取得
+        const sites = await window.getTenantSites(tenantId);
+
+        // フィルター用のセレクトボックスを更新
+        siteFilter.innerHTML = '<option value="">すべて</option>';
+        sites.filter(s => s.active).forEach(site => {
+            const option = document.createElement('option');
+            option.value = site.name;
+            option.textContent = site.name;
+            siteFilter.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('現場フィルター読み込みエラー:', error);
+    }
+}
+
+/**
+ * フィルターをクリア
+ */
+function clearExpenseFilters() {
+    const monthFilter = document.getElementById('expense-month-filter');
+    const siteFilter = document.getElementById('expense-site-filter');
+
+    if (monthFilter) monthFilter.value = '';
+    if (siteFilter) siteFilter.value = '';
+
+    // 一覧を再読み込み
+    loadExpenseList();
+}
+
 // グローバルスコープに公開
 window.openExpenseModal = openExpenseModal;
 window.openEditExpenseModal = openEditExpenseModal;
@@ -354,3 +473,4 @@ window.closeExpenseModal = closeExpenseModal;
 window.deleteExpense = deleteExpense;
 window.loadExpenseList = loadExpenseList;
 window.initExpenseManagement = initExpenseManagement;
+window.clearExpenseFilters = clearExpenseFilters;

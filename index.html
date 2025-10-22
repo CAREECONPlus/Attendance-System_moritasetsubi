@@ -1714,6 +1714,37 @@
                             </div>
                         </div>
 
+                        <!-- フィルターセクション -->
+                        <div class="expense-filter-section">
+                            <div class="expense-filter-row">
+                                <div class="expense-filter-item">
+                                    <label for="expense-month-filter">📅 月別</label>
+                                    <input type="month" id="expense-month-filter" class="filter-input">
+                                </div>
+                                <div class="expense-filter-item">
+                                    <label for="expense-site-filter">🏢 現場別</label>
+                                    <select id="expense-site-filter" class="filter-input">
+                                        <option value="">すべて</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <button id="expense-clear-filter-btn" class="btn btn-secondary btn-small">🔄 クリア</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 合計金額表示 -->
+                        <div class="expense-summary-section">
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">💵 合計金額</div>
+                                <div class="expense-summary-amount" id="expense-total-amount">¥0</div>
+                            </div>
+                            <div class="expense-summary-card">
+                                <div class="expense-summary-label">📊 表示件数</div>
+                                <div class="expense-summary-count" id="expense-count">0件</div>
+                            </div>
+                        </div>
+
                         <!-- 経費カードグリッド -->
                         <div id="expense-cards-grid" class="expense-cards-grid">
                             <!-- 経費カードがJavaScriptで動的に生成されます -->
