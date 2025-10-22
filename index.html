@@ -1757,7 +1757,7 @@
 
                         <!-- 経費登録ボタン -->
                         <div class="expense-add-section">
-                            <button id="add-expense-btn" class="btn btn-primary btn-large" onclick="window.openExpenseModal()">
+                            <button id="add-expense-btn" class="btn btn-primary btn-large">
                                 ➕ 経費を追加
                             </button>
                         </div>
@@ -1960,8 +1960,8 @@
                     </table>
                 </div>
 
-                <!-- 勤怠データ編集モーダル -->
-                <div id="edit-attendance-modal" class="modal hidden">
+                <!-- 勤怠データ編集モーダル（管理者用） -->
+                <div id="admin-edit-attendance-modal" class="modal hidden">
                     <div class="modal-overlay" onclick="closeEditModal()"></div>
                     <div class="modal-content">
                         <div class="modal-header">
@@ -1969,43 +1969,43 @@
                             <button class="modal-close" onclick="closeEditModal()">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <form id="edit-attendance-form">
+                            <form id="admin-edit-attendance-form">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="edit-employee-name">従業員名</label>
-                                        <input type="text" id="edit-employee-name" readonly>
+                                        <label for="admin-edit-employee-name">従業員名</label>
+                                        <input type="text" id="admin-edit-employee-name" readonly>
                                     </div>
                                     <div class="form-group">
-                                        <label for="edit-date">日付 *</label>
-                                        <input type="date" id="edit-date" required>
+                                        <label for="admin-edit-date">日付 *</label>
+                                        <input type="date" id="admin-edit-date" required>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="edit-site-name">現場名 *</label>
-                                        <input type="text" id="edit-site-name" required>
+                                        <label for="admin-edit-site-name">現場名 *</label>
+                                        <input type="text" id="admin-edit-site-name" required>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="edit-start-time">出勤時間 *</label>
-                                        <input type="time" id="edit-start-time" required>
+                                        <label for="admin-edit-start-time">出勤時間 *</label>
+                                        <input type="time" id="admin-edit-start-time" required>
                                     </div>
                                     <div class="form-group">
-                                        <label for="edit-end-time">退勤時間</label>
-                                        <input type="time" id="edit-end-time">
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="edit-break-duration">休憩時間（分）</label>
-                                        <input type="number" id="edit-break-duration" min="0" placeholder="0">
+                                        <label for="admin-edit-end-time">退勤時間</label>
+                                        <input type="time" id="admin-edit-end-time">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="edit-notes">メモ</label>
-                                        <textarea id="edit-notes" rows="3" placeholder="作業内容や特記事項"></textarea>
+                                        <label for="admin-edit-break-duration">休憩時間（分）</label>
+                                        <input type="number" id="admin-edit-break-duration" min="0" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="admin-edit-notes">メモ</label>
+                                        <textarea id="admin-edit-notes" rows="3" placeholder="作業内容や特記事項"></textarea>
                                     </div>
                                 </div>
                             </form>

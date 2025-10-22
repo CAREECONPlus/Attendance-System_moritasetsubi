@@ -5843,14 +5843,14 @@ let currentEditingRecordId = null;
  */
 function setupModalEventListeners() {
     logger.log('Setting up modal event listeners...');
-    
+
     // 保存ボタン
-    const saveBtn = document.querySelector('#edit-attendance-modal .btn-primary');
+    const saveBtn = document.querySelector('#admin-edit-attendance-modal .btn-primary');
     if (saveBtn) {
         // 既存のイベントリスナーを削除
         saveBtn.replaceWith(saveBtn.cloneNode(true));
-        const newSaveBtn = document.querySelector('#edit-attendance-modal .btn-primary');
-        
+        const newSaveBtn = document.querySelector('#admin-edit-attendance-modal .btn-primary');
+
         newSaveBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             logger.log('Save button clicked via event listener');
@@ -5862,14 +5862,14 @@ function setupModalEventListeners() {
         });
         logger.log('Save button event listener added');
     }
-    
+
     // 削除ボタン
-    const deleteBtn = document.querySelector('#edit-attendance-modal .btn-danger');
+    const deleteBtn = document.querySelector('#admin-edit-attendance-modal .btn-danger');
     if (deleteBtn) {
         // 既存のイベントリスナーを削除
         deleteBtn.replaceWith(deleteBtn.cloneNode(true));
-        const newDeleteBtn = document.querySelector('#edit-attendance-modal .btn-danger');
-        
+        const newDeleteBtn = document.querySelector('#admin-edit-attendance-modal .btn-danger');
+
         newDeleteBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             logger.log('Delete button clicked via event listener');
@@ -5881,14 +5881,14 @@ function setupModalEventListeners() {
         });
         logger.log('Delete button event listener added');
     }
-    
+
     // キャンセルボタン
-    const cancelBtn = document.querySelector('#edit-attendance-modal .btn-secondary');
+    const cancelBtn = document.querySelector('#admin-edit-attendance-modal .btn-secondary');
     if (cancelBtn) {
         // 既存のイベントリスナーを削除
         cancelBtn.replaceWith(cancelBtn.cloneNode(true));
-        const newCancelBtn = document.querySelector('#edit-attendance-modal .btn-secondary');
-        
+        const newCancelBtn = document.querySelector('#admin-edit-attendance-modal .btn-secondary');
+
         newCancelBtn.addEventListener('click', function(e) {
             e.preventDefault();
             logger.log('Cancel button clicked via event listener');
@@ -5926,17 +5926,17 @@ async function editAttendanceRecord(recordId) {
         
         // モーダルのフォームに値を設定
         logger.log('Setting modal form values...');
-        document.getElementById('edit-employee-name').value = record.userName || record.userEmail || '';
-        document.getElementById('edit-date').value = record.date || '';
-        document.getElementById('edit-site-name').value = record.siteName || '';
-        document.getElementById('edit-start-time').value = record.startTime || '';
-        document.getElementById('edit-end-time').value = record.endTime || '';
-        document.getElementById('edit-break-duration').value = record.breakDuration || 0;
-        document.getElementById('edit-notes').value = record.notes || '';
-        
+        document.getElementById('admin-edit-employee-name').value = record.userName || record.userEmail || '';
+        document.getElementById('admin-edit-date').value = record.date || '';
+        document.getElementById('admin-edit-site-name').value = record.siteName || '';
+        document.getElementById('admin-edit-start-time').value = record.startTime || '';
+        document.getElementById('admin-edit-end-time').value = record.endTime || '';
+        document.getElementById('admin-edit-break-duration').value = record.breakDuration || 0;
+        document.getElementById('admin-edit-notes').value = record.notes || '';
+
         // モーダルを表示
         logger.log('Showing modal...');
-        const modal = document.getElementById('edit-attendance-modal');
+        const modal = document.getElementById('admin-edit-attendance-modal');
         logger.log('Modal element:', modal);
         
         if (modal) {
@@ -5966,7 +5966,7 @@ async function editAttendanceRecord(recordId) {
  * モーダルを閉じる
  */
 function closeEditModal() {
-    const modal = document.getElementById('edit-attendance-modal');
+    const modal = document.getElementById('admin-edit-attendance-modal');
     if (modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none';
@@ -5996,12 +5996,12 @@ async function saveAttendanceRecordInternal() {
         }
         
         // フォームデータを取得
-        const date = document.getElementById('edit-date').value;
-        const siteName = document.getElementById('edit-site-name').value.trim();
-        const startTime = document.getElementById('edit-start-time').value;
-        const endTime = document.getElementById('edit-end-time').value;
-        const breakDuration = parseInt(document.getElementById('edit-break-duration').value) || 0;
-        const notes = document.getElementById('edit-notes').value.trim();
+        const date = document.getElementById('admin-edit-date').value;
+        const siteName = document.getElementById('admin-edit-site-name').value.trim();
+        const startTime = document.getElementById('admin-edit-start-time').value;
+        const endTime = document.getElementById('admin-edit-end-time').value;
+        const breakDuration = parseInt(document.getElementById('admin-edit-break-duration').value) || 0;
+        const notes = document.getElementById('admin-edit-notes').value.trim();
         
         // バリデーション
         if (!date || !siteName || !startTime) {
