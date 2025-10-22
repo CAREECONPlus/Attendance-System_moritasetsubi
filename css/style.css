@@ -2184,6 +2184,11 @@ textarea:focus-visible {
     padding: 1.5rem;
 }
 
+/* 経費モーダル専用のz-index設定 */
+#expense-modal {
+    z-index: 99999 !important;
+}
+
 .expense-management-header {
     margin-bottom: 2rem;
     text-align: center;
