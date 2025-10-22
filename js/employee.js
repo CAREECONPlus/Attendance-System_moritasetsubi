@@ -649,10 +649,101 @@ async function loadSiteOptions() {
                     siteSelect.appendChild(option);
                 }
             });
-            
+
         }
+
+        // 履歴を表示
+        displaySiteHistory();
+
     } catch (error) {
     }
+}
+
+/**
+ * 現場を履歴に追加
+ */
+function addSiteToHistory(siteName) {
+    try {
+        const userId = currentUser?.uid || window.currentUser?.uid;
+        if (!userId || !siteName) return;
+
+        const key = `siteHistory_${userId}`;
+        let history = JSON.parse(localStorage.getItem(key) || '[]');
+
+        // 既存の履歴から同じ現場を削除
+        history = history.filter(name => name !== siteName);
+
+        // 最新の現場を先頭に追加
+        history.unshift(siteName);
+
+        // 最大5件まで保持
+        if (history.length > 5) {
+            history = history.slice(0, 5);
+        }
+
+        localStorage.setItem(key, JSON.stringify(history));
+    } catch (error) {
+        console.error('履歴保存エラー:', error);
+    }
+}
+
+/**
+ * 現場履歴を取得
+ */
+function getSiteHistory() {
+    try {
+        const userId = currentUser?.uid || window.currentUser?.uid;
+        if (!userId) return [];
+
+        const key = `siteHistory_${userId}`;
+        return JSON.parse(localStorage.getItem(key) || '[]');
+    } catch (error) {
+        console.error('履歴取得エラー:', error);
+        return [];
+    }
+}
+
+/**
+ * 現場履歴を表示
+ */
+function displaySiteHistory() {
+    const historySection = document.getElementById('site-history-section');
+    const historyButtons = document.getElementById('site-history-buttons');
+
+    if (!historySection || !historyButtons) return;
+
+    const history = getSiteHistory();
+
+    if (history.length === 0) {
+        historySection.style.display = 'none';
+        return;
+    }
+
+    historySection.style.display = 'block';
+
+    const buttonsHTML = history.map(siteName => `
+        <button type="button" class="site-history-btn" onclick="selectSiteFromHistory('${escapeHtmlEmployee(siteName)}')">
+            🏢 ${escapeHtmlEmployee(siteName)}
+        </button>
+    `).join('');
+
+    historyButtons.innerHTML = buttonsHTML;
+}
+
+/**
+ * 履歴から現場を選択
+ */
+function selectSiteFromHistory(siteName) {
+    const siteSelect = document.getElementById('site-name');
+    if (!siteSelect) return;
+
+    siteSelect.value = siteName;
+
+    // 視覚的フィードバック
+    siteSelect.style.background = 'var(--careecon-background-blue)';
+    setTimeout(() => {
+        siteSelect.style.background = '';
+    }, 500);
 }
 
 // サイト選択の変更イベント（手動入力は削除済み）
@@ -767,6 +858,9 @@ async function handleClockIn() {
         updateClockButtons('working');
         updateStatusDisplay('working', todayAttendanceData);
 
+        // 現場を履歴に追加
+        addSiteToHistory(siteName);
+
         alert(`✅ 出勤しました！\n現場: ${siteName}\n時刻: ${attendanceData.startTime}\n日付: ${today}`);
 
         // フォームをクリア
@@ -774,6 +868,9 @@ async function handleClockIn() {
 
         // 最近の記録を更新
         loadRecentRecordsSafely();
+
+        // 履歴を更新
+        displaySiteHistory();
 
         // 処理完了
         dailyLimitProcessing = false;
@@ -1738,7 +1835,7 @@ async function handleEmployeeAddSite(e) {
 }
 
 /**
- * 従業員用現場一覧を読み込み表示
+ * 従業員用現場一覧を読み込み表示（カードグリッド版）
  */
 async function loadEmployeeSiteList() {
     try {
@@ -1746,50 +1843,101 @@ async function loadEmployeeSiteList() {
         if (!tenantId) return;
 
         const sites = await window.getTenantSites(tenantId);
-        const siteListData = document.getElementById('employee-site-list-data');
+        const cardsGrid = document.getElementById('employee-site-cards-grid');
 
-        if (!siteListData) return;
+        if (!cardsGrid) return;
 
         if (sites.length === 0) {
-            siteListData.innerHTML = '<tr><td colspan="6" class="no-data">現場が登録されていません</td></tr>';
+            cardsGrid.innerHTML = '<div class="no-data" style="text-align:center;padding:3rem;color:var(--text-secondary);">現場が登録されていません</div>';
             return;
         }
 
         // 現場の使用状況を取得
         const siteUsageStats = await getEmployeeSiteUsageStats(tenantId);
 
-        const siteRows = sites.map(site => {
+        // お気に入り現場を取得
+        const favoriteSites = await getEmployeeFavoriteSites(tenantId);
+
+        // お気に入り順、有効/無効順でソート
+        const sortedSites = sites.sort((a, b) => {
+            const aFav = favoriteSites.includes(a.id) ? 1 : 0;
+            const bFav = favoriteSites.includes(b.id) ? 1 : 0;
+            if (aFav !== bFav) return bFav - aFav; // お気に入りが先
+            if (a.active !== b.active) return b.active ? 1 : -1; // 有効が先
+            return 0;
+        });
+
+        const siteCards = sortedSites.map(site => {
             const usage = siteUsageStats[site.name] || { count: 0, lastUsed: null };
+            const isFavorite = favoriteSites.includes(site.id);
+
             const statusBadge = site.active ?
                 '<span class="status-badge status-active">有効</span>' :
                 '<span class="status-badge status-inactive">無効</span>';
 
-            const usageText = usage.count > 0 ?
-                `${usage.count}回使用` :
-                '未使用';
+            const usageBadge = usage.count > 0 ?
+                `<span class="site-usage-badge">${usage.count}回使用</span>` :
+                '<span class="site-usage-badge unused">未使用</span>';
+
+            const createdDate = site.createdAt ?
+                new Date(site.createdAt.toDate ? site.createdAt.toDate() : site.createdAt).toLocaleDateString('ja-JP') :
+                '不明';
 
             return `
-                <tr>
-                    <td class="site-name">${escapeHtmlEmployee(site.name)}</td>
-                    <td class="site-address">${escapeHtmlEmployee(site.address || '未設定')}</td>
-                    <td class="site-created">${site.createdAt ? new Date(site.createdAt.toDate ? site.createdAt.toDate() : site.createdAt).toLocaleDateString('ja-JP') : '不明'}</td>
-                    <td class="site-status">${statusBadge}</td>
-                    <td class="site-usage">${usageText}</td>
-                    <td class="site-actions">
-                        <button class="btn btn-secondary btn-small" onclick="editEmployeeSite('${site.id}')">編集</button>
-                        <button class="btn btn-${site.active ? 'danger' : 'success'} btn-small" onclick="toggleEmployeeSiteStatus('${site.id}', ${!site.active})">${site.active ? '無効化' : '有効化'}</button>
-                    </td>
-                </tr>
+                <div class="site-card-item ${isFavorite ? 'favorite' : ''}" data-site-id="${site.id}">
+                    <div class="site-card-header-row">
+                        <h3 class="site-card-title">🏢 ${escapeHtmlEmployee(site.name)}</h3>
+                        <div class="site-card-status">${statusBadge}</div>
+                    </div>
+
+                    <div class="site-card-body-info">
+                        ${site.address ? `
+                            <div class="site-info-row">
+                                <span class="site-info-icon">📍</span>
+                                <span class="site-info-text">${escapeHtmlEmployee(site.address)}</span>
+                            </div>
+                        ` : ''}
+
+                        <div class="site-info-row">
+                            <span class="site-info-icon">📅</span>
+                            <span class="site-info-text">作成日: ${createdDate}</span>
+                        </div>
+
+                        <div class="site-info-row">
+                            <span class="site-info-icon">📊</span>
+                            <span class="site-info-text">${usageBadge}</span>
+                        </div>
+
+                        ${site.description ? `
+                            <div class="site-info-row">
+                                <span class="site-info-icon">📝</span>
+                                <span class="site-info-text">${escapeHtmlEmployee(site.description)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="site-card-footer">
+                        <button class="btn btn-favorite ${isFavorite ? 'active' : ''}" onclick="toggleEmployeeFavorite('${site.id}')">
+                            ${isFavorite ? '⭐' : '☆'} お気に入り
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="editEmployeeSite('${site.id}')">
+                            ✏️ 編集
+                        </button>
+                        <button class="btn btn-${site.active ? 'danger' : 'success'} btn-small" onclick="toggleEmployeeSiteStatus('${site.id}', ${!site.active})">
+                            ${site.active ? '無効化' : '有効化'}
+                        </button>
+                    </div>
+                </div>
             `;
         }).join('');
 
-        siteListData.innerHTML = siteRows;
+        cardsGrid.innerHTML = siteCards;
 
     } catch (error) {
         console.error('現場一覧読み込みエラー:', error);
-        const siteListData = document.getElementById('employee-site-list-data');
-        if (siteListData) {
-            siteListData.innerHTML = '<tr><td colspan="6" class="error">現場一覧の読み込みに失敗しました</td></tr>';
+        const cardsGrid = document.getElementById('employee-site-cards-grid');
+        if (cardsGrid) {
+            cardsGrid.innerHTML = '<div class="error" style="text-align:center;padding:3rem;color:var(--danger-color);font-weight:600;">現場一覧の読み込みに失敗しました</div>';
         }
     }
 }
@@ -1963,6 +2111,54 @@ async function updateEmployeeTenantSites(tenantId, sites) {
 }
 
 /**
+ * お気に入り現場を取得
+ */
+async function getEmployeeFavoriteSites(tenantId) {
+    try {
+        const userId = currentUser?.uid || window.currentUser?.uid;
+        if (!userId) return [];
+
+        const key = `favoriteSites_${userId}_${tenantId}`;
+        const favorites = localStorage.getItem(key);
+        return favorites ? JSON.parse(favorites) : [];
+    } catch (error) {
+        console.error('お気に入り取得エラー:', error);
+        return [];
+    }
+}
+
+/**
+ * お気に入り現場の切り替え
+ */
+async function toggleEmployeeFavorite(siteId) {
+    try {
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        const userId = currentUser?.uid || window.currentUser?.uid;
+        if (!tenantId || !userId) return;
+
+        const key = `favoriteSites_${userId}_${tenantId}`;
+        let favorites = await getEmployeeFavoriteSites(tenantId);
+
+        if (favorites.includes(siteId)) {
+            // お気に入りから削除
+            favorites = favorites.filter(id => id !== siteId);
+        } else {
+            // お気に入りに追加
+            favorites.push(siteId);
+        }
+
+        localStorage.setItem(key, JSON.stringify(favorites));
+
+        // 現場一覧を再読み込み
+        await loadEmployeeSiteList();
+
+    } catch (error) {
+        console.error('お気に入り切り替えエラー:', error);
+        alert('お気に入りの切り替えに失敗しました');
+    }
+}
+
+/**
  * HTMLエスケープ関数（従業員用）
  */
 function escapeHtmlEmployee(text) {
@@ -1974,5 +2170,7 @@ function escapeHtmlEmployee(text) {
 // 従業員用現場管理関数をグローバルスコープに公開
 window.editEmployeeSite = editEmployeeSite;
 window.toggleEmployeeSiteStatus = toggleEmployeeSiteStatus;
+window.toggleEmployeeFavorite = toggleEmployeeFavorite;
+window.selectSiteFromHistory = selectSiteFromHistory;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
 
