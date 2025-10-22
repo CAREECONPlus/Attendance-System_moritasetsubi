@@ -1671,3 +1671,134 @@ textarea:focus-visible {
         font-size: 0.9rem;
     }
 }
+
+/* ========================================
+   現場管理 - ステータスバッジUI
+   ======================================== */
+
+/* ステータスバッジの基本スタイル */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+/* 有効状態 */
+.status-badge.status-active {
+    background: linear-gradient(135deg, #1DCE85 0%, #17b574 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(29, 206, 133, 0.3);
+}
+
+.status-badge.status-active::before {
+    content: '●';
+    font-size: 0.625rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* 無効状態 */
+.status-badge.status-inactive {
+    background: linear-gradient(135deg, #E9ECEF 0%, #CED4DA 100%);
+    color: #6C757D;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.15);
+}
+
+.status-badge.status-inactive::before {
+    content: '○';
+    font-size: 0.625rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* 現場管理テーブルの改善 */
+.site-list-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.site-list-table thead {
+    background: linear-gradient(135deg, var(--careecon-primary-blue) 0%, var(--careecon-secondary-blue) 100%);
+    color: white;
+}
+
+.site-list-table th {
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-align: left;
+    letter-spacing: 0.025em;
+}
+
+.site-list-table td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #E9ECEF;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.site-list-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.site-list-table tbody tr:hover {
+    background-color: var(--careecon-background-blue);
+}
+
+.site-list-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* サイト名のスタイル */
+.site-list-table .site-name {
+    font-weight: 600;
+    color: var(--careecon-navy);
+}
+
+/* サイトアクションボタン */
+.site-list-table .site-actions {
+    white-space: nowrap;
+}
+
+.site-list-table .site-actions .btn {
+    margin-right: 0.5rem;
+}
+
+.site-list-table .site-actions .btn:last-child {
+    margin-right: 0;
+}
+
+/* データなし表示 */
+.site-list-table .no-data {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* エラー表示 */
+.site-list-table .error {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--danger-color);
+    font-weight: 600;
+}

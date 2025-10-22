@@ -715,73 +715,45 @@ async function handleClockIn() {
     }
     
     setButtonProcessing();
-    
+
     try {
         if (!currentUser) {
             throw new Error('ユーザーが認証されていません');
         }
-        
+
         // 現場選択チェック
         const siteName = getSiteNameFromSelection();
-        
+
         if (!siteName) {
             restoreButton();
             return;
         }
-        
-        // 🚨 重要：同一現場での重複出勤・短時間再出勤チェック
-        const siteCheck = await checkSiteLimit(currentUser.uid, siteName);
-        
-        if (!siteCheck.canClockIn) {
-            if (siteCheck.reason === 'active_work') {
-                alert(`${siteName}では既に勤務中です。退勤してから新しい勤務を開始してください。`);
-                restoreButton();
-                return;
-            } else if (siteCheck.reason === 'recent_clock_out') {
-                // 短時間再出勤の確認モーダルを表示
-                const userConfirmed = await showReClockInModal(siteCheck);
-                if (!userConfirmed) {
-                    logger.log('ユーザーが再出勤をキャンセルしました');
-                    restoreButton();
-                    return;
-                }
-                logger.log('ユーザーが再出勤を承認しました');
-            }
-        }
-        
-        // 🎯 日付生成を修正（JST確実対応）
+
+        // 日付生成
         const now = new Date();
-        
-        // 🆕 修正: getTodayJST()を使用
         const today = getTodayJST();
-        
-        // デバッグ用ログ available if needed
-        
+
         const workNotesElement = document.getElementById('work-notes');
         const workNotes = workNotesElement ? workNotesElement.value.trim() : '';
-        
+
         const attendanceData = {
             userId: currentUser.uid,
             userEmail: currentUser.email,
-            date: today,  // 実際の日付
-            workingDate: getWorkingDate(),  // 🆕 夜勤対応：勤務日（4時間ルール）
+            date: today,
             siteName: siteName,
             startTime: now.toLocaleTimeString('ja-JP'),
             status: 'working',
             notes: workNotes,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            // デバッグ用
             clientTimestamp: now.toISOString(),
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
-        
-        
+
         // Firestoreに保存
         const docRef = await getAttendanceCollection()
             .add(attendanceData);
-        
-        
+
         // グローバル変数更新
         currentAttendanceId = docRef.id;
         todayAttendanceData = {
@@ -790,30 +762,25 @@ async function handleClockIn() {
             createdAt: now,
             updatedAt: now
         };
-        
+
         // UI更新
         updateClockButtons('working');
         updateStatusDisplay('working', todayAttendanceData);
-        
-        // 🆕 複数現場表示を更新
-        setTimeout(() => {
-            updateMultiSiteDisplay();
-        }, 500);
-        
+
         alert(`✅ 出勤しました！\n現場: ${siteName}\n時刻: ${attendanceData.startTime}\n日付: ${today}`);
-        
+
         // フォームをクリア
         if (workNotesElement) workNotesElement.value = '';
-        
+
         // 最近の記録を更新
         loadRecentRecordsSafely();
-        
+
         // 処理完了
         dailyLimitProcessing = false;
-        
+
     } catch (error) {
         alert('出勤処理中にエラーが発生しました。\n' + error.message);
-        
+
         restoreButton();
     }
 }
@@ -851,14 +818,9 @@ async function handleClockOut() {
         // UI更新
         updateClockButtons('completed');
         updateStatusDisplay('completed', todayAttendanceData);
-        
-        // 🆕 複数現場表示を更新
-        setTimeout(() => {
-            updateMultiSiteDisplay();
-        }, 500);
-        
+
         alert('お疲れさまでした！');
-        
+
         // 最近の記録を更新
         loadRecentRecordsSafely();
         
@@ -924,12 +886,7 @@ async function handleBreakStart() {
         alert('休憩を開始しました');
         updateClockButtons('break');
         updateStatusDisplay('break', todayAttendanceData, breakData);
-        
-        // 🆕 複数現場表示を更新
-        setTimeout(() => {
-            updateMultiSiteDisplay();
-        }, 500);
-        
+
     } catch (error) {
         alert('休憩記録でエラーが発生しました: ' + error.message);
     }
@@ -986,12 +943,7 @@ async function handleBreakEnd() {
         alert('休憩を終了しました');
         updateClockButtons('working');
         updateStatusDisplay('working', todayAttendanceData);
-        
-        // 🆕 複数現場表示を更新
-        setTimeout(() => {
-            updateMultiSiteDisplay();
-        }, 500);
-        
+
     } catch (error) {
         alert('休憩終了記録でエラーが発生しました: ' + error.message);
     }
@@ -1076,22 +1028,22 @@ function updateClockButtons(status) {
             break;
             
         case 'completed':
-            // 全ボタン無効（勤務完了）
+            // 退勤完了後、再度出勤可能に
             if (clockInBtn) {
-                clockInBtn.disabled = true;
-                clockInBtn.textContent = '本日勤務完了';
+                clockInBtn.disabled = false;
+                clockInBtn.textContent = '出勤';
             }
             if (clockOutBtn) {
                 clockOutBtn.disabled = true;
-                clockOutBtn.textContent = '退勤済み';
+                clockOutBtn.textContent = '退勤';
             }
             if (breakStartBtn) {
                 breakStartBtn.disabled = true;
-                breakStartBtn.textContent = '勤務終了';
+                breakStartBtn.textContent = '休憩開始';
             }
             if (breakEndBtn) {
                 breakEndBtn.disabled = true;
-                breakEndBtn.textContent = '勤務終了';
+                breakEndBtn.textContent = '休憩終了';
             }
             break;
     }
@@ -1143,10 +1095,10 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
             case 'completed':
                 statusHtml = `
                     <div class="status-completed">
-                        <h4>✅ 本日は退勤済みです。</h4>
+                        <h4>✅ 退勤しました</h4>
                         <p>現場: ${attendanceData.siteName}</p>
                         <p>勤務時間: ${attendanceData.startTime} - ${attendanceData.endTime}</p>
-                        <p>お疲れさまでした。</p>
+                        <p>お疲れさまでした。再度出勤する場合は出勤ボタンを押してください。</p>
                     </div>
                 `;
                 break;
@@ -1555,11 +1507,6 @@ async function initEmployeePage() {
 
         // 今日の勤怠状態を復元
         restoreTodayAttendanceState();
-
-        // 🆕 複数現場データの表示
-        setTimeout(() => {
-            updateMultiSiteDisplay();
-        }, 1500);
 
         // UI要素の設定
         setupEmployeeEventListeners();
