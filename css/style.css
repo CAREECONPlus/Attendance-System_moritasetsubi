@@ -1755,6 +1755,11 @@ textarea:focus-visible {
     color: var(--careecon-navy);
 }
 
+/* サイトステータスセルのスタイル - 不要な色を上書き */
+.site-list-table .site-status {
+    color: inherit !important;
+}
+
 /* サイトアクションボタン */
 .site-list-table .site-actions {
     white-space: nowrap;

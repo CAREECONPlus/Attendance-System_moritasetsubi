@@ -1777,6 +1777,7 @@ async function loadEmployeeSiteList() {
                     <td class="site-usage">${usageText}</td>
                     <td class="site-actions">
                         <button class="btn btn-secondary btn-small" onclick="editEmployeeSite('${site.id}')">編集</button>
+                        <button class="btn btn-${site.active ? 'danger' : 'success'} btn-small" onclick="toggleEmployeeSiteStatus('${site.id}', ${!site.active})">${site.active ? '無効化' : '有効化'}</button>
                     </td>
                 </tr>
             `;
@@ -1887,6 +1888,52 @@ async function editEmployeeSite(siteId) {
 }
 
 /**
+ * 従業員による現場の有効/無効切り替え
+ */
+async function toggleEmployeeSiteStatus(siteId, newStatus) {
+    try {
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        const sites = await window.getTenantSites(tenantId);
+        const site = sites.find(s => s.id === siteId);
+
+        if (!site) {
+            alert('現場が見つかりません');
+            return;
+        }
+
+        const action = newStatus ? '有効化' : '無効化';
+        if (!confirm(`現場「${site.name}」を${action}しますか？`)) {
+            return;
+        }
+
+        // 現場データを更新
+        const updatedSite = {
+            ...site,
+            active: newStatus,
+            updatedAt: new Date(),
+            updatedBy: currentUser?.email || 'unknown',
+            updatedByRole: 'employee'
+        };
+
+        // テナント設定を更新
+        const updatedSites = sites.map(s => s.id === siteId ? updatedSite : s);
+        await updateEmployeeTenantSites(tenantId, updatedSites);
+
+        // 現場一覧を更新
+        await loadEmployeeSiteList();
+
+        // 勤怠打刻画面の現場選択リストも更新
+        await loadSiteOptions();
+
+        alert(`現場を${action}しました`);
+
+    } catch (error) {
+        console.error('現場ステータス更新エラー:', error);
+        alert('現場ステータスの更新に失敗しました');
+    }
+}
+
+/**
  * テナントの現場設定を更新（従業員用）
  */
 async function updateEmployeeTenantSites(tenantId, sites) {
@@ -1926,5 +1973,6 @@ function escapeHtmlEmployee(text) {
 
 // 従業員用現場管理関数をグローバルスコープに公開
 window.editEmployeeSite = editEmployeeSite;
+window.toggleEmployeeSiteStatus = toggleEmployeeSiteStatus;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
 
