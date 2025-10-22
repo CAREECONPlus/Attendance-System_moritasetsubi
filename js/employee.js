@@ -1334,7 +1334,7 @@ function displayRecentRecords(snapshot) {
     let html = '';
     records.forEach(record => {
         const statusText = getStatusText(record.status);
-        
+
         html += `
             <div class="record-item">
                 <div class="record-header">
@@ -1348,11 +1348,19 @@ function displayRecentRecords(snapshot) {
                         ${record.endTime ? ` / 退勤: ${record.endTime}` : ' (勤務中)'}
                     </div>
                     ${record.notes ? `<div class="record-notes">📝 ${record.notes}</div>` : ''}
+                    ${record.editHistory && record.editHistory.length > 0 ?
+                        `<div class="record-edit-badge">✏️ 編集済み (${record.editHistory.length}回)</div>` : ''
+                    }
+                </div>
+                <div class="record-actions">
+                    <button class="btn btn-secondary btn-small btn-edit-record" onclick="openEditModal('${record.id}')">
+                        ✏️ 編集
+                    </button>
                 </div>
             </div>
         `;
     });
-    
+
     recentList.innerHTML = html;
 }
 
@@ -1665,6 +1673,13 @@ function setupEmployeeEventListeners() {
     if (logoutBtn && !logoutBtn.hasAttribute('data-listener-set')) {
         logoutBtn.addEventListener('click', handleLogout);
         logoutBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    // 勤怠編集フォーム
+    const editAttendanceForm = document.getElementById('edit-attendance-form');
+    if (editAttendanceForm && !editAttendanceForm.hasAttribute('data-listener-set')) {
+        editAttendanceForm.addEventListener('submit', saveEditedAttendance);
+        editAttendanceForm.setAttribute('data-listener-set', 'true');
     }
 
     // タブ切り替えボタン
@@ -2167,10 +2182,170 @@ function escapeHtmlEmployee(text) {
     return div.innerHTML;
 }
 
+/**
+ * 勤怠記録編集モーダルを開く
+ */
+async function openEditModal(recordId) {
+    try {
+        // 記録を取得
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId) return;
+
+        const recordDoc = await firebase.firestore()
+            .collection('tenants')
+            .doc(tenantId)
+            .collection('attendance')
+            .doc(recordId)
+            .get();
+
+        if (!recordDoc.exists) {
+            alert('記録が見つかりませんでした');
+            return;
+        }
+
+        const record = recordDoc.data();
+
+        // フォームに値を設定
+        document.getElementById('edit-record-id').value = recordId;
+        document.getElementById('edit-date').value = record.date || '';
+
+        // 現場リストを読み込む
+        const sites = await window.getTenantSites(tenantId);
+        const siteSelect = document.getElementById('edit-site-name');
+        siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
+
+        sites.filter(s => s.active).forEach(site => {
+            const option = document.createElement('option');
+            option.value = site.name;
+            option.textContent = site.name;
+            if (site.name === record.siteName) {
+                option.selected = true;
+            }
+            siteSelect.appendChild(option);
+        });
+
+        // 時刻を設定（HH:MM形式に変換）
+        document.getElementById('edit-start-time').value = convertToTimeInput(record.startTime);
+        document.getElementById('edit-end-time').value = convertToTimeInput(record.endTime);
+        document.getElementById('edit-notes').value = record.notes || '';
+        document.getElementById('edit-reason').value = '';
+
+        // モーダルを表示
+        document.getElementById('edit-attendance-modal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('モーダル表示エラー:', error);
+        alert('記録の読み込みに失敗しました');
+    }
+}
+
+/**
+ * 編集モーダルを閉じる
+ */
+function closeEditModal() {
+    document.getElementById('edit-attendance-modal').classList.add('hidden');
+    document.getElementById('edit-attendance-form').reset();
+}
+
+/**
+ * 時刻を HH:MM 形式に変換
+ */
+function convertToTimeInput(timeString) {
+    if (!timeString) return '';
+
+    // "09:00:00" または "9:00" 形式を "09:00" に変換
+    const parts = timeString.split(':');
+    if (parts.length >= 2) {
+        const hour = parts[0].padStart(2, '0');
+        const minute = parts[1].padStart(2, '0');
+        return `${hour}:${minute}`;
+    }
+
+    return '';
+}
+
+/**
+ * 勤怠記録を編集保存
+ */
+async function saveEditedAttendance(e) {
+    e.preventDefault();
+
+    try {
+        const recordId = document.getElementById('edit-record-id').value;
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId || !recordId) return;
+
+        const siteName = document.getElementById('edit-site-name').value;
+        const startTime = document.getElementById('edit-start-time').value;
+        const endTime = document.getElementById('edit-end-time').value;
+        const notes = document.getElementById('edit-notes').value;
+        const editReason = document.getElementById('edit-reason').value;
+
+        if (!siteName || !startTime) {
+            alert('現場名と出勤時刻は必須です');
+            return;
+        }
+
+        if (!editReason.trim()) {
+            alert('修正理由を入力してください');
+            return;
+        }
+
+        // 編集履歴を作成
+        const editHistoryEntry = {
+            editedAt: new Date().toISOString(),
+            editedBy: currentUser?.email || 'unknown',
+            reason: editReason,
+            changes: {
+                siteName,
+                startTime: startTime + ':00', // 秒を追加
+                endTime: endTime ? endTime + ':00' : null,
+                notes
+            }
+        };
+
+        // 更新データを準備
+        const updateData = {
+            siteName,
+            startTime: startTime + ':00',
+            notes,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            editHistory: firebase.firestore.FieldValue.arrayUnion(editHistoryEntry)
+        };
+
+        if (endTime) {
+            updateData.endTime = endTime + ':00';
+            updateData.status = 'completed';
+        }
+
+        // Firestoreを更新
+        await firebase.firestore()
+            .collection('tenants')
+            .doc(tenantId)
+            .collection('attendance')
+            .doc(recordId)
+            .update(updateData);
+
+        alert('勤怠記録を更新しました');
+
+        // モーダルを閉じる
+        closeEditModal();
+
+        // 記録一覧を再読み込み
+        await loadRecentRecordsSafely();
+
+    } catch (error) {
+        console.error('記録更新エラー:', error);
+        alert('記録の更新に失敗しました');
+    }
+}
+
 // 従業員用現場管理関数をグローバルスコープに公開
 window.editEmployeeSite = editEmployeeSite;
 window.toggleEmployeeSiteStatus = toggleEmployeeSiteStatus;
 window.toggleEmployeeFavorite = toggleEmployeeFavorite;
 window.selectSiteFromHistory = selectSiteFromHistory;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
 
