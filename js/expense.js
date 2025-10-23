@@ -17,11 +17,18 @@ function getCategoryDisplayName(category) {
  * 経費精算機能の初期化
  */
 function initExpenseManagement() {
+    console.log('initExpenseManagement: 初期化開始');
+
     // 経費追加ボタンのイベント
     const addExpenseBtn = document.getElementById('add-expense-btn');
+    console.log('initExpenseManagement: 経費追加ボタン', addExpenseBtn);
+
     if (addExpenseBtn && !addExpenseBtn.hasAttribute('data-listener-set')) {
+        console.log('initExpenseManagement: イベントリスナーを設定');
         addExpenseBtn.addEventListener('click', openExpenseModal);
         addExpenseBtn.setAttribute('data-listener-set', 'true');
+    } else if (addExpenseBtn) {
+        console.log('initExpenseManagement: イベントリスナーは既に設定済み');
     }
 
     // 経費更新ボタンのイベント
@@ -67,9 +74,13 @@ function initExpenseManagement() {
  * 経費登録モーダルを開く（新規）
  */
 async function openExpenseModal() {
+    console.log('openExpenseModal: 関数が呼ばれました');
+
     try {
         // モーダル要素を取得
         const modal = document.getElementById('expense-modal');
+        console.log('openExpenseModal: モーダル要素', modal);
+
         if (!modal) {
             alert('経費モーダル要素が見つかりません。ページをリロードしてください。');
             return;
