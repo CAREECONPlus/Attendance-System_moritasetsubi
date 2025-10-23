@@ -886,6 +886,18 @@ function switchTab(tab) {
         return;
     }
 
+    // 従業員タブの特別処理
+    if (tab === 'employee') {
+        showEmployeeManagementTab();
+        return;
+    }
+
+    // 現場タブの特別処理
+    if (tab === 'site') {
+        showSiteManagementTab();
+        return;
+    }
+
     // 管理者依頼コンテンツを非表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
     if (adminRequestsContent) {
@@ -909,7 +921,19 @@ function switchTab(tab) {
     if (settingsContent) {
         settingsContent.classList.add('hidden');
     }
-    
+
+    // 従業員管理コンテンツを非表示
+    const employeeManagementContent = document.getElementById('employee-management-content');
+    if (employeeManagementContent) {
+        employeeManagementContent.classList.add('hidden');
+    }
+
+    // 現場管理コンテンツを非表示
+    const siteManagementContent = document.getElementById('site-management-content');
+    if (siteManagementContent) {
+        siteManagementContent.classList.add('hidden');
+    }
+
     // 通常の勤怠データテーブルを表示
     const attendanceContainer = document.querySelector('.attendance-table-container');
     if (attendanceContainer) {
