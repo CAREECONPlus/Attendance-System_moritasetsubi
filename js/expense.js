@@ -113,6 +113,15 @@ async function openExpenseModal() {
         // モーダルを表示（現場リスト読み込み前に表示）
         modal.classList.remove('hidden');
         console.log('openExpenseModal: モーダルを表示しました');
+        console.log('openExpenseModal: モーダルクラス =', modal.className);
+
+        // 計算されたスタイルをチェック
+        const computedStyle = window.getComputedStyle(modal);
+        console.log('openExpenseModal: display =', computedStyle.display);
+        console.log('openExpenseModal: visibility =', computedStyle.visibility);
+        console.log('openExpenseModal: opacity =', computedStyle.opacity);
+        console.log('openExpenseModal: z-index =', computedStyle.zIndex);
+        console.log('openExpenseModal: position =', computedStyle.position);
 
         // 現場リストを読み込む（エラーが発生してもモーダルは表示済み）
         try {
