@@ -110,28 +110,49 @@ async function openExpenseModal() {
             dateInput.value = today;
         }
 
-        // 現場リストを読み込む
-        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
-        if (tenantId && typeof window.getTenantSites === 'function') {
-            const sites = await window.getTenantSites(tenantId);
+        // モーダルを表示（現場リスト読み込み前に表示）
+        modal.classList.remove('hidden');
+        console.log('openExpenseModal: モーダルを表示しました');
+
+        // 現場リストを読み込む（エラーが発生してもモーダルは表示済み）
+        try {
+            const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+            console.log('openExpenseModal: テナントID', tenantId);
+
+            if (tenantId && typeof window.getTenantSites === 'function') {
+                const sites = await window.getTenantSites(tenantId);
+                console.log('openExpenseModal: 現場リスト', sites);
+
+                const siteSelect = document.getElementById('expense-site-name');
+                if (siteSelect && sites) {
+                    siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
+
+                    sites.filter(s => s.active).forEach(site => {
+                        const option = document.createElement('option');
+                        option.value = site.name;
+                        option.textContent = site.name;
+                        siteSelect.appendChild(option);
+                    });
+                }
+            } else {
+                console.warn('openExpenseModal: テナントIDが取得できないか、getTenantSites関数が存在しません');
+                // 現場リストが読み込めなくても、モーダルは表示される
+                const siteSelect = document.getElementById('expense-site-name');
+                if (siteSelect) {
+                    siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
+                }
+            }
+        } catch (siteError) {
+            console.error('openExpenseModal: 現場リスト読み込みエラー（モーダルは表示済み）:', siteError);
+            // エラーが発生してもモーダルは表示される
             const siteSelect = document.getElementById('expense-site-name');
             if (siteSelect) {
                 siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
-
-                sites.filter(s => s.active).forEach(site => {
-                    const option = document.createElement('option');
-                    option.value = site.name;
-                    option.textContent = site.name;
-                    siteSelect.appendChild(option);
-                });
             }
         }
 
-        // モーダルを表示
-        modal.classList.remove('hidden');
-
     } catch (error) {
-        console.error('モーダル表示エラー:', error);
+        console.error('openExpenseModal: モーダル表示エラー:', error);
         alert('モーダルの表示に失敗しました: ' + error.message);
     }
 }
