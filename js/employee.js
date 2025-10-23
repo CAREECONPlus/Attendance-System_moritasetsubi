@@ -590,19 +590,15 @@ function updateCurrentTime() {
 
 // イベントリスナーの設定
 function setupEmployeeEventListeners() {
-    
+
     const clockInBtn = document.getElementById('clock-in-btn');
     const clockOutBtn = document.getElementById('clock-out-btn');
-    const breakStartBtn = document.getElementById('break-start-btn');
-    const breakEndBtn = document.getElementById('break-end-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    
+
     if (clockInBtn) clockInBtn.addEventListener('click', handleClockIn);
     if (clockOutBtn) clockOutBtn.addEventListener('click', handleClockOut);
-    if (breakStartBtn) breakStartBtn.addEventListener('click', handleBreakStart);
-    if (breakEndBtn) breakEndBtn.addEventListener('click', handleBreakEnd);
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
-    
+
 }
 
 // 現場選択の設定（直接入力対応）
@@ -827,12 +823,17 @@ async function handleClockIn() {
         const workNotesElement = document.getElementById('work-notes');
         const workNotes = workNotesElement ? workNotesElement.value.trim() : '';
 
+        // 休憩時間を取得
+        const breakMinutesElement = document.getElementById('break-minutes');
+        const breakMinutes = breakMinutesElement ? parseInt(breakMinutesElement.value) || 60 : 60;
+
         const attendanceData = {
             userId: currentUser.uid,
             userEmail: currentUser.email,
             date: today,
             siteName: siteName,
             startTime: now.toLocaleTimeString('ja-JP'),
+            breakMinutes: breakMinutes,
             status: 'working',
             notes: workNotes,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1048,20 +1049,18 @@ async function handleBreakEnd() {
 
 // updateClockButtons関数
 function updateClockButtons(status) {
-    
+
     const clockInBtn = document.getElementById('clock-in-btn');
     const clockOutBtn = document.getElementById('clock-out-btn');
-    const breakStartBtn = document.getElementById('break-start-btn');
-    const breakEndBtn = document.getElementById('break-end-btn');
-    
+
     // 全ボタンの特殊クラスをリセット
-    [clockInBtn, clockOutBtn, breakStartBtn, breakEndBtn].forEach(btn => {
+    [clockInBtn, clockOutBtn].forEach(btn => {
         if (btn) {
-            btn.classList.remove('break-active', 'processing');
+            btn.classList.remove('processing');
             btn.disabled = false;
         }
     });
-    
+
     switch (status) {
         case 'waiting':
             // 出勤ボタンのみ有効
@@ -1073,18 +1072,11 @@ function updateClockButtons(status) {
                 clockOutBtn.disabled = true;
                 clockOutBtn.textContent = '退勤';
             }
-            if (breakStartBtn) {
-                breakStartBtn.disabled = true;
-                breakStartBtn.textContent = '休憩開始';
-            }
-            if (breakEndBtn) {
-                breakEndBtn.disabled = true;
-                breakEndBtn.textContent = '休憩終了';
-            }
             break;
-            
+
         case 'working':
-            // 出勤済み、退勤・休憩開始が有効
+        case 'break': // breakステータスもworkingと同じ扱い（休憩は自動控除）
+            // 出勤済み、退勤が有効
             if (clockInBtn) {
                 clockInBtn.disabled = true;
                 clockInBtn.textContent = '出勤済み';
@@ -1093,37 +1085,8 @@ function updateClockButtons(status) {
                 clockOutBtn.disabled = false;
                 clockOutBtn.textContent = '退勤';
             }
-            if (breakStartBtn) {
-                breakStartBtn.disabled = false;
-                breakStartBtn.textContent = '休憩開始';
-            }
-            if (breakEndBtn) {
-                breakEndBtn.disabled = true;
-                breakEndBtn.textContent = '休憩終了';
-            }
             break;
-            
-        case 'break':
-            // 出勤済み、退勤・休憩終了が有効
-            if (clockInBtn) {
-                clockInBtn.disabled = true;
-                clockInBtn.textContent = '出勤済み';
-            }
-            if (clockOutBtn) {
-                clockOutBtn.disabled = false;
-                clockOutBtn.textContent = '退勤';
-            }
-            if (breakStartBtn) {
-                breakStartBtn.disabled = true;
-                breakStartBtn.textContent = '休憩中';
-                breakStartBtn.classList.add('break-active'); // 🎨 特殊スタイル適用
-            }
-            if (breakEndBtn) {
-                breakEndBtn.disabled = false;
-                breakEndBtn.textContent = '休憩終了';
-            }
-            break;
-            
+
         case 'completed':
             // 退勤完了後、再度出勤可能に
             if (clockInBtn) {
@@ -1134,20 +1097,12 @@ function updateClockButtons(status) {
                 clockOutBtn.disabled = true;
                 clockOutBtn.textContent = '退勤';
             }
-            if (breakStartBtn) {
-                breakStartBtn.disabled = true;
-                breakStartBtn.textContent = '休憩開始';
-            }
-            if (breakEndBtn) {
-                breakEndBtn.disabled = true;
-                breakEndBtn.textContent = '休憩終了';
-            }
             break;
     }
     
     // 🎯 強制的にスタイルを再適用（キャッシュ問題対策）
     setTimeout(() => {
-        [clockInBtn, clockOutBtn, breakStartBtn, breakEndBtn].forEach(btn => {
+        [clockInBtn, clockOutBtn].forEach(btn => {
             if (btn) {
                 // フォーカスを一瞬当てて外してスタイル更新を強制
                 const originalTabIndex = btn.tabIndex;
@@ -1158,7 +1113,7 @@ function updateClockButtons(status) {
             }
         });
     }, 50);
-    
+
 }
 
 // ステータス表示更新
@@ -1170,25 +1125,20 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
         
         switch (status) {
             case 'working':
+            case 'break': // breakステータスもworkingと同じ表示（休憩は自動控除）
+                const breakInfo = attendanceData.breakMinutes > 0
+                    ? `<p>休憩時間: ${attendanceData.breakMinutes}分（自動控除）</p>`
+                    : '';
                 statusHtml = `
                     <div class="status-working">
                         <h4>💼 勤務中です</h4>
                         <p>現場: ${attendanceData.siteName}</p>
                         <p>出勤時刻: ${attendanceData.startTime}</p>
+                        ${breakInfo}
                     </div>
                 `;
                 break;
-                
-            case 'break':
-                statusHtml = `
-                    <div class="status-break">
-                        <h4>⏸️ 休憩中です</h4>
-                        <p>現場: ${attendanceData.siteName}</p>
-                        <p>休憩開始: ${breakData ? breakData.startTime : '不明'}</p>
-                    </div>
-                `;
-                break;
-                
+
             case 'completed':
                 statusHtml = `
                     <div class="status-completed">

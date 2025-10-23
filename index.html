@@ -51,9 +51,7 @@
         
         /* 勤怠ボタンの状態別色設定（強制適用） */
         #clock-in-btn,
-        #clock-out-btn, 
-        #break-start-btn,
-        #break-end-btn {
+        #clock-out-btn {
             transition: all 0.3s ease !important;
             border: none !important;
             border-radius: var(--radius-lg) !important;
@@ -91,38 +89,6 @@
             opacity: 0.6 !important;
         }
 
-        /* 休憩開始ボタン - 有効状態（黄色） */
-        #break-start-btn:not(:disabled) {
-            background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-            color: black !important;
-        }
-
-        /* 休憩開始ボタン - 休憩中状態（水色） */
-        #break-start-btn.break-active {
-            background: linear-gradient(135deg, #17a2b8, #138496) !important;
-            color: white !important;
-            opacity: 0.85 !important;
-        }
-
-        /* 休憩開始ボタン - 無効状態（グレー） */
-        #break-start-btn:disabled:not(.break-active) {
-            background: #6c757d !important;
-            color: white !important;
-            opacity: 0.6 !important;
-        }
-
-        /* 休憩終了ボタン - 有効状態（オレンジ） */
-        #break-end-btn:not(:disabled) {
-            background: linear-gradient(135deg, #fd7e14, #e8650e) !important;
-            color: white !important;
-        }
-
-        /* 休憩終了ボタン - 無効状態（グレー） */
-        #break-end-btn:disabled {
-            background: #6c757d !important;
-            color: white !important;
-            opacity: 0.6 !important;
-        }
 
         /* ホバー効果（有効なボタンのみ） */
         .clock-btn:not(:disabled):hover {
@@ -402,9 +368,7 @@
         /* 小画面対応 */
         @media (max-width: 480px) {
             #clock-in-btn,
-            #clock-out-btn, 
-            #break-start-btn,
-            #break-end-btn {
+            #clock-out-btn {
                 padding: 14px 8px !important;
                 font-size: 16px !important;
                 min-width: 80px !important;
@@ -1583,15 +1547,11 @@
                         <div class="status-waiting">出勤ボタンを押してください</div>
                     </div>
 
-                    <!-- 出退勤・休憩ボタン -->
+                    <!-- 出退勤ボタン -->
                     <div class="clock-buttons">
                         <div class="button-row">
                             <button class="btn btn-primary clock-btn" id="clock-in-btn">出勤</button>
                             <button class="btn btn-secondary clock-btn" id="clock-out-btn" disabled>退勤</button>
-                        </div>
-                        <div class="button-row">
-                            <button class="btn btn-warning clock-btn" id="break-start-btn" disabled>休憩開始</button>
-                            <button class="btn btn-warning clock-btn" id="break-end-btn" disabled>休憩終了</button>
                         </div>
                     </div>
 
@@ -1602,6 +1562,20 @@
                             <select id="site-name" required>
                                 <option value="">現場を選択してください</option>
                             </select>
+                        </div>
+
+                        <!-- 休憩時間入力 -->
+                        <div class="form-group">
+                            <label for="break-minutes">☕ 休憩時間（分）：</label>
+                            <select id="break-minutes" required>
+                                <option value="0">休憩なし</option>
+                                <option value="30">30分</option>
+                                <option value="45">45分</option>
+                                <option value="60" selected>60分（1時間）</option>
+                                <option value="90">90分（1.5時間）</option>
+                                <option value="120">120分（2時間）</option>
+                            </select>
+                            <small class="form-hint">勤務時間から自動で控除されます</small>
                         </div>
 
                         <!-- 最近使った現場（履歴） -->
