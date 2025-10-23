@@ -1825,13 +1825,13 @@
 
             <main class="admin-main">
                 <div class="admin-tabs">
-                    <button class="tab-btn active" data-tab="daily">日別表示</button>
-                    <button class="tab-btn" data-tab="monthly">月別表示</button>
-                    <button class="tab-btn" data-tab="employee">従業員別</button>
-                    <button class="tab-btn" data-tab="site">現場別</button>
-                    <button class="tab-btn" data-tab="expense-report">💰 経費集計</button>
-                    <button class="tab-btn" data-tab="site-management">現場管理</button>
-                    <button class="tab-btn" data-tab="invite">従業員招待</button>
+                    <button class="tab-btn active" data-tab="daily">📅 日別表示</button>
+                    <button class="tab-btn" data-tab="monthly">📊 月別表示</button>
+                    <button class="tab-btn" data-tab="employee">👥 従業員別</button>
+                    <button class="tab-btn" data-tab="site">🏢 現場別</button>
+                    <button class="tab-btn" data-tab="expense-report">💰 経費精算</button>
+                    <button class="tab-btn" data-tab="settings">⚙️ 設定</button>
+                    <button class="tab-btn" data-tab="invite">✉️ 従業員招待</button>
                     <button class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;">従業員管理</button>
                     <button class="tab-btn" data-tab="admin-requests" id="admin-requests-tab" style="display: none;">管理者依頼</button>
                 </div>
@@ -2272,6 +2272,116 @@
                                         <tr><td colspan="4" class="no-data">データを読み込んでいます...</td></tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⚙️ 設定タブ -->
+                <div id="settings-content" class="tab-content hidden">
+                    <div class="settings-section">
+                        <div class="settings-header">
+                            <h2>⚙️ システム設定</h2>
+                            <p class="settings-description">休憩時間の設定と現場管理ができます。</p>
+                        </div>
+
+                        <!-- 休憩時間設定セクション -->
+                        <div class="setting-card">
+                            <div class="setting-card-header">
+                                <h3>☕ 休憩時間設定</h3>
+                                <p class="setting-description">従業員の勤怠打刻時に自動で控除される休憩時間（分）を設定します。</p>
+                            </div>
+                            <div class="setting-card-body">
+                                <form id="break-time-settings-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="default-break-minutes">デフォルト休憩時間（分） <span class="required">*</span></label>
+                                            <input type="number" id="default-break-minutes" name="defaultBreakMinutes"
+                                                   min="0" max="480" value="60" required
+                                                   placeholder="例: 60">
+                                            <small class="form-help">従業員が出勤時に変更できます。0分に設定すると休憩なしになります。</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="break-time-options">休憩時間の選択肢（カンマ区切り）</label>
+                                            <input type="text" id="break-time-options" name="breakTimeOptions"
+                                                   placeholder="例: 30,45,60,90,120">
+                                            <small class="form-help">従業員が選択できる休憩時間の候補を設定できます。</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            ✅ 保存
+                                        </button>
+                                        <button type="button" id="reset-break-settings" class="btn btn-secondary">
+                                            🔄 デフォルトに戻す
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- 現場管理セクション -->
+                        <div class="setting-card">
+                            <div class="setting-card-header">
+                                <h3>🏢 現場管理</h3>
+                                <p class="setting-description">従業員が選択できる現場を管理できます。</p>
+                            </div>
+                            <div class="setting-card-body">
+                                <!-- 新規現場追加 -->
+                                <div class="site-add-section">
+                                    <h4>➕ 新しい現場を追加</h4>
+                                    <form id="add-site-form">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="add-site-name">現場名 <span class="required">*</span></label>
+                                                <input type="text" id="add-site-name" name="siteName" required
+                                                       placeholder="例: 東京本社" maxlength="50">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="add-site-address">住所</label>
+                                                <input type="text" id="add-site-address" name="siteAddress"
+                                                       placeholder="例: 東京都渋谷区..." maxlength="100">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="add-site-description">説明・備考</label>
+                                                <textarea id="add-site-description" name="siteDescription"
+                                                          placeholder="現場の詳細情報や注意事項など" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary">
+                                                ✅ 現場を追加
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- 現場一覧 -->
+                                <div class="site-list-section">
+                                    <div class="site-list-header">
+                                        <h4>📋 現場一覧</h4>
+                                        <button id="refresh-sites-btn" class="btn btn-secondary btn-small">🔄 更新</button>
+                                    </div>
+                                    <div class="site-list-container">
+                                        <table class="site-list-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>現場名</th>
+                                                    <th>住所</th>
+                                                    <th>作成日</th>
+                                                    <th>状態</th>
+                                                    <th>使用状況</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="site-list-data">
+                                                <!-- 現場データが表示されます -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
