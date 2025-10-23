@@ -926,6 +926,7 @@ function switchTab(tab) {
     const attendanceContainer = document.querySelector('.attendance-table-container');
     if (attendanceContainer) {
         attendanceContainer.classList.remove('hidden');
+        attendanceContainer.style.display = '';  // style.displayをリセット
     }
     
     // フィルター行を表示
@@ -6197,6 +6198,8 @@ async function deleteAttendanceRecordFromFirestore(recordId, tenantId) {
  * 経費レポートタブを表示
  */
 function showExpenseReportTab() {
+    console.log('showExpenseReportTab: 経費精算タブを表示中...');
+
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -6208,25 +6211,33 @@ function showExpenseReportTab() {
         expenseReportBtn.classList.add('active');
     }
 
-    // すべてのコンテンツを非表示
+    // すべての.tab-contentを非表示（経費レポートも一旦非表示にする）
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
-    if (filterRow) filterRow.style.display = 'none';
+    if (filterRow) {
+        filterRow.style.display = 'none';
+    }
 
-    // 勤怠テーブルコンテナを非表示
+    // 勤怠テーブルコンテナを確実に非表示
     const attendanceContainer = document.querySelector('.attendance-table-container');
+    console.log('showExpenseReportTab: 勤怠テーブルコンテナ:', attendanceContainer);
     if (attendanceContainer) {
         attendanceContainer.classList.add('hidden');
+        attendanceContainer.style.display = 'none';
+        console.log('showExpenseReportTab: 勤怠テーブルを非表示にしました');
     }
 
     // 経費レポートコンテンツを表示
     const expenseReportContent = document.getElementById('expense-report-content');
+    console.log('showExpenseReportTab: 経費レポートコンテンツ:', expenseReportContent);
     if (expenseReportContent) {
         expenseReportContent.classList.remove('hidden');
+        expenseReportContent.style.display = 'block';
+        console.log('showExpenseReportTab: 経費レポートコンテンツを表示しました');
     }
 
     // 経費レポート機能を初期化
@@ -6244,6 +6255,8 @@ function showExpenseReportTab() {
  * 設定タブを表示
  */
 function showSettingsTab() {
+    console.log('showSettingsTab: 設定タブを表示中...');
+
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -6255,25 +6268,33 @@ function showSettingsTab() {
         settingsBtn.classList.add('active');
     }
 
-    // すべてのコンテンツを非表示
+    // すべての.tab-contentを非表示（設定タブも一旦非表示にする）
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
-    if (filterRow) filterRow.style.display = 'none';
+    if (filterRow) {
+        filterRow.style.display = 'none';
+    }
 
-    // 勤怠テーブルコンテナを非表示
+    // 勤怠テーブルコンテナを確実に非表示
     const attendanceContainer = document.querySelector('.attendance-table-container');
+    console.log('showSettingsTab: 勤怠テーブルコンテナ:', attendanceContainer);
     if (attendanceContainer) {
         attendanceContainer.classList.add('hidden');
+        attendanceContainer.style.display = 'none';
+        console.log('showSettingsTab: 勤怠テーブルを非表示にしました');
     }
 
     // 設定コンテンツを表示
     const settingsContent = document.getElementById('settings-content');
+    console.log('showSettingsTab: 設定コンテンツ:', settingsContent);
     if (settingsContent) {
         settingsContent.classList.remove('hidden');
+        settingsContent.style.display = 'block';
+        console.log('showSettingsTab: 設定コンテンツを表示しました');
     }
 
     // 設定機能を初期化
