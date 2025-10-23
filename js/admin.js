@@ -922,16 +922,19 @@ function switchTab(tab) {
         employeeManagementContent.classList.add('hidden');
     }
 
-    // 通常の勤怠データテーブルを表示
-    const attendanceContainer = document.querySelector('.attendance-table-container');
-    if (attendanceContainer) {
-        attendanceContainer.classList.remove('hidden');
-        attendanceContainer.style.display = '';  // style.displayをリセット
-    }
-    
+    // 通常の勤怠データテーブルをすべて表示
+    const attendanceContainers = document.querySelectorAll('.attendance-table-container');
+    attendanceContainers.forEach(container => {
+        container.classList.remove('hidden');
+        container.style.display = '';  // style.displayをリセット
+    });
+
     // フィルター行を表示
     const filterRow = document.querySelector('.filter-row');
-    if (filterRow) filterRow.style.display = 'flex';
+    if (filterRow) {
+        filterRow.classList.remove('hidden');
+        filterRow.style.display = 'flex';
+    }
     
     // アクティブタブの切り替え
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -6198,7 +6201,7 @@ async function deleteAttendanceRecordFromFirestore(recordId, tenantId) {
  * 経費レポートタブを表示
  */
 function showExpenseReportTab() {
-    console.log('showExpenseReportTab: 経費精算タブを表示中...');
+    console.log('========== showExpenseReportTab 開始 ==========');
 
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -6211,51 +6214,60 @@ function showExpenseReportTab() {
         expenseReportBtn.classList.add('active');
     }
 
-    // すべての.tab-contentを非表示（経費レポートも一旦非表示にする）
+    // すべての.tab-contentを非表示
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
+    console.log('filterRow:', filterRow);
     if (filterRow) {
         filterRow.style.display = 'none';
+        filterRow.classList.add('hidden');
     }
 
-    // 勤怠テーブルコンテナを確実に非表示
-    const attendanceContainer = document.querySelector('.attendance-table-container');
-    console.log('showExpenseReportTab: 勤怠テーブルコンテナ:', attendanceContainer);
-    if (attendanceContainer) {
-        attendanceContainer.classList.add('hidden');
-        attendanceContainer.style.display = 'none';
-        console.log('showExpenseReportTab: 勤怠テーブルを非表示にしました');
-    }
+    // すべての勤怠テーブルコンテナを確実に非表示
+    const attendanceContainers = document.querySelectorAll('.attendance-table-container');
+    console.log('勤怠テーブルコンテナの数:', attendanceContainers.length);
+    attendanceContainers.forEach((container, index) => {
+        console.log(`コンテナ ${index}:`, container);
+        container.classList.add('hidden');
+        container.style.display = 'none';
+        console.log(`コンテナ ${index} を非表示にしました`);
+    });
 
     // 経費レポートコンテンツを表示
     const expenseReportContent = document.getElementById('expense-report-content');
-    console.log('showExpenseReportTab: 経費レポートコンテンツ:', expenseReportContent);
+    console.log('expense-report-content:', expenseReportContent);
     if (expenseReportContent) {
         expenseReportContent.classList.remove('hidden');
         expenseReportContent.style.display = 'block';
-        console.log('showExpenseReportTab: 経費レポートコンテンツを表示しました');
+        console.log('経費レポートコンテンツを表示しました');
+    } else {
+        console.error('expense-report-contentが見つかりません！');
     }
 
     // 経費レポート機能を初期化
     if (typeof window.initExpenseReport === 'function') {
+        console.log('initExpenseReportを呼び出します');
         window.initExpenseReport();
     }
 
     // 経費レポートデータを読み込み
     if (typeof window.loadExpenseReport === 'function') {
+        console.log('loadExpenseReportを呼び出します');
         window.loadExpenseReport();
     }
+
+    console.log('========== showExpenseReportTab 終了 ==========');
 }
 
 /**
  * 設定タブを表示
  */
 function showSettingsTab() {
-    console.log('showSettingsTab: 設定タブを表示中...');
+    console.log('========== showSettingsTab 開始 ==========');
 
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -6268,47 +6280,57 @@ function showSettingsTab() {
         settingsBtn.classList.add('active');
     }
 
-    // すべての.tab-contentを非表示（設定タブも一旦非表示にする）
+    // すべての.tab-contentを非表示
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
+    console.log('filterRow:', filterRow);
     if (filterRow) {
         filterRow.style.display = 'none';
+        filterRow.classList.add('hidden');
     }
 
-    // 勤怠テーブルコンテナを確実に非表示
-    const attendanceContainer = document.querySelector('.attendance-table-container');
-    console.log('showSettingsTab: 勤怠テーブルコンテナ:', attendanceContainer);
-    if (attendanceContainer) {
-        attendanceContainer.classList.add('hidden');
-        attendanceContainer.style.display = 'none';
-        console.log('showSettingsTab: 勤怠テーブルを非表示にしました');
-    }
+    // すべての勤怠テーブルコンテナを確実に非表示
+    const attendanceContainers = document.querySelectorAll('.attendance-table-container');
+    console.log('勤怠テーブルコンテナの数:', attendanceContainers.length);
+    attendanceContainers.forEach((container, index) => {
+        console.log(`コンテナ ${index}:`, container);
+        container.classList.add('hidden');
+        container.style.display = 'none';
+        console.log(`コンテナ ${index} を非表示にしました`);
+    });
 
     // 設定コンテンツを表示
     const settingsContent = document.getElementById('settings-content');
-    console.log('showSettingsTab: 設定コンテンツ:', settingsContent);
+    console.log('settings-content:', settingsContent);
     if (settingsContent) {
         settingsContent.classList.remove('hidden');
         settingsContent.style.display = 'block';
-        console.log('showSettingsTab: 設定コンテンツを表示しました');
+        console.log('設定コンテンツを表示しました');
+    } else {
+        console.error('settings-contentが見つかりません！');
     }
 
     // 設定機能を初期化
     if (typeof window.initSettings === 'function') {
+        console.log('initSettingsを呼び出します');
         window.initSettings();
     }
 
     // 現場一覧を読み込み
     if (typeof window.loadSiteList === 'function') {
+        console.log('loadSiteListを呼び出します');
         window.loadSiteList();
     }
 
     // 休憩時間設定を読み込み
+    console.log('loadBreakTimeSettingsを呼び出します');
     loadBreakTimeSettings();
+
+    console.log('========== showSettingsTab 終了 ==========');
 }
 
 /**
