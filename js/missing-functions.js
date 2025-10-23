@@ -138,21 +138,24 @@ function showNotification(message, type = 'info') {
  * 現在のテナントIDを取得（フォールバック付き）
  */
 function getCurrentTenantId() {
-    // main.jsまたはtenant.jsの関数を呼び出し
-    if (typeof window.getCurrentTenantId === 'function') {
-        return window.getCurrentTenantId();
-    }
-    
-    // フォールバック: グローバル変数から取得
+    // フォールバック1: グローバル変数から取得
     if (window.currentTenantId) {
         return window.currentTenantId;
     }
-    
-    // フォールバック: ユーザー情報から取得
+
+    // フォールバック2: ユーザー情報から取得
     if (window.currentUser && window.currentUser.tenantId) {
         return window.currentUser.tenantId;
     }
-    
+
+    // フォールバック3: URLパラメータから取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const tenantParam = urlParams.get('tenant');
+    if (tenantParam) {
+        return tenantParam;
+    }
+
+    console.warn('getCurrentTenantId: テナントIDが取得できません');
     return null;
 }
 
