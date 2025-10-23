@@ -892,12 +892,6 @@ function switchTab(tab) {
         return;
     }
 
-    // 現場タブの特別処理
-    if (tab === 'site') {
-        showSiteManagementTab();
-        return;
-    }
-
     // 管理者依頼コンテンツを非表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
     if (adminRequestsContent) {
@@ -926,12 +920,6 @@ function switchTab(tab) {
     const employeeManagementContent = document.getElementById('employee-management-content');
     if (employeeManagementContent) {
         employeeManagementContent.classList.add('hidden');
-    }
-
-    // 現場管理コンテンツを非表示
-    const siteManagementContent = document.getElementById('site-management-content');
-    if (siteManagementContent) {
-        siteManagementContent.classList.add('hidden');
     }
 
     // 通常の勤怠データテーブルを表示
