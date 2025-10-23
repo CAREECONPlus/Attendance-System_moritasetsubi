@@ -880,16 +880,34 @@ function switchTab(tab) {
         return;
     }
 
+    // 設定タブの特別処理
+    if (tab === 'settings') {
+        showSettingsTab();
+        return;
+    }
+
     // 管理者依頼コンテンツを非表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
     if (adminRequestsContent) {
         adminRequestsContent.classList.add('hidden');
     }
-    
+
     // 招待コンテンツを非表示
     const inviteContent = document.getElementById('invite-content');
     if (inviteContent) {
         inviteContent.classList.add('hidden');
+    }
+
+    // 経費レポートコンテンツを非表示
+    const expenseReportContent = document.getElementById('expense-report-content');
+    if (expenseReportContent) {
+        expenseReportContent.classList.add('hidden');
+    }
+
+    // 設定コンテンツを非表示
+    const settingsContent = document.getElementById('settings-content');
+    if (settingsContent) {
+        settingsContent.classList.add('hidden');
     }
     
     // 通常の勤怠データテーブルを表示
@@ -1388,19 +1406,33 @@ function renderAttendanceTable(data) {
  * 管理者イベントの設定
  */
 function setupAdminEvents() {
-    
+
     // CSV出力ボタン
     const exportBtn = getElement('export-csv');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportToCSV);
     }
-    
+
     // フィルター変更イベント
     const filterInputs = document.querySelectorAll('#filter-date, #filter-month, #filter-employee, #filter-site');
     filterInputs.forEach(input => {
         input.addEventListener('change', loadAttendanceData);
     });
-    
+
+    // 設定タブ: 休憩時間設定フォーム
+    const breakTimeSettingsForm = document.getElementById('break-time-settings-form');
+    if (breakTimeSettingsForm && !breakTimeSettingsForm.hasAttribute('data-listener-set')) {
+        breakTimeSettingsForm.addEventListener('submit', saveBreakTimeSettings);
+        breakTimeSettingsForm.setAttribute('data-listener-set', 'true');
+    }
+
+    // 設定タブ: リセットボタン
+    const resetBreakSettings = document.getElementById('reset-break-settings');
+    if (resetBreakSettings && !resetBreakSettings.hasAttribute('data-listener-set')) {
+        resetBreakSettings.addEventListener('click', resetBreakTimeSettings);
+        resetBreakSettings.setAttribute('data-listener-set', 'true');
+    }
+
 }
 
 /**
@@ -6196,6 +6228,138 @@ function showExpenseReportTab() {
     }
 }
 
+/**
+ * 設定タブを表示
+ */
+function showSettingsTab() {
+    // すべてのタブボタンから active を削除
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // 設定タブボタンに active を追加
+    const settingsBtn = document.querySelector('[data-tab="settings"]');
+    if (settingsBtn) {
+        settingsBtn.classList.add('active');
+    }
+
+    // すべてのコンテンツを非表示
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    // フィルター行を非表示
+    const filterRow = document.querySelector('.filter-row');
+    if (filterRow) filterRow.style.display = 'none';
+
+    // 勤怠テーブルコンテナを非表示
+    const attendanceContainer = document.querySelector('.attendance-table-container');
+    if (attendanceContainer) {
+        attendanceContainer.classList.add('hidden');
+    }
+
+    // 設定コンテンツを表示
+    const settingsContent = document.getElementById('settings-content');
+    if (settingsContent) {
+        settingsContent.classList.remove('hidden');
+    }
+
+    // 設定機能を初期化
+    if (typeof window.initSettings === 'function') {
+        window.initSettings();
+    }
+
+    // 現場一覧を読み込み
+    if (typeof window.loadSiteList === 'function') {
+        window.loadSiteList();
+    }
+
+    // 休憩時間設定を読み込み
+    loadBreakTimeSettings();
+}
+
+/**
+ * 休憩時間設定を読み込み
+ */
+async function loadBreakTimeSettings() {
+    try {
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId) return;
+
+        const settings = await window.getTenantSettings(tenantId);
+
+        // デフォルト休憩時間を設定
+        const defaultBreakMinutes = settings?.breakTime?.defaultMinutes || 60;
+        const breakTimeOptions = settings?.breakTime?.options || [30, 45, 60, 90, 120];
+
+        document.getElementById('default-break-minutes').value = defaultBreakMinutes;
+        document.getElementById('break-time-options').value = breakTimeOptions.join(',');
+
+    } catch (error) {
+        console.error('休憩時間設定の読み込みエラー:', error);
+    }
+}
+
+/**
+ * 休憩時間設定を保存
+ */
+async function saveBreakTimeSettings(e) {
+    e.preventDefault();
+
+    try {
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId) {
+            alert('テナント情報が取得できません');
+            return;
+        }
+
+        const defaultBreakMinutes = parseInt(document.getElementById('default-break-minutes').value) || 60;
+        const breakTimeOptionsStr = document.getElementById('break-time-options').value || '30,45,60,90,120';
+        const breakTimeOptions = breakTimeOptionsStr.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+
+        const tenantSettingsRef = firebase.firestore()
+            .collection('tenants')
+            .doc(tenantId)
+            .collection('settings')
+            .doc('config');
+
+        // 現在の設定を取得
+        const settingsDoc = await tenantSettingsRef.get();
+        const currentSettings = settingsDoc.exists ? settingsDoc.data() : {};
+
+        // 休憩時間設定を更新
+        const updateData = {
+            ...currentSettings,
+            breakTime: {
+                defaultMinutes: defaultBreakMinutes,
+                options: breakTimeOptions,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            },
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (settingsDoc.exists) {
+            await tenantSettingsRef.update(updateData);
+        } else {
+            await tenantSettingsRef.set(updateData);
+        }
+
+        alert('休憩時間設定を保存しました');
+
+    } catch (error) {
+        console.error('休憩時間設定の保存エラー:', error);
+        alert('休憩時間設定の保存に失敗しました');
+    }
+}
+
+/**
+ * 休憩時間設定をリセット
+ */
+function resetBreakTimeSettings() {
+    document.getElementById('default-break-minutes').value = 60;
+    document.getElementById('break-time-options').value = '30,45,60,90,120';
+}
+
 // グローバルスコープに関数をエクスポート
 window.initAdminPage = initAdminPage;
 window.switchTab = switchTab;
@@ -6210,4 +6374,7 @@ window.rejectAdminRequest = rejectAdminRequest;
 window.viewRequestDetails = viewRequestDetails;
 window.currentData = currentData;
 window.showExpenseReportTab = showExpenseReportTab;
+window.showSettingsTab = showSettingsTab;
+window.saveBreakTimeSettings = saveBreakTimeSettings;
+window.resetBreakTimeSettings = resetBreakTimeSettings;
 

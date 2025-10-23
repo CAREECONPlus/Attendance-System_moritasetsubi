@@ -529,41 +529,65 @@ textarea:focus {
 }
 
 /* 管理者画面 */
+#admin-page {
+    background: #e9ecef !important;
+    min-height: 100vh !important;
+}
+
+#admin-page .container {
+    background: transparent !important;
+    min-height: 100vh !important;
+}
+
+.admin-main {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    margin: 2rem auto;
+    max-width: 1400px;
+}
+
 .admin-tabs {
     display: flex;
     margin-bottom: 25px;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid rgba(36, 78, 255, 0.1);
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 5px;
-    background: var(--careecon-white);
+    background: transparent;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding: 20px 20px 0 20px;
+    padding: 10px 0px 0 0px;
+    gap: 8px;
 }
 
 .tab-btn {
-    padding: 12px 25px;
+    padding: 14px 28px;
     border: none;
-    background: none;
+    background: linear-gradient(135deg, rgba(241, 244, 255, 0.6), rgba(249, 250, 252, 0.6));
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: var(--text-muted);
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
+    position: relative;
 }
 
 .tab-btn:hover {
     color: var(--careecon-primary-blue);
-    background: rgba(44, 93, 255, 0.05);
+    background: linear-gradient(135deg, rgba(36, 78, 255, 0.08), rgba(36, 78, 255, 0.05));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(36, 78, 255, 0.1);
 }
 
 .tab-btn.active {
-    color: var(--careecon-primary-blue);
-    border-bottom-color: var(--careecon-primary-blue);
-    background: rgba(44, 93, 255, 0.1);
+    color: white;
+    background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+    border-bottom-color: transparent;
+    box-shadow: 0 6px 12px rgba(36, 78, 255, 0.25);
 }
 
 .filter-row {
@@ -610,6 +634,7 @@ textarea:focus {
     box-shadow: var(--shadow-md);
     margin-bottom: 30px;
     border: 2px solid rgba(124, 157, 254, 0.1);
+    padding: 1.5rem;
 }
 
 .attendance-table {
@@ -2173,6 +2198,143 @@ textarea:focus-visible {
 .btn-edit-record {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
+}
+
+/* ========================================
+   設定タブ
+   ======================================== */
+
+.settings-section {
+    padding: 0;
+}
+
+.settings-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.settings-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.settings-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.setting-card {
+    background: linear-gradient(135deg, rgba(241, 244, 255, 0.4), rgba(249, 250, 252, 0.4));
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 2px solid rgba(36, 78, 255, 0.1);
+    box-shadow: var(--shadow-md);
+}
+
+.setting-card-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(36, 78, 255, 0.1);
+    padding-bottom: 1rem;
+}
+
+.setting-card-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+.setting-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.setting-card-body {
+    padding-top: 1rem;
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.site-add-section {
+    margin-bottom: 2rem;
+}
+
+.site-add-section h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 1rem;
+}
+
+.site-list-section {
+    margin-top: 2rem;
+}
+
+.site-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.site-list-header h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+}
+
+.site-list-container {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+}
+
+.site-list-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.site-list-table thead {
+    background: linear-gradient(135deg, var(--careecon-background-blue), var(--careecon-gray-blue));
+}
+
+.site-list-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    font-size: 0.9rem;
+    border-bottom: 2px solid var(--careecon-primary-blue);
+}
+
+.site-list-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.site-list-table tbody tr:hover {
+    background: var(--careecon-background-blue);
+}
+
+.required {
+    color: var(--danger-color);
+    font-weight: 700;
 }
 
 /* ========================================
