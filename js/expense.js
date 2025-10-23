@@ -112,6 +112,7 @@ async function openExpenseModal() {
 
         // モーダルを表示（現場リスト読み込み前に表示）
         modal.classList.remove('hidden');
+        modal.style.display = 'flex';  // インラインスタイルを明示的に設定
         console.log('openExpenseModal: モーダルを表示しました');
         console.log('openExpenseModal: モーダルクラス =', modal.className);
 
@@ -215,7 +216,11 @@ async function openEditExpenseModal(expenseId) {
         });
 
         // モーダルを表示
-        document.getElementById('expense-modal').classList.remove('hidden');
+        const modal = document.getElementById('expense-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';  // インラインスタイルを明示的に設定
+        }
 
     } catch (error) {
         console.error('編集モーダル表示エラー:', error);
@@ -227,7 +232,11 @@ async function openEditExpenseModal(expenseId) {
  * 経費モーダルを閉じる
  */
 function closeExpenseModal() {
-    document.getElementById('expense-modal').classList.add('hidden');
+    const modal = document.getElementById('expense-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';  // インラインスタイルも設定
+    }
     document.getElementById('expense-form').reset();
 }
 
