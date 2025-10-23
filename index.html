@@ -1808,61 +1808,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 経費登録・編集モーダル -->
-                <div id="expense-modal" class="modal hidden">
-                    <div class="modal-overlay" onclick="closeExpenseModal()"></div>
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="expense-modal-title">💰 経費を追加</h3>
-                            <button class="modal-close-btn" onclick="closeExpenseModal()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="expense-form">
-                                <input type="hidden" id="expense-id">
-
-                                <div class="form-group">
-                                    <label for="expense-date">📅 日付 <span class="required">*</span></label>
-                                    <input type="date" id="expense-date" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="expense-category">📂 経費項目 <span class="required">*</span></label>
-                                    <select id="expense-category" required>
-                                        <option value="">選択してください</option>
-                                        <option value="parking">🅿️ 駐車場代</option>
-                                        <option value="tools">🔧 工具代</option>
-                                        <option value="highway">🛣️ 高速代</option>
-                                        <option value="other">📝 その他</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="expense-amount">💵 金額 <span class="required">*</span></label>
-                                    <input type="number" id="expense-amount" min="0" step="1" placeholder="1000" required>
-                                    <small class="form-hint">円単位で入力してください</small>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="expense-site-name">🏢 現場名 <span class="required">*</span></label>
-                                    <select id="expense-site-name" required>
-                                        <option value="">現場を選択してください</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="expense-description">📝 説明・メモ</label>
-                                    <textarea id="expense-description" rows="3" maxlength="500" placeholder="詳細な内容や目的を記入してください"></textarea>
-                                </div>
-
-                                <div class="modal-actions">
-                                    <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">キャンセル</button>
-                                    <button type="submit" class="btn btn-primary">💾 保存</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     </div>
@@ -2421,6 +2366,61 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 経費登録・編集モーダル -->
+    <div id="expense-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeExpenseModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="expense-modal-title">💰 経費を追加</h3>
+                <button class="modal-close-btn" onclick="closeExpenseModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="expense-form">
+                    <input type="hidden" id="expense-id">
+
+                    <div class="form-group">
+                        <label for="expense-date">📅 日付 <span class="required">*</span></label>
+                        <input type="date" id="expense-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-category">📂 経費項目 <span class="required">*</span></label>
+                        <select id="expense-category" required>
+                            <option value="">選択してください</option>
+                            <option value="parking">🅿️ 駐車場代</option>
+                            <option value="tools">🔧 工具代</option>
+                            <option value="highway">🛣️ 高速代</option>
+                            <option value="other">📝 その他</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-amount">💵 金額 <span class="required">*</span></label>
+                        <input type="number" id="expense-amount" min="0" step="1" placeholder="1000" required>
+                        <small class="form-hint">円単位で入力してください</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-site-name">🏢 現場名 <span class="required">*</span></label>
+                        <select id="expense-site-name" required>
+                            <option value="">現場を選択してください</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-description">📝 説明・メモ</label>
+                        <textarea id="expense-description" rows="3" maxlength="500" placeholder="詳細な内容や目的を記入してください"></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">キャンセル</button>
+                        <button type="submit" class="btn btn-primary">💾 保存</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
