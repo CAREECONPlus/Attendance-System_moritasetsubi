@@ -827,32 +827,41 @@ async function initAdminPage() {
  * 管理者画面の基本的なUI初期化
  */
 function setupAdminBasics() {
-    
+    console.log('========== setupAdminBasics() 開始 ==========');
+
     // ユーザー名を表示
     const currentUser = getCurrentUser();
     if (currentUser) {
         const userNameEl = getElement('admin-user-name');
         if (userNameEl) {
             userNameEl.textContent = currentUser.displayName || currentUser.email;
+            console.log('ユーザー名を設定:', currentUser.displayName || currentUser.email);
         }
     }
-    
+
     // ログアウトボタン
     const logoutBtn = getElement('admin-logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
             signOut();
         });
+        console.log('ログアウトボタンのイベントリスナーを設定');
     }
-    
+
     // タブ切り替えイベント
     const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
+    console.log('タブボタンの数:', tabBtns.length);
+    tabBtns.forEach((btn, index) => {
+        const tabName = btn.getAttribute('data-tab');
+        console.log(`タブボタン ${index}: data-tab="${tabName}"`);
         btn.addEventListener('click', function() {
             const tab = this.getAttribute('data-tab');
+            console.log(`タブボタンがクリックされました: ${tab}`);
             switchTab(tab);
         });
     });
+    console.log('すべてのタブボタンにイベントリスナーを設定しました');
+    console.log('========== setupAdminBasics() 終了 ==========');
 }
 
 /**
