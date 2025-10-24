@@ -39,7 +39,7 @@
     <script src="js/auth.js?v=20250124c"></script>
     <script src="js/main.js?v=20250124c"></script>
     <script src="js/tenant-settings.js?v=20250124c"></script>
-    <script src="js/employee.js?v=20250124e"></script>
+    <script src="js/employee.js?v=20250124g"></script>
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/expense-report.js?v=20250124c"></script>
     <script src="js/admin.js?v=20250124c"></script>
@@ -1749,61 +1749,6 @@
                             <div class="loading-message">🔄 記録を読み込み中...</div>
                         </div>
                     </section>
-
-                    <!-- 勤怠記録編集モーダル -->
-                    <div id="edit-attendance-modal" class="modal hidden">
-                        <div class="modal-overlay" onclick="closeEditModal()"></div>
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>✏️ 勤怠記録を編集</h3>
-                                <button class="modal-close-btn" onclick="closeEditModal()">×</button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="edit-attendance-form">
-                                    <input type="hidden" id="edit-record-id">
-
-                                    <div class="form-group">
-                                        <label for="edit-date">📅 日付</label>
-                                        <input type="date" id="edit-date" readonly>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="edit-site-name">🏢 現場名</label>
-                                        <select id="edit-site-name" required>
-                                            <option value="">現場を選択してください</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="edit-start-time">⏰ 出勤時刻</label>
-                                            <input type="time" id="edit-start-time" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="edit-end-time">🏁 退勤時刻</label>
-                                            <input type="time" id="edit-end-time">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="edit-notes">📝 メモ</label>
-                                        <textarea id="edit-notes" rows="3" maxlength="500" placeholder="作業内容や特記事項"></textarea>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="edit-reason">✍️ 修正理由 <span class="required">*</span></label>
-                                        <textarea id="edit-reason" rows="2" maxlength="200" placeholder="修正理由を入力してください" required></textarea>
-                                        <small class="form-hint">修正理由は履歴として保存されます</small>
-                                    </div>
-
-                                    <div class="modal-actions">
-                                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
-                                        <button type="submit" class="btn btn-primary">💾 保存</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- 現場管理タブ -->
@@ -2576,6 +2521,61 @@
 
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">キャンセル</button>
+                        <button type="submit" class="btn btn-primary">💾 保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 勤怠記録編集モーダル（従業員用） - bodyの直下に配置 -->
+    <div id="edit-attendance-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeEditModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ 勤怠記録を編集</h3>
+                <button class="modal-close-btn" onclick="closeEditModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-attendance-form">
+                    <input type="hidden" id="edit-record-id">
+
+                    <div class="form-group">
+                        <label for="edit-date">📅 日付</label>
+                        <input type="date" id="edit-date" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-site-name">🏢 現場名</label>
+                        <select id="edit-site-name" required>
+                            <option value="">現場を選択してください</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-start-time">⏰ 出勤時刻</label>
+                            <input type="time" id="edit-start-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-end-time">🏁 退勤時刻</label>
+                            <input type="time" id="edit-end-time">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-notes">📝 メモ</label>
+                        <textarea id="edit-notes" rows="3" maxlength="500" placeholder="作業内容や特記事項"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-reason">✍️ 修正理由 <span class="required">*</span></label>
+                        <textarea id="edit-reason" rows="2" maxlength="200" placeholder="修正理由を入力してください" required></textarea>
+                        <small class="form-hint">修正理由は履歴として保存されます</small>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
                         <button type="submit" class="btn btn-primary">💾 保存</button>
                     </div>
                 </form>
