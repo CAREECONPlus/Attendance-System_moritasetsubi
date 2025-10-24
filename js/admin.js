@@ -5165,8 +5165,10 @@ function initAdminTabs() {
     tabBtns.forEach(btn => {
         logger.log('タブボタン:', btn.getAttribute('data-tab'));
         if (!btn.hasAttribute('data-listener-set')) {
-            btn.addEventListener('click', (e) => {
-                const tabName = e.target.getAttribute('data-tab');
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const tabName = this.getAttribute('data-tab');  // e.target → this に変更
                 logger.log('タブクリック:', tabName);
                 if (tabName) {
                     switchTab(tabName);
