@@ -1,5 +1,8 @@
 // employee.js - 従業員ページの機能（完全版 - 日付修正版）
 
+console.log('========================================');
+console.log('📦 employee.js ファイル読み込み開始');
+console.log('========================================');
 
 // 現在のユーザー情報とグローバル変数
 let currentUser = null;
@@ -2379,4 +2382,33 @@ window.selectSiteFromHistory = selectSiteFromHistory;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
+
+// 🔧 デバッグ: ファイル読み込み完了の確認
+console.log('========================================');
+console.log('✅ employee.js ファイル読み込み完了');
+console.log('📌 window.openEditModal が利用可能:', typeof window.openEditModal === 'function');
+console.log('📌 window.closeEditModal が利用可能:', typeof window.closeEditModal === 'function');
+console.log('========================================');
+
+// DOMContentLoaded後に再度確認
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔧 DOMContentLoaded: employee.js 関数チェック');
+        console.log('  - window.openEditModal:', typeof window.openEditModal);
+        console.log('  - window.closeEditModal:', typeof window.closeEditModal);
+
+        // テスト用: 編集ボタンが生成されたらクリックイベントをテスト
+        setTimeout(function() {
+            const editButtons = document.querySelectorAll('.btn-edit-record');
+            console.log('🔍 編集ボタンの数:', editButtons.length);
+            if (editButtons.length > 0) {
+                console.log('🔍 最初の編集ボタンのonclick属性:', editButtons[0].getAttribute('onclick'));
+            }
+        }, 2000);
+    });
+} else {
+    console.log('🔧 DOMContentLoaded: employee.js 関数チェック (already loaded)');
+    console.log('  - window.openEditModal:', typeof window.openEditModal);
+    console.log('  - window.closeEditModal:', typeof window.closeEditModal);
+}
 
