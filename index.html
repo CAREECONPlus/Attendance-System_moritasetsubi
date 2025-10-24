@@ -2530,11 +2530,11 @@
 
     <!-- 勤怠記録編集モーダル（従業員用） - bodyの直下に配置 -->
     <div id="edit-attendance-modal" class="modal hidden">
-        <div class="modal-overlay" onclick="closeEditModal()"></div>
+        <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3>✏️ 勤怠記録を編集</h3>
-                <button class="modal-close-btn" onclick="closeEditModal()">×</button>
+                <button class="modal-close-btn">×</button>
             </div>
             <div class="modal-body">
                 <form id="edit-attendance-form">
@@ -2575,7 +2575,7 @@
                     </div>
 
                     <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
+                        <button type="button" class="btn btn-secondary">キャンセル</button>
                         <button type="submit" class="btn btn-primary">💾 保存</button>
                     </div>
                 </form>

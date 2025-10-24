@@ -2259,6 +2259,9 @@ async function openEditModal(recordId) {
         console.log('🔍 モーダルのdisplayスタイル（設定後）:', modal.style.display);
         console.log('🔍 モーダルの計算済みスタイル（設定後）:', window.getComputedStyle(modal).display);
 
+        // イベントリスナーを設定（重複を防ぐため、一度削除してから追加）
+        setupEditModalCloseListeners();
+
         console.log('✅ モーダルを表示しました');
 
     } catch (error) {
@@ -2271,6 +2274,52 @@ async function openEditModal(recordId) {
     }
 }
 
+/**
+ * 編集モーダルの閉じるイベントリスナーを設定
+ */
+function setupEditModalCloseListeners() {
+    console.log('🔧 setupEditModalCloseListeners: イベントリスナーを設定');
+
+    const modal = document.getElementById('edit-attendance-modal');
+    const overlay = modal?.querySelector('.modal-overlay');
+    const closeBtn = modal?.querySelector('.modal-close-btn');
+    const cancelBtn = modal?.querySelector('.btn-secondary');
+
+    // 既存のイベントリスナーをクリア（クローンして置き換え）
+    if (overlay) {
+        const newOverlay = overlay.cloneNode(true);
+        overlay.parentNode.replaceChild(newOverlay, overlay);
+        newOverlay.addEventListener('click', function(e) {
+            console.log('✅ オーバーレイクリック検出');
+            e.stopPropagation();
+            closeEditModal();
+        });
+        console.log('  - オーバーレイのイベントリスナーを設定');
+    }
+
+    if (closeBtn) {
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        newCloseBtn.addEventListener('click', function(e) {
+            console.log('✅ ×ボタンクリック検出');
+            e.stopPropagation();
+            closeEditModal();
+        });
+        console.log('  - ×ボタンのイベントリスナーを設定');
+    }
+
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.addEventListener('click', function(e) {
+            console.log('✅ キャンセルボタンクリック検出');
+            e.stopPropagation();
+            closeEditModal();
+        });
+        console.log('  - キャンセルボタンのイベントリスナーを設定');
+    }
+}
+
 // 即座にグローバルスコープに公開（HTMLから呼び出せるように）
 window.openEditModal = openEditModal;
 
@@ -2278,16 +2327,34 @@ window.openEditModal = openEditModal;
  * 編集モーダルを閉じる
  */
 function closeEditModal() {
-    console.log('closeEditModal 呼び出し');
+    console.log('========================================');
+    console.log('🔧 closeEditModal 呼び出し');
+    console.log('========================================');
+
     const modal = document.getElementById('edit-attendance-modal');
+    console.log('モーダル要素:', modal);
+
     if (modal) {
+        console.log('🔍 閉じる前のクラスリスト:', modal.classList.toString());
+        console.log('🔍 閉じる前のdisplayスタイル:', modal.style.display);
+
         modal.classList.add('hidden');
-        modal.style.display = 'none'; // インラインスタイルをクリア
+        modal.style.display = 'none';
+
+        console.log('🔍 閉じた後のクラスリスト:', modal.classList.toString());
+        console.log('🔍 閉じた後のdisplayスタイル:', modal.style.display);
+        console.log('✅ モーダルを閉じました');
+    } else {
+        console.error('❌ モーダル要素が見つかりません');
     }
+
     const form = document.getElementById('edit-attendance-form');
     if (form) {
         form.reset();
+        console.log('✅ フォームをリセットしました');
     }
+
+    console.log('========================================');
 }
 
 // 即座にグローバルスコープに公開
