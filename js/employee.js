@@ -1,9 +1,5 @@
 // employee.js - 従業員ページの機能（完全版 - 日付修正版）
 
-console.log('========================================');
-console.log('📦 employee.js ファイル読み込み開始');
-console.log('========================================');
-
 // 現在のユーザー情報とグローバル変数
 let currentUser = null;
 let dailyLimitProcessing = false;
@@ -266,15 +262,14 @@ async function checkSiteLimit(userId, siteName) {
         if (!activeSnapshot.empty) {
             // 同一現場で未完了の勤務がある場合
             const activeRecord = activeSnapshot.docs[0].data();
-            logger.log('🚨 同一現場で未完了の勤務を検出:', siteName);
-            
+
             // グローバル変数を更新
             todayAttendanceData = {
                 id: activeSnapshot.docs[0].id,
                 ...activeRecord
             };
             currentAttendanceId = activeSnapshot.docs[0].id;
-            
+
             await restoreCurrentState(activeRecord);
             return { canClockIn: false, reason: 'active_work' };
         }
@@ -297,10 +292,8 @@ async function checkSiteLimit(userId, siteName) {
             if (lastEndTime) {
                 const timeDifference = (now - lastEndTime) / (1000 * 60); // 分単位
                 const timeThreshold = 60; // 1時間以内の再出勤は確認が必要
-                
+
                 if (timeDifference <= timeThreshold) {
-                    logger.log('⚠️ 短時間での再出勤を検出:', siteName, `${Math.round(timeDifference)}分前に退勤`);
-                    
                     return {
                         canClockIn: false,
                         reason: 'recent_clock_out',
@@ -488,39 +481,36 @@ function displayMultiSiteAttendance(sites) {
 // 🆕 現場切り替え機能
 async function switchToSite(attendanceId, siteName) {
     try {
-        logger.log('🔄 現場切り替え開始:', siteName);
-        
         // 指定された勤怠レコードを取得
         const doc = await getAttendanceCollection().doc(attendanceId).get();
-        
+
         if (!doc.exists) {
             alert('勤怠データが見つかりません');
             return;
         }
-        
+
         const attendanceData = doc.data();
-        
+
         // グローバル変数を更新
         currentAttendanceId = attendanceId;
         todayAttendanceData = {
             id: attendanceId,
             ...attendanceData
         };
-        
+
         // 状態を復元
         await restoreCurrentState(attendanceData);
-        
+
         // 現場選択を更新
         const siteSelect = document.getElementById('site-name');
         if (siteSelect) {
             siteSelect.value = siteName;
         }
-        
+
         alert(`${siteName}に切り替えました`);
-        logger.log('✅ 現場切り替え完了:', siteName);
-        
+
     } catch (error) {
-        console.error('❌ 現場切り替えエラー:', error);
+        console.error('現場切り替えエラー:', error);
         alert('現場の切り替えに失敗しました');
     }
 }
@@ -618,12 +608,9 @@ async function loadSiteOptions() {
         }
         
         const sites = await window.getTenantSites(tenantId);
-        logger.log('loadSiteOptions - 取得した現場データ:', sites);
-        
+
         const siteSelect = document.getElementById('site-name');
-        logger.log('loadSiteOptions - セレクト要素:', siteSelect);
-        logger.log('loadSiteOptions - 現在のオプション数:', siteSelect?.children.length);
-        
+
         if (siteSelect && sites && sites.length > 0) {
             // 既存のオプションをクリア（最初の1つ「現場を選択してください」のみ残す）
             while (siteSelect.children.length > 1) {
@@ -1168,67 +1155,55 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
 
 // 最近の記録を安全に読み込み（直近3日間のみ）
 async function loadRecentRecordsSafely() {
-    logger.log('loadRecentRecordsSafely called');
-    
     const recentList = document.getElementById('recent-list');
     if (!recentList) {
         console.error('recent-list element not found');
         return;
     }
-    
+
     try {
         if (!currentUser) {
-            logger.log('currentUser not set, showing welcome message');
             showWelcomeMessage();
             return;
         }
-        
-        logger.log('Loading records for user:', currentUser.uid);
-        
+
         // 直近3日間の日付範囲を計算
         const today = getTodayJST();
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 2); // 今日含めて3日間
         const threeDaysAgoString = threeDaysAgo.toISOString().split('T')[0];
-        
-        
+
         // インデックス不要の簡素化クエリ（ユーザーIDのみでフィルター）
         const query = getAttendanceCollection()
             .where('userId', '==', currentUser.uid)
             .limit(20); // 多めに取得してクライアント側でフィルター
-        
+
         const snapshot = await query.get();
-        logger.log('Query completed, docs found:', snapshot.size);
-        
+
         // クライアント側で直近3日間でフィルター
         const filteredDocs = [];
         snapshot.docs.forEach(doc => {
             const data = doc.data();
             const recordDate = data.date;
-            logger.log('Processing record:', { id: doc.id, date: recordDate });
             if (recordDate && recordDate >= threeDaysAgoString && recordDate <= today) {
                 filteredDocs.push(doc);
             }
         });
-        
-        logger.log('Filtered docs:', filteredDocs.length);
-        
+
         // 擬似的なsnapshot作成
         const filteredSnapshot = {
             empty: filteredDocs.length === 0,
             size: filteredDocs.length,
             docs: filteredDocs
         };
-        
+
         if (filteredSnapshot.empty) {
-            logger.log('No recent records found, showing welcome message');
             showWelcomeMessage();
             return;
         }
-        
-        logger.log('Displaying records');
+
         displayRecentRecords(filteredSnapshot);
-        
+
     } catch (error) {
         console.error('Error loading recent records:', error);
         handleRecordLoadError(error);
@@ -1472,16 +1447,14 @@ async function adminResetEmployeeAttendance(userId, targetDate) {
         if (!targetDate) {
             targetDate = getTodayJST();
         }
-        
-        logger.log('🔄 管理者による勤怠状態リセット開始:', userId, targetDate);
-        
+
         // 対象日の勤怠レコードを取得
         const attendanceQuery = getAttendanceCollection()
             .where('userId', '==', userId)
             .where('date', '==', targetDate);
-        
+
         const attendanceSnapshot = await attendanceQuery.get();
-        
+
         if (!attendanceSnapshot.empty) {
             // 勤怠レコードを未完了状態に変更
             const updatePromises = attendanceSnapshot.docs.map(doc => {
@@ -1493,11 +1466,9 @@ async function adminResetEmployeeAttendance(userId, targetDate) {
                     adminResetAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
-            
+
             await Promise.all(updatePromises);
-            
-            logger.log('✅ 勤怠状態リセット完了:', attendanceSnapshot.docs.length, '件');
-            
+
             // 管理者ログに記録
             const adminLog = {
                 action: 'reset_attendance_state',
@@ -1508,16 +1479,16 @@ async function adminResetEmployeeAttendance(userId, targetDate) {
                 recordCount: attendanceSnapshot.docs.length,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
-            
+
             await firebase.firestore().collection('admin_logs').add(adminLog);
-            
+
             return { success: true, message: '勤怠状態をリセットしました' };
         } else {
             return { success: false, message: '対象日の勤怠データが見つかりません' };
         }
-        
+
     } catch (error) {
-        console.error('❌ 勤怠状態リセットエラー:', error);
+        console.error('勤怠状態リセットエラー:', error);
         return { success: false, message: 'リセット処理でエラーが発生しました' };
     }
 }
@@ -2154,22 +2125,16 @@ function escapeHtmlEmployee(text) {
  * 勤怠記録編集モーダルを開く
  */
 async function openEditModal(recordId) {
-    console.log('========================================');
-    console.log('🔧 openEditModal 呼び出し - recordId:', recordId);
-    console.log('========================================');
-
     try {
         // 記録を取得
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
-        console.log('tenantId:', tenantId);
 
         if (!tenantId) {
-            console.error('tenantIdが取得できませんでした');
+            console.error('テナント情報が取得できませんでした');
             alert('テナント情報が取得できませんでした');
             return;
         }
 
-        console.log('Firestore クエリ開始...');
         const recordDoc = await firebase.firestore()
             .collection('tenants')
             .doc(tenantId)
@@ -2177,21 +2142,16 @@ async function openEditModal(recordId) {
             .doc(recordId)
             .get();
 
-        console.log('recordDoc.exists:', recordDoc.exists);
-
         if (!recordDoc.exists) {
             alert('記録が見つかりませんでした');
             return;
         }
 
         const record = recordDoc.data();
-        console.log('取得したレコード:', record);
 
         // フォームに値を設定
         const editRecordIdEl = document.getElementById('edit-record-id');
         const editDateEl = document.getElementById('edit-date');
-        console.log('edit-record-id要素:', editRecordIdEl);
-        console.log('edit-date要素:', editDateEl);
 
         if (!editRecordIdEl || !editDateEl) {
             console.error('必要なフォーム要素が見つかりません');
@@ -2203,13 +2163,11 @@ async function openEditModal(recordId) {
         editDateEl.value = record.date || '';
 
         // 現場リストを読み込む
-        console.log('現場リスト読み込み開始...');
         const sites = await window.getTenantSites(tenantId);
-        console.log('取得した現場数:', sites?.length);
 
         const siteSelect = document.getElementById('edit-site-name');
         if (!siteSelect) {
-            console.error('edit-site-name要素が見つかりません');
+            console.error('現場選択フォームが見つかりません');
             alert('現場選択フォームが見つかりませんでした');
             return;
         }
@@ -2239,37 +2197,21 @@ async function openEditModal(recordId) {
 
         // モーダルを表示
         const modal = document.getElementById('edit-attendance-modal');
-        console.log('モーダル要素:', modal);
-        console.log('🔍 モーダルのクラスリスト（表示前）:', modal?.classList.toString());
-        console.log('🔍 モーダルのdisplayスタイル（表示前）:', modal?.style.display);
-        console.log('🔍 モーダルの計算済みスタイル（表示前）:', window.getComputedStyle(modal).display);
 
         if (!modal) {
-            console.error('edit-attendance-modal要素が見つかりません');
+            console.error('編集モーダルが見つかりません');
             alert('編集モーダルが見つかりませんでした');
             return;
         }
 
-        console.log('🔧 hiddenクラスを削除します...');
         modal.classList.remove('hidden');
-        console.log('🔍 モーダルのクラスリスト（削除後）:', modal.classList.toString());
-
-        console.log('🔧 displayスタイルをblockに設定します...');
         modal.style.display = 'block';
-        console.log('🔍 モーダルのdisplayスタイル（設定後）:', modal.style.display);
-        console.log('🔍 モーダルの計算済みスタイル（設定後）:', window.getComputedStyle(modal).display);
 
-        // イベントリスナーを設定（重複を防ぐため、一度削除してから追加）
+        // イベントリスナーを設定
         setupEditModalCloseListeners();
 
-        console.log('✅ モーダルを表示しました');
-
     } catch (error) {
-        console.error('========================================');
-        console.error('❌ モーダル表示エラー:', error);
-        console.error('エラー詳細:', error.message);
-        console.error('スタックトレース:', error.stack);
-        console.error('========================================');
+        console.error('モーダル表示エラー:', error);
         alert('記録の読み込みに失敗しました:\n' + error.message);
     }
 }
@@ -2278,8 +2220,6 @@ async function openEditModal(recordId) {
  * 編集モーダルの閉じるイベントリスナーを設定
  */
 function setupEditModalCloseListeners() {
-    console.log('🔧 setupEditModalCloseListeners: イベントリスナーを設定');
-
     const modal = document.getElementById('edit-attendance-modal');
     const overlay = modal?.querySelector('.modal-overlay');
     const closeBtn = modal?.querySelector('.modal-close-btn');
@@ -2287,34 +2227,17 @@ function setupEditModalCloseListeners() {
 
     // モーダルを閉じる処理を直接定義
     const closeModalDirectly = function() {
-        console.log('========================================');
-        console.log('🔧 closeModalDirectly 呼び出し');
-        console.log('========================================');
-
         const modalEl = document.getElementById('edit-attendance-modal');
-        console.log('モーダル要素:', modalEl);
 
         if (modalEl) {
-            console.log('🔍 閉じる前のクラスリスト:', modalEl.classList.toString());
-            console.log('🔍 閉じる前のdisplayスタイル:', modalEl.style.display);
-
             modalEl.classList.add('hidden');
             modalEl.style.display = 'none';
-
-            console.log('🔍 閉じた後のクラスリスト:', modalEl.classList.toString());
-            console.log('🔍 閉じた後のdisplayスタイル:', modalEl.style.display);
-            console.log('✅ モーダルを閉じました');
-        } else {
-            console.error('❌ モーダル要素が見つかりません');
         }
 
         const formEl = document.getElementById('edit-attendance-form');
         if (formEl) {
             formEl.reset();
-            console.log('✅ フォームをリセットしました');
         }
-
-        console.log('========================================');
     };
 
     // 既存のイベントリスナーをクリア（クローンして置き換え）
@@ -2322,36 +2245,30 @@ function setupEditModalCloseListeners() {
         const newOverlay = overlay.cloneNode(true);
         overlay.parentNode.replaceChild(newOverlay, overlay);
         newOverlay.addEventListener('click', function(e) {
-            console.log('✅ オーバーレイクリック検出');
             e.preventDefault();
             e.stopPropagation();
             closeModalDirectly();
         });
-        console.log('  - オーバーレイのイベントリスナーを設定');
     }
 
     if (closeBtn) {
         const newCloseBtn = closeBtn.cloneNode(true);
         closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
         newCloseBtn.addEventListener('click', function(e) {
-            console.log('✅ ×ボタンクリック検出');
             e.preventDefault();
             e.stopPropagation();
             closeModalDirectly();
         });
-        console.log('  - ×ボタンのイベントリスナーを設定');
     }
 
     if (cancelBtn) {
         const newCancelBtn = cancelBtn.cloneNode(true);
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
         newCancelBtn.addEventListener('click', function(e) {
-            console.log('✅ キャンセルボタンクリック検出');
             e.preventDefault();
             e.stopPropagation();
             closeModalDirectly();
         });
-        console.log('  - キャンセルボタンのイベントリスナーを設定');
     }
 }
 
@@ -2362,34 +2279,17 @@ window.openEditModal = openEditModal;
  * 編集モーダルを閉じる
  */
 function closeEditModal() {
-    console.log('========================================');
-    console.log('🔧 closeEditModal 呼び出し');
-    console.log('========================================');
-
     const modal = document.getElementById('edit-attendance-modal');
-    console.log('モーダル要素:', modal);
 
     if (modal) {
-        console.log('🔍 閉じる前のクラスリスト:', modal.classList.toString());
-        console.log('🔍 閉じる前のdisplayスタイル:', modal.style.display);
-
         modal.classList.add('hidden');
         modal.style.display = 'none';
-
-        console.log('🔍 閉じた後のクラスリスト:', modal.classList.toString());
-        console.log('🔍 閉じた後のdisplayスタイル:', modal.style.display);
-        console.log('✅ モーダルを閉じました');
-    } else {
-        console.error('❌ モーダル要素が見つかりません');
     }
 
     const form = document.getElementById('edit-attendance-form');
     if (form) {
         form.reset();
-        console.log('✅ フォームをリセットしました');
     }
-
-    console.log('========================================');
 }
 
 // 即座にグローバルスコープに公開
@@ -2477,17 +2377,14 @@ async function saveEditedAttendance(e) {
         alert('勤怠記録を更新しました');
 
         // モーダルを閉じる（直接処理）
-        console.log('🔧 保存後のモーダルクローズ処理開始');
         const modalEl = document.getElementById('edit-attendance-modal');
         if (modalEl) {
             modalEl.classList.add('hidden');
             modalEl.style.display = 'none';
-            console.log('✅ モーダルを閉じました（保存後）');
         }
         const formEl = document.getElementById('edit-attendance-form');
         if (formEl) {
             formEl.reset();
-            console.log('✅ フォームをリセットしました（保存後）');
         }
 
         // 記録一覧を再読み込み
@@ -2507,33 +2404,4 @@ window.selectSiteFromHistory = selectSiteFromHistory;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
-
-// 🔧 デバッグ: ファイル読み込み完了の確認
-console.log('========================================');
-console.log('✅ employee.js ファイル読み込み完了');
-console.log('📌 window.openEditModal が利用可能:', typeof window.openEditModal === 'function');
-console.log('📌 window.closeEditModal が利用可能:', typeof window.closeEditModal === 'function');
-console.log('========================================');
-
-// DOMContentLoaded後に再度確認
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🔧 DOMContentLoaded: employee.js 関数チェック');
-        console.log('  - window.openEditModal:', typeof window.openEditModal);
-        console.log('  - window.closeEditModal:', typeof window.closeEditModal);
-
-        // テスト用: 編集ボタンが生成されたらクリックイベントをテスト
-        setTimeout(function() {
-            const editButtons = document.querySelectorAll('.btn-edit-record');
-            console.log('🔍 編集ボタンの数:', editButtons.length);
-            if (editButtons.length > 0) {
-                console.log('🔍 最初の編集ボタンのonclick属性:', editButtons[0].getAttribute('onclick'));
-            }
-        }, 2000);
-    });
-} else {
-    console.log('🔧 DOMContentLoaded: employee.js 関数チェック (already loaded)');
-    console.log('  - window.openEditModal:', typeof window.openEditModal);
-    console.log('  - window.closeEditModal:', typeof window.closeEditModal);
-}
 
