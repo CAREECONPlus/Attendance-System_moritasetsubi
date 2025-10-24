@@ -1439,18 +1439,13 @@
     </style>
 
     <script>
-    // 🔧 緊急修正: タブクリックイベントの即時設定
-    // GitHub Pagesのキャッシュ問題を回避するため、HTMLに直接埋め込み
+    // タブクリックイベントの即時設定
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('🔧 緊急修正: タブイベントリスナーを設定中...');
-
         setTimeout(function() {
             const tabBtns = document.querySelectorAll('.tab-btn');
-            console.log('見つかったタブボタン:', tabBtns.length);
 
             tabBtns.forEach(function(btn, index) {
                 const tabName = btn.getAttribute('data-tab');
-                console.log(`タブボタン ${index}: ${tabName}`);
 
                 // 既存のリスナーを削除
                 const newBtn = btn.cloneNode(true);
@@ -1461,10 +1456,8 @@
                     e.preventDefault();
                     e.stopPropagation();
                     const tab = this.getAttribute('data-tab');
-                    console.log('🖱️ タブクリック:', tab);
 
                     if (tab === 'expense-report') {
-                        console.log('💰 経費精算タブの処理');
                         // すべてのタブコンテンツを非表示
                         document.querySelectorAll('.tab-content').forEach(function(c) {
                             c.classList.add('hidden');
@@ -1485,7 +1478,6 @@
                         if (expenseContent) {
                             expenseContent.classList.remove('hidden');
                             expenseContent.style.display = 'block';
-                            console.log('✅ 経費レポートコンテンツを表示しました');
                         }
                         // タブボタンをアクティブに
                         document.querySelectorAll('.tab-btn').forEach(function(b) {
@@ -1501,7 +1493,6 @@
                             window.loadExpenseReport();
                         }
                     } else if (tab === 'settings') {
-                        console.log('⚙️ 設定タブの処理');
                         // すべてのタブコンテンツを非表示
                         document.querySelectorAll('.tab-content').forEach(function(c) {
                             c.classList.add('hidden');
@@ -1522,7 +1513,6 @@
                         if (settingsContent) {
                             settingsContent.classList.remove('hidden');
                             settingsContent.style.display = 'block';
-                            console.log('✅ 設定コンテンツを表示しました');
                         }
                         // タブボタンをアクティブに
                         document.querySelectorAll('.tab-btn').forEach(function(b) {
@@ -1542,7 +1532,6 @@
                         }
                     } else {
                         // 他のタブの処理（daily, monthly, employee, site, invite など）
-                        console.log('📊 勤怠データタブまたは他のタブの処理:', tab);
 
                         // 経費精算コンテンツを確実に非表示
                         const expenseContent = document.getElementById('expense-report-content');
@@ -1558,7 +1547,7 @@
                             settingsContent.style.display = 'none';
                         }
 
-                        // 🔧 重要：勤怠テーブルのstyle.displayをリセット
+                        // 勤怠テーブルのstyle.displayをリセット
                         document.querySelectorAll('.attendance-table-container').forEach(function(c) {
                             c.classList.remove('hidden');
                             c.style.display = '';  // 空文字でリセット
@@ -1578,8 +1567,6 @@
                     }
                 });
             });
-
-            console.log('✅ すべてのタブボタンにイベントリスナーを設定しました');
         }, 500); // 500ms後に実行（他のスクリプト読み込み後）
     });
     </script>
