@@ -2240,6 +2240,9 @@ async function openEditModal(recordId) {
         // モーダルを表示
         const modal = document.getElementById('edit-attendance-modal');
         console.log('モーダル要素:', modal);
+        console.log('🔍 モーダルのクラスリスト（表示前）:', modal?.classList.toString());
+        console.log('🔍 モーダルのdisplayスタイル（表示前）:', modal?.style.display);
+        console.log('🔍 モーダルの計算済みスタイル（表示前）:', window.getComputedStyle(modal).display);
 
         if (!modal) {
             console.error('edit-attendance-modal要素が見つかりません');
@@ -2247,7 +2250,15 @@ async function openEditModal(recordId) {
             return;
         }
 
+        console.log('🔧 hiddenクラスを削除します...');
         modal.classList.remove('hidden');
+        console.log('🔍 モーダルのクラスリスト（削除後）:', modal.classList.toString());
+
+        console.log('🔧 displayスタイルをblockに設定します...');
+        modal.style.display = 'block';
+        console.log('🔍 モーダルのdisplayスタイル（設定後）:', modal.style.display);
+        console.log('🔍 モーダルの計算済みスタイル（設定後）:', window.getComputedStyle(modal).display);
+
         console.log('✅ モーダルを表示しました');
 
     } catch (error) {
