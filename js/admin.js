@@ -859,8 +859,13 @@ function setupAdminBasics() {
  * タブ切り替え関数
  */
 function switchTab(tab) {
+    console.log('========================================');
+    console.log('switchTab() 呼び出し - タブ:', tab);
+    console.log('========================================');
+
     // 管理者依頼タブの特別処理（スーパー管理者のみ）
     if (tab === 'admin-requests') {
+        console.log('admin-requestsタブの処理');
         if (window.currentUser && window.currentUser.role === 'super_admin') {
             showAdminRequestsTab();
         } else {
@@ -870,18 +875,21 @@ function switchTab(tab) {
 
     // 従業員招待タブの特別処理
     if (tab === 'invite') {
+        console.log('inviteタブの処理 → showInviteTab()を呼び出し');
         showInviteTab();
         return;
     }
 
     // 経費レポートタブの特別処理
     if (tab === 'expense-report') {
+        console.log('expense-reportタブの処理 → showExpenseReportTab()を呼び出し');
         showExpenseReportTab();
         return;
     }
 
     // 設定タブの特別処理
     if (tab === 'settings') {
+        console.log('settingsタブの処理 → showSettingsTab()を呼び出し');
         showSettingsTab();
         return;
     }
