@@ -2282,6 +2282,7 @@ function closeEditModal() {
     const modal = document.getElementById('edit-attendance-modal');
     if (modal) {
         modal.classList.add('hidden');
+        modal.style.display = 'none'; // インラインスタイルをクリア
     }
     const form = document.getElementById('edit-attendance-form');
     if (form) {
