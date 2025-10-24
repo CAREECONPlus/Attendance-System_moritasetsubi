@@ -1541,7 +1541,24 @@
                             window.loadBreakTimeSettings();
                         }
                     } else {
-                        // 他のタブはswitchTab関数を呼び出し
+                        // 他のタブの処理（daily, monthly, employee, site, invite など）
+                        console.log('📊 勤怠データタブまたは他のタブの処理:', tab);
+
+                        // 経費精算コンテンツを確実に非表示
+                        const expenseContent = document.getElementById('expense-report-content');
+                        if (expenseContent) {
+                            expenseContent.classList.add('hidden');
+                            expenseContent.style.display = 'none';
+                        }
+
+                        // 設定コンテンツを確実に非表示
+                        const settingsContent = document.getElementById('settings-content');
+                        if (settingsContent) {
+                            settingsContent.classList.add('hidden');
+                            settingsContent.style.display = 'none';
+                        }
+
+                        // switchTab関数を呼び出し
                         if (typeof window.switchTab === 'function') {
                             window.switchTab(tab);
                         }
