@@ -1473,7 +1473,7 @@ function setupAdminEvents() {
  */
 async function exportToCSV() {
     let exportBtn = null;
-    
+
     try {
         // ローディング表示
         exportBtn = getElement('export-csv');
@@ -1481,103 +1481,63 @@ async function exportToCSV() {
             exportBtn.disabled = true;
             exportBtn.textContent = 'CSV出力中...';
         }
-        
-        logger.log('📊 CSV出力処理開始');
-        logger.log('🔍 システム状態確認:', {
-            firebase: typeof firebase,
-            firestore: typeof firebase?.firestore,
-            auth: typeof firebase?.auth,
-            currentUser: window.currentUser,
-            currentTenant: window.currentTenant,
-            getTenantFirestore: typeof window.getTenantFirestore,
-            getCurrentUser: typeof window.getCurrentUser
-        });
-        
+
         // Firebase初期化確認
         if (typeof firebase === 'undefined' || !firebase.firestore) {
             throw new Error('Firebaseが初期化されていません');
         }
-        
+
         // 認証状態確認
         const currentUser = window.getCurrentUser ? window.getCurrentUser() : window.currentUser;
-        logger.log('👤 認証状態確認:', {
-            hasGetCurrentUser: typeof window.getCurrentUser === 'function',
-            windowCurrentUser: window.currentUser,
-            resolvedUser: currentUser
-        });
-        
+
         if (!currentUser) {
             throw new Error('認証が必要です。再度ログインしてください。');
         }
-        
+
         if (typeof currentUser === 'string') {
-            console.error('❌ 不正な認証状態:', currentUser);
+            console.error('不正な認証状態:', currentUser);
             throw new Error('認証状態が不正です。再度ログインしてください。');
         }
-        
-        logger.log('👤 CSV出力ユーザー:', {
-            email: currentUser.email,
-            role: currentUser.role,
-            tenantId: currentUser.tenantId,
-            uid: currentUser.uid
-        });
-        
+
         // テナント情報確認
         if (!window.currentTenant && currentUser.tenantId) {
-            logger.log('🏢 テナント情報を取得中...');
             if (typeof window.loadTenantInfo === 'function') {
                 try {
                     const tenantInfo = await window.loadTenantInfo(currentUser.tenantId);
                     if (tenantInfo) {
                         window.currentTenant = tenantInfo;
-                        logger.log('✅ テナント情報取得成功:', tenantInfo.companyName);
-                    } else {
-                        logger.warn('⚠️ テナント情報が見つかりません:', currentUser.tenantId);
                     }
                 } catch (tenantError) {
-                    console.error('❌ テナント情報取得エラー:', tenantError);
+                    console.error('テナント情報取得エラー:', tenantError);
                 }
-            } else {
-                logger.warn('⚠️ loadTenantInfo関数が利用できません');
             }
         }
-        
-        logger.log('📊 フィルタードデータ取得開始...');
+
         const data = await getCurrentFilteredData();
-        
+
         if (!data || data.length === 0) {
-            logger.log('📭 出力対象データなし');
             showToast('出力するデータがありません', 'warning');
             return;
         }
-        
-        logger.log(`📋 CSV出力対象レコード数: ${data.length}`);
-        logger.log('📄 CSVコンテンツ生成開始...');
-        
+
         const csvContent = generateCSVContent(data);
         if (!csvContent) {
             throw new Error('CSVコンテンツの生成に失敗しました');
         }
-        
+
         const filename = generateCSVFilename();
-        logger.log('💾 CSVダウンロード実行:', filename);
-        
+
         downloadCSV(csvContent, filename);
-        
+
         showToast(`${data.length}件のデータをCSV出力しました`, 'success');
-        logger.log('✅ CSV出力完了:', filename);
-        
+
     } catch (error) {
-        console.error('❌ CSV出力エラー詳細:', {
+        console.error('CSV出力エラー:', {
             name: error.name,
             message: error.message,
-            code: error.code,
-            stack: error.stack,
-            currentUser: window.currentUser,
-            currentTenant: window.currentTenant,
-            authUser: firebase?.auth()?.currentUser
+            code: error.code
         });
-        
+
         let errorMessage = 'CSV出力に失敗しました';
         if (error.code === 'permission-denied') {
             errorMessage = 'データアクセス権限がありません。管理者にお問い合わせください。';
@@ -1590,7 +1550,7 @@ async function exportToCSV() {
         } else if (error.message.includes('コレクション')) {
             errorMessage = 'データベース接続エラーです。管理者にお問い合わせください。';
         }
-        
+
         showToast(errorMessage, 'error');
     } finally {
         // ボタンを元に戻す
@@ -1664,59 +1624,33 @@ function generateCSVFilename() {
  */
 async function getCurrentFilteredData() {
     try {
-        logger.log('📊 フィルタードデータ取得開始');
-        logger.log('🔍 現在の状態:', {
-            currentUser: window.currentUser,
-            currentTenant: window.currentTenant,
-            authUser: firebase?.auth()?.currentUser?.email,
-            url: window.location.href
-        });
-        
         const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
-        logger.log('📑 アクティブタブ:', activeTab);
-        
+
         if (!activeTab) {
-            logger.warn('⚠️ アクティブタブが見つかりません');
-            logger.log('📋 利用可能なタブ:', Array.from(document.querySelectorAll('.tab-btn')).map(tab => ({
-                element: tab,
-                dataTab: tab.getAttribute('data-tab'),
-                active: tab.classList.contains('active')
-            })));
             return [];
         }
-        
+
         // テナント対応の勤怠データコレクション取得
         let query;
         try {
-            logger.log('🔍 勤怠コレクション取得試行...');
             query = getAttendanceCollection();
-            logger.log('✅ 勤怠コレクション取得成功:', {
-                hasQuery: !!query,
-                queryType: typeof query,
-                path: query?.path || 'path不明'
-            });
         } catch (collectionError) {
-            console.error('❌ 勤怠コレクション取得エラー:', {
+            console.error('勤怠コレクション取得エラー:', {
                 error: collectionError,
                 message: collectionError.message,
-                code: collectionError.code,
-                stack: collectionError.stack
+                code: collectionError.code
             });
             throw new Error(`データベースコレクションの取得に失敗しました: ${collectionError.message}`);
         }
-        
+
         // フィルター条件の適用
-        logger.log('🔍 フィルター条件適用開始');
-        
         if (activeTab === 'daily') {
             const filterDate = getElement('filter-date')?.value;
-            logger.log('📅 日別フィルター:', filterDate);
             if (filterDate) {
                 query = query.where('date', '==', filterDate);
             }
         } else if (activeTab === 'monthly') {
             const filterMonth = getElement('filter-month')?.value;
-            logger.log('📅 月別フィルター:', filterMonth);
             if (filterMonth) {
                 const startDate = `${filterMonth}-01`;
                 const endDate = `${filterMonth}-31`;
@@ -1724,55 +1658,36 @@ async function getCurrentFilteredData() {
             }
         } else if (activeTab === 'employee') {
             const employeeId = getElement('filter-employee')?.value;
-            logger.log('👤 従業員フィルター:', employeeId);
             if (employeeId) {
                 query = query.where('userId', '==', employeeId);
             }
         } else if (activeTab === 'site') {
             const siteName = getElement('filter-site')?.value;
-            logger.log('🏢 現場フィルター:', siteName);
             if (siteName) {
                 query = query.where('siteName', '==', siteName);
             }
         }
-        
+
         // ソート条件を追加
         const sortField = getElement('sort-field')?.value || 'date';
         const sortDirection = getElement('sort-direction')?.value || 'desc';
-        logger.log('📊 ソート条件:', { sortField, sortDirection });
-        
+
         try {
             query = query.orderBy(sortField, sortDirection);
         } catch (sortError) {
-            logger.warn('⚠️ ソート条件適用エラー - デフォルトソートを使用:', sortError);
             query = query.orderBy('date', 'desc');
         }
-        
-        logger.log('📥 Firestoreクエリ実行開始', {
-            queryPath: query.path || 'path不明',
-            hasAuth: !!firebase.auth().currentUser,
-            authUserEmail: firebase.auth().currentUser?.email
-        });
-        
+
         let querySnapshot;
         try {
             querySnapshot = await query.get();
-            logger.log('✅ Firestoreクエリ実行成功', {
-                empty: querySnapshot.empty,
-                size: querySnapshot.size,
-                metadata: querySnapshot.metadata
-            });
         } catch (queryError) {
-            console.error('❌ Firestoreクエリ実行エラー:', {
+            console.error('Firestoreクエリ実行エラー:', {
                 error: queryError,
                 message: queryError.message,
-                code: queryError.code,
-                details: queryError.details,
-                queryPath: query.path || 'path不明',
-                currentUser: window.currentUser,
-                authUser: firebase.auth().currentUser
+                code: queryError.code
             });
-            
+
             // 具体的なエラーメッセージを生成
             let errorMessage = 'データベースクエリの実行に失敗しました';
             if (queryError.code === 'permission-denied') {
@@ -1782,10 +1697,10 @@ async function getCurrentFilteredData() {
             } else if (queryError.code === 'unauthenticated') {
                 errorMessage = '認証が無効です。再度ログインしてください。';
             }
-            
+
             throw new Error(`${errorMessage} (${queryError.code}: ${queryError.message})`);
         }
-        
+
         const data = querySnapshot.docs.map(doc => {
             try {
                 return {
@@ -1793,52 +1708,37 @@ async function getCurrentFilteredData() {
                     ...doc.data()
                 };
             } catch (docError) {
-                logger.warn('⚠️ ドキュメントデータ取得エラー:', docError);
                 return {
                     id: doc.id,
                     error: `データ取得エラー: ${docError.message}`
                 };
             }
         });
-        
-        logger.log(`📋 取得した勤怠レコード数: ${data.length}`, {
-            firstRecord: data[0] || null,
-            sampleFields: data[0] ? Object.keys(data[0]) : []
-        });
-        
+
         if (data.length === 0) {
-            logger.log('📭 データが見つかりません');
             return data;
         }
-        
+
         // ユーザー情報とマージ
         try {
-            logger.log('👥 ユーザー情報マージ開始');
             await enrichDataWithUserInfo(data);
-            logger.log('✅ ユーザー情報マージ完了');
         } catch (userError) {
-            logger.warn('⚠️ ユーザー情報マージエラー:', userError);
             // ユーザー情報取得に失敗してもCSV出力は続行
         }
-        
+
         // 休憩データも取得
         try {
-            logger.log('🛑 休憩データ取得開始');
             await loadBreakDataForRecords(data);
-            logger.log('✅ 休憩データ取得完了');
         } catch (breakError) {
-            logger.warn('⚠️ 休憩データ取得エラー:', breakError);
             // 休憩データ取得に失敗してもCSV出力は続行
         }
-        
-        logger.log('✅ CSV用データ取得完了');
+
         return data;
-        
+
     } catch (error) {
-        console.error('❌ CSV用データ取得エラー詳細:', {
+        console.error('CSV用データ取得エラー:', {
             message: error.message,
-            code: error.code,
-            stack: error.stack
+            code: error.code
         });
         throw error;
     }
