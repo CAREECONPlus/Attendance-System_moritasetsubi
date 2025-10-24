@@ -2285,14 +2285,47 @@ function setupEditModalCloseListeners() {
     const closeBtn = modal?.querySelector('.modal-close-btn');
     const cancelBtn = modal?.querySelector('.btn-secondary');
 
+    // モーダルを閉じる処理を直接定義
+    const closeModalDirectly = function() {
+        console.log('========================================');
+        console.log('🔧 closeModalDirectly 呼び出し');
+        console.log('========================================');
+
+        const modalEl = document.getElementById('edit-attendance-modal');
+        console.log('モーダル要素:', modalEl);
+
+        if (modalEl) {
+            console.log('🔍 閉じる前のクラスリスト:', modalEl.classList.toString());
+            console.log('🔍 閉じる前のdisplayスタイル:', modalEl.style.display);
+
+            modalEl.classList.add('hidden');
+            modalEl.style.display = 'none';
+
+            console.log('🔍 閉じた後のクラスリスト:', modalEl.classList.toString());
+            console.log('🔍 閉じた後のdisplayスタイル:', modalEl.style.display);
+            console.log('✅ モーダルを閉じました');
+        } else {
+            console.error('❌ モーダル要素が見つかりません');
+        }
+
+        const formEl = document.getElementById('edit-attendance-form');
+        if (formEl) {
+            formEl.reset();
+            console.log('✅ フォームをリセットしました');
+        }
+
+        console.log('========================================');
+    };
+
     // 既存のイベントリスナーをクリア（クローンして置き換え）
     if (overlay) {
         const newOverlay = overlay.cloneNode(true);
         overlay.parentNode.replaceChild(newOverlay, overlay);
         newOverlay.addEventListener('click', function(e) {
             console.log('✅ オーバーレイクリック検出');
+            e.preventDefault();
             e.stopPropagation();
-            closeEditModal();
+            closeModalDirectly();
         });
         console.log('  - オーバーレイのイベントリスナーを設定');
     }
@@ -2302,8 +2335,9 @@ function setupEditModalCloseListeners() {
         closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
         newCloseBtn.addEventListener('click', function(e) {
             console.log('✅ ×ボタンクリック検出');
+            e.preventDefault();
             e.stopPropagation();
-            closeEditModal();
+            closeModalDirectly();
         });
         console.log('  - ×ボタンのイベントリスナーを設定');
     }
@@ -2313,8 +2347,9 @@ function setupEditModalCloseListeners() {
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
         newCancelBtn.addEventListener('click', function(e) {
             console.log('✅ キャンセルボタンクリック検出');
+            e.preventDefault();
             e.stopPropagation();
-            closeEditModal();
+            closeModalDirectly();
         });
         console.log('  - キャンセルボタンのイベントリスナーを設定');
     }
@@ -2441,8 +2476,19 @@ async function saveEditedAttendance(e) {
 
         alert('勤怠記録を更新しました');
 
-        // モーダルを閉じる
-        closeEditModal();
+        // モーダルを閉じる（直接処理）
+        console.log('🔧 保存後のモーダルクローズ処理開始');
+        const modalEl = document.getElementById('edit-attendance-modal');
+        if (modalEl) {
+            modalEl.classList.add('hidden');
+            modalEl.style.display = 'none';
+            console.log('✅ モーダルを閉じました（保存後）');
+        }
+        const formEl = document.getElementById('edit-attendance-form');
+        if (formEl) {
+            formEl.reset();
+            console.log('✅ フォームをリセットしました（保存後）');
+        }
 
         // 記録一覧を再読み込み
         await loadRecentRecordsSafely();
