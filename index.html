@@ -1558,6 +1558,19 @@
                             settingsContent.style.display = 'none';
                         }
 
+                        // 🔧 重要：勤怠テーブルのstyle.displayをリセット
+                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
+                            c.classList.remove('hidden');
+                            c.style.display = '';  // 空文字でリセット
+                        });
+
+                        // フィルター行を表示
+                        const filterRow = document.querySelector('.filter-row');
+                        if (filterRow) {
+                            filterRow.classList.remove('hidden');
+                            filterRow.style.display = 'flex';
+                        }
+
                         // switchTab関数を呼び出し
                         if (typeof window.switchTab === 'function') {
                             window.switchTab(tab);
