@@ -2151,11 +2151,22 @@ function escapeHtmlEmployee(text) {
  * 勤怠記録編集モーダルを開く
  */
 async function openEditModal(recordId) {
+    console.log('========================================');
+    console.log('🔧 openEditModal 呼び出し - recordId:', recordId);
+    console.log('========================================');
+
     try {
         // 記録を取得
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
-        if (!tenantId) return;
+        console.log('tenantId:', tenantId);
 
+        if (!tenantId) {
+            console.error('tenantIdが取得できませんでした');
+            alert('テナント情報が取得できませんでした');
+            return;
+        }
+
+        console.log('Firestore クエリ開始...');
         const recordDoc = await firebase.firestore()
             .collection('tenants')
             .doc(tenantId)
@@ -2163,20 +2174,43 @@ async function openEditModal(recordId) {
             .doc(recordId)
             .get();
 
+        console.log('recordDoc.exists:', recordDoc.exists);
+
         if (!recordDoc.exists) {
             alert('記録が見つかりませんでした');
             return;
         }
 
         const record = recordDoc.data();
+        console.log('取得したレコード:', record);
 
         // フォームに値を設定
-        document.getElementById('edit-record-id').value = recordId;
-        document.getElementById('edit-date').value = record.date || '';
+        const editRecordIdEl = document.getElementById('edit-record-id');
+        const editDateEl = document.getElementById('edit-date');
+        console.log('edit-record-id要素:', editRecordIdEl);
+        console.log('edit-date要素:', editDateEl);
+
+        if (!editRecordIdEl || !editDateEl) {
+            console.error('必要なフォーム要素が見つかりません');
+            alert('フォーム要素が見つかりませんでした');
+            return;
+        }
+
+        editRecordIdEl.value = recordId;
+        editDateEl.value = record.date || '';
 
         // 現場リストを読み込む
+        console.log('現場リスト読み込み開始...');
         const sites = await window.getTenantSites(tenantId);
+        console.log('取得した現場数:', sites?.length);
+
         const siteSelect = document.getElementById('edit-site-name');
+        if (!siteSelect) {
+            console.error('edit-site-name要素が見つかりません');
+            alert('現場選択フォームが見つかりませんでした');
+            return;
+        }
+
         siteSelect.innerHTML = '<option value="">現場を選択してください</option>';
 
         sites.filter(s => s.active).forEach(site => {
@@ -2190,27 +2224,59 @@ async function openEditModal(recordId) {
         });
 
         // 時刻を設定（HH:MM形式に変換）
-        document.getElementById('edit-start-time').value = convertToTimeInput(record.startTime);
-        document.getElementById('edit-end-time').value = convertToTimeInput(record.endTime);
-        document.getElementById('edit-notes').value = record.notes || '';
-        document.getElementById('edit-reason').value = '';
+        const editStartTimeEl = document.getElementById('edit-start-time');
+        const editEndTimeEl = document.getElementById('edit-end-time');
+        const editNotesEl = document.getElementById('edit-notes');
+        const editReasonEl = document.getElementById('edit-reason');
+
+        if (editStartTimeEl) editStartTimeEl.value = convertToTimeInput(record.startTime);
+        if (editEndTimeEl) editEndTimeEl.value = convertToTimeInput(record.endTime);
+        if (editNotesEl) editNotesEl.value = record.notes || '';
+        if (editReasonEl) editReasonEl.value = '';
 
         // モーダルを表示
-        document.getElementById('edit-attendance-modal').classList.remove('hidden');
+        const modal = document.getElementById('edit-attendance-modal');
+        console.log('モーダル要素:', modal);
+
+        if (!modal) {
+            console.error('edit-attendance-modal要素が見つかりません');
+            alert('編集モーダルが見つかりませんでした');
+            return;
+        }
+
+        modal.classList.remove('hidden');
+        console.log('✅ モーダルを表示しました');
 
     } catch (error) {
-        console.error('モーダル表示エラー:', error);
-        alert('記録の読み込みに失敗しました');
+        console.error('========================================');
+        console.error('❌ モーダル表示エラー:', error);
+        console.error('エラー詳細:', error.message);
+        console.error('スタックトレース:', error.stack);
+        console.error('========================================');
+        alert('記録の読み込みに失敗しました:\n' + error.message);
     }
 }
+
+// 即座にグローバルスコープに公開（HTMLから呼び出せるように）
+window.openEditModal = openEditModal;
 
 /**
  * 編集モーダルを閉じる
  */
 function closeEditModal() {
-    document.getElementById('edit-attendance-modal').classList.add('hidden');
-    document.getElementById('edit-attendance-form').reset();
+    console.log('closeEditModal 呼び出し');
+    const modal = document.getElementById('edit-attendance-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    const form = document.getElementById('edit-attendance-form');
+    if (form) {
+        form.reset();
+    }
 }
+
+// 即座にグローバルスコープに公開
+window.closeEditModal = closeEditModal;
 
 /**
  * 時刻を HH:MM 形式に変換
