@@ -1437,6 +1437,122 @@
         }
 
     </style>
+
+    <script>
+    // 🔧 緊急修正: タブクリックイベントの即時設定
+    // GitHub Pagesのキャッシュ問題を回避するため、HTMLに直接埋め込み
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔧 緊急修正: タブイベントリスナーを設定中...');
+
+        setTimeout(function() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            console.log('見つかったタブボタン:', tabBtns.length);
+
+            tabBtns.forEach(function(btn, index) {
+                const tabName = btn.getAttribute('data-tab');
+                console.log(`タブボタン ${index}: ${tabName}`);
+
+                // 既存のリスナーを削除
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+
+                // 新しいイベントリスナーを設定
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const tab = this.getAttribute('data-tab');
+                    console.log('🖱️ タブクリック:', tab);
+
+                    if (tab === 'expense-report') {
+                        console.log('💰 経費精算タブの処理');
+                        // すべてのタブコンテンツを非表示
+                        document.querySelectorAll('.tab-content').forEach(function(c) {
+                            c.classList.add('hidden');
+                        });
+                        // フィルター行を非表示
+                        const filterRow = document.querySelector('.filter-row');
+                        if (filterRow) {
+                            filterRow.style.display = 'none';
+                            filterRow.classList.add('hidden');
+                        }
+                        // すべての勤怠テーブルを非表示
+                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
+                            c.classList.add('hidden');
+                            c.style.display = 'none';
+                        });
+                        // 経費レポートを表示
+                        const expenseContent = document.getElementById('expense-report-content');
+                        if (expenseContent) {
+                            expenseContent.classList.remove('hidden');
+                            expenseContent.style.display = 'block';
+                            console.log('✅ 経費レポートコンテンツを表示しました');
+                        }
+                        // タブボタンをアクティブに
+                        document.querySelectorAll('.tab-btn').forEach(function(b) {
+                            b.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        // 経費レポート機能を初期化
+                        if (typeof window.initExpenseReport === 'function') {
+                            window.initExpenseReport();
+                        }
+                        if (typeof window.loadExpenseReport === 'function') {
+                            window.loadExpenseReport();
+                        }
+                    } else if (tab === 'settings') {
+                        console.log('⚙️ 設定タブの処理');
+                        // すべてのタブコンテンツを非表示
+                        document.querySelectorAll('.tab-content').forEach(function(c) {
+                            c.classList.add('hidden');
+                        });
+                        // フィルター行を非表示
+                        const filterRow = document.querySelector('.filter-row');
+                        if (filterRow) {
+                            filterRow.style.display = 'none';
+                            filterRow.classList.add('hidden');
+                        }
+                        // すべての勤怠テーブルを非表示
+                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
+                            c.classList.add('hidden');
+                            c.style.display = 'none';
+                        });
+                        // 設定コンテンツを表示
+                        const settingsContent = document.getElementById('settings-content');
+                        if (settingsContent) {
+                            settingsContent.classList.remove('hidden');
+                            settingsContent.style.display = 'block';
+                            console.log('✅ 設定コンテンツを表示しました');
+                        }
+                        // タブボタンをアクティブに
+                        document.querySelectorAll('.tab-btn').forEach(function(b) {
+                            b.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        // 設定機能を初期化
+                        if (typeof window.initSettings === 'function') {
+                            window.initSettings();
+                        }
+                        if (typeof window.loadSiteList === 'function') {
+                            window.loadSiteList();
+                        }
+                        if (typeof window.loadBreakTimeSettings === 'function') {
+                            window.loadBreakTimeSettings();
+                        }
+                    } else {
+                        // 他のタブはswitchTab関数を呼び出し
+                        if (typeof window.switchTab === 'function') {
+                            window.switchTab(tab);
+                        }
+                    }
+                });
+            });
+
+            console.log('✅ すべてのタブボタンにイベントリスナーを設定しました');
+        }, 500); // 500ms後に実行（他のスクリプト読み込み後）
+    });
+    </script>
 </head>
 <body>
     <!-- ログインページ -->
