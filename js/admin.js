@@ -810,7 +810,7 @@ async function initAdminPage() {
             if (filterMonth) filterMonth.value = thisMonth;
             
             // データの読み込み（Firebase対応）
-            await loadEmployeeList();
+            await loadEmployeeFilterList();
             await loadSiteFilterList();
             await loadAttendanceData();
             
@@ -976,6 +976,8 @@ function switchTab(tab) {
     } else if (tab === 'employee') {
         const employeeFilter = document.querySelector('.employee-filter');
         if (employeeFilter) employeeFilter.classList.remove('hidden');
+        // 従業員別タブを開いたときに従業員フィルターを更新
+        loadEmployeeFilterList();
     } else if (tab === 'site') {
         const siteFilter = document.querySelector('.site-filter');
         if (siteFilter) siteFilter.classList.remove('hidden');
@@ -988,9 +990,9 @@ function switchTab(tab) {
 }
 
 /**
- * 従業員リストの読み込み（Firebase v8対応版）
+ * 従業員フィルターリストの読み込み（Firebase v8対応版）
  */
-async function loadEmployeeList() {
+async function loadEmployeeFilterList() {
     try {
         const tenantId = getCurrentTenantId();
         const querySnapshot = await firebase.firestore()
@@ -999,15 +1001,15 @@ async function loadEmployeeList() {
             .where('role', '==', 'employee')
             .orderBy('displayName')
             .get();
-        
+
         const select = getElement('filter-employee');
         if (!select) return;
-        
+
         // 既存のオプションをクリア（最初の「全員」オプションは残す）
         while (select.options.length > 1) {
             select.remove(1);
         }
-        
+
         // 従業員リストを追加
         querySnapshot.forEach(doc => {
             const employee = doc.data();
@@ -1016,7 +1018,7 @@ async function loadEmployeeList() {
             option.textContent = employee.displayName || employee.email;
             select.appendChild(option);
         });
-        
+
     } catch (error) {
         showError('従業員リストの読み込みに失敗しました');
     }
