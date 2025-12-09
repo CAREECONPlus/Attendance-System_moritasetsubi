@@ -995,31 +995,51 @@ function switchTab(tab) {
 async function loadEmployeeFilterList() {
     try {
         const tenantId = getCurrentTenantId();
+
+        // orderByを削除して、クエリをシンプルにする
         const querySnapshot = await firebase.firestore()
             .collection('tenants').doc(tenantId)
             .collection('users')
             .where('role', '==', 'employee')
-            .orderBy('displayName')
             .get();
 
         const select = getElement('filter-employee');
-        if (!select) return;
+        if (!select) {
+            console.warn('filter-employee要素が見つかりません');
+            return;
+        }
 
         // 既存のオプションをクリア（最初の「全員」オプションは残す）
         while (select.options.length > 1) {
             select.remove(1);
         }
 
-        // 従業員リストを追加
+        // 従業員リストを配列に変換してソート
+        const employees = [];
         querySnapshot.forEach(doc => {
             const employee = doc.data();
+            employees.push({
+                id: doc.id,
+                displayName: employee.displayName || employee.email,
+                email: employee.email
+            });
+        });
+
+        // 名前順にソート
+        employees.sort((a, b) => a.displayName.localeCompare(b.displayName, 'ja'));
+
+        // オプションを追加
+        employees.forEach(employee => {
             const option = document.createElement('option');
-            option.value = doc.id;
-            option.textContent = employee.displayName || employee.email;
+            option.value = employee.id;
+            option.textContent = employee.displayName;
             select.appendChild(option);
         });
 
+        console.log(`従業員フィルターに${employees.length}名を追加しました`);
+
     } catch (error) {
+        console.error('従業員リストの読み込みエラー:', error);
         showError('従業員リストの読み込みに失敗しました');
     }
 }
