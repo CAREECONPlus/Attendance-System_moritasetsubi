@@ -1457,33 +1457,25 @@
                     e.stopPropagation();
                     const tab = this.getAttribute('data-tab');
 
+                    // タブボタンをアクティブに
+                    document.querySelectorAll('.tab-btn').forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+
+                    // すべてのタブコンテンツを非表示
+                    document.querySelectorAll('.tab-content').forEach(function(c) {
+                        c.classList.add('hidden');
+                        c.style.display = 'none';
+                    });
+
                     if (tab === 'expense-report') {
-                        // すべてのタブコンテンツを非表示
-                        document.querySelectorAll('.tab-content').forEach(function(c) {
-                            c.classList.add('hidden');
-                        });
-                        // フィルター行を非表示
-                        const filterRow = document.querySelector('.filter-row');
-                        if (filterRow) {
-                            filterRow.style.display = 'none';
-                            filterRow.classList.add('hidden');
-                        }
-                        // すべての勤怠テーブルを非表示
-                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
-                            c.classList.add('hidden');
-                            c.style.display = 'none';
-                        });
                         // 経費レポートを表示
                         const expenseContent = document.getElementById('expense-report-content');
                         if (expenseContent) {
                             expenseContent.classList.remove('hidden');
                             expenseContent.style.display = 'block';
                         }
-                        // タブボタンをアクティブに
-                        document.querySelectorAll('.tab-btn').forEach(function(b) {
-                            b.classList.remove('active');
-                        });
-                        this.classList.add('active');
 
                         // 経費レポート機能を初期化
                         if (typeof window.initExpenseReport === 'function') {
@@ -1493,32 +1485,12 @@
                             window.loadExpenseReport();
                         }
                     } else if (tab === 'settings') {
-                        // すべてのタブコンテンツを非表示
-                        document.querySelectorAll('.tab-content').forEach(function(c) {
-                            c.classList.add('hidden');
-                        });
-                        // フィルター行を非表示
-                        const filterRow = document.querySelector('.filter-row');
-                        if (filterRow) {
-                            filterRow.style.display = 'none';
-                            filterRow.classList.add('hidden');
-                        }
-                        // すべての勤怠テーブルを非表示
-                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
-                            c.classList.add('hidden');
-                            c.style.display = 'none';
-                        });
                         // 設定コンテンツを表示
                         const settingsContent = document.getElementById('settings-content');
                         if (settingsContent) {
                             settingsContent.classList.remove('hidden');
                             settingsContent.style.display = 'block';
                         }
-                        // タブボタンをアクティブに
-                        document.querySelectorAll('.tab-btn').forEach(function(b) {
-                            b.classList.remove('active');
-                        });
-                        this.classList.add('active');
 
                         // 設定機能を初期化
                         if (typeof window.initSettings === 'function') {
@@ -1530,34 +1502,33 @@
                         if (typeof window.loadBreakTimeSettings === 'function') {
                             window.loadBreakTimeSettings();
                         }
+                    } else if (tab === 'invite') {
+                        // 招待タブを表示
+                        const inviteContent = document.getElementById('invite-content');
+                        if (inviteContent) {
+                            inviteContent.classList.remove('hidden');
+                            inviteContent.style.display = 'block';
+                        }
+                    } else if (tab === 'employee-management') {
+                        // 従業員管理タブを表示
+                        const employeeContent = document.getElementById('employee-management-content');
+                        if (employeeContent) {
+                            employeeContent.classList.remove('hidden');
+                            employeeContent.style.display = 'block';
+                        }
+                    } else if (tab === 'admin-requests') {
+                        // 管理者依頼タブを表示
+                        const adminRequestsContent = document.getElementById('admin-requests-content');
+                        if (adminRequestsContent) {
+                            adminRequestsContent.classList.remove('hidden');
+                            adminRequestsContent.style.display = 'block';
+                        }
                     } else {
-                        // 他のタブの処理（daily, monthly, employee, site, invite など）
-
-                        // 経費精算コンテンツを確実に非表示
-                        const expenseContent = document.getElementById('expense-report-content');
-                        if (expenseContent) {
-                            expenseContent.classList.add('hidden');
-                            expenseContent.style.display = 'none';
-                        }
-
-                        // 設定コンテンツを確実に非表示
-                        const settingsContent = document.getElementById('settings-content');
-                        if (settingsContent) {
-                            settingsContent.classList.add('hidden');
-                            settingsContent.style.display = 'none';
-                        }
-
-                        // 勤怠テーブルのstyle.displayをリセット
-                        document.querySelectorAll('.attendance-table-container').forEach(function(c) {
-                            c.classList.remove('hidden');
-                            c.style.display = '';  // 空文字でリセット
-                        });
-
-                        // フィルター行を表示
-                        const filterRow = document.querySelector('.filter-row');
-                        if (filterRow) {
-                            filterRow.classList.remove('hidden');
-                            filterRow.style.display = 'flex';
+                        // 勤怠管理タブ（daily, monthly, employee, site）を表示
+                        const attendanceContent = document.getElementById('attendance-tab-content');
+                        if (attendanceContent) {
+                            attendanceContent.classList.remove('hidden');
+                            attendanceContent.style.display = 'block';
                         }
 
                         // switchTab関数を呼び出し
@@ -1888,73 +1859,76 @@
                     <button class="tab-btn" data-tab="admin-requests" id="admin-requests-tab" style="display: none;">管理者依頼</button>
                 </div>
 
-                <div class="filter-row">
-                    <div class="date-filter">
-                        <label class="filter-label">日付:</label>
-                        <input type="date" id="filter-date">
+                <!-- 勤怠管理タブコンテンツ（日別・月別・従業員別・現場別） -->
+                <div id="attendance-tab-content" class="tab-content">
+                    <div class="filter-row">
+                        <div class="date-filter">
+                            <label class="filter-label">日付:</label>
+                            <input type="date" id="filter-date">
+                        </div>
+                        <div class="month-filter hidden">
+                            <label class="filter-label">月:</label>
+                            <input type="month" id="filter-month">
+                        </div>
+                        <div class="employee-filter hidden">
+                            <label class="filter-label">従業員:</label>
+                            <select id="filter-employee">
+                                <option value="">全員</option>
+                            </select>
+                        </div>
+                        <div class="site-filter hidden">
+                            <label class="filter-label">現場:</label>
+                            <select id="filter-site">
+                                <option value="">全ての現場</option>
+                            </select>
+                        </div>
+                        <div class="sort-controls">
+                            <label class="filter-label">並び順:</label>
+                            <select id="sort-field">
+                                <option value="date">日付順</option>
+                                <option value="userName">従業員名順</option>
+                                <option value="siteName">現場名順</option>
+                                <option value="startTime">出勤時刻順</option>
+                            </select>
+                            <select id="sort-direction">
+                                <option value="asc">昇順 ↑</option>
+                                <option value="desc">降順 ↓</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="export-csv" class="btn btn-primary">CSV出力</button>
+                        </div>
                     </div>
-                    <div class="month-filter hidden">
-                        <label class="filter-label">月:</label>
-                        <input type="month" id="filter-month">
-                    </div>
-                    <div class="employee-filter hidden">
-                        <label class="filter-label">従業員:</label>
-                        <select id="filter-employee">
-                            <option value="">全員</option>
-                        </select>
-                    </div>
-                    <div class="site-filter hidden">
-                        <label class="filter-label">現場:</label>
-                        <select id="filter-site">
-                            <option value="">全ての現場</option>
-                        </select>
-                    </div>
-                    <div class="sort-controls">
-                        <label class="filter-label">並び順:</label>
-                        <select id="sort-field">
-                            <option value="date">日付順</option>
-                            <option value="userName">従業員名順</option>
-                            <option value="siteName">現場名順</option>
-                            <option value="startTime">出勤時刻順</option>
-                        </select>
-                        <select id="sort-direction">
-                            <option value="asc">昇順 ↑</option>
-                            <option value="desc">降順 ↓</option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button id="export-csv" class="btn btn-primary">CSV出力</button>
-                    </div>
-                </div>
 
-                <div class="attendance-table-container">
-                    <table class="attendance-table">
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-sort="userName">
-                                    従業員名 <span class="sort-indicator" data-sort="userName"></span>
-                                </th>
-                                <th class="sortable" data-sort="date">
-                                    日付 <span class="sort-indicator" data-sort="date"></span>
-                                </th>
-                                <th class="sortable" data-sort="siteName">
-                                    現場名 <span class="sort-indicator" data-sort="siteName"></span>
-                                </th>
-                                <th class="sortable" data-sort="startTime">
-                                    出勤時間 <span class="sort-indicator" data-sort="startTime"></span>
-                                </th>
-                                <th class="sortable" data-sort="endTime">
-                                    退勤時間 <span class="sort-indicator" data-sort="endTime"></span>
-                                </th>
-                                <th>休憩時間</th>
-                                <th>実稼働時間</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendance-data">
-                            <!-- 勤怠データが表示されます -->
-                        </tbody>
-                    </table>
+                    <div class="attendance-table-container">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="userName">
+                                        従業員名 <span class="sort-indicator" data-sort="userName"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="date">
+                                        日付 <span class="sort-indicator" data-sort="date"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="siteName">
+                                        現場名 <span class="sort-indicator" data-sort="siteName"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="startTime">
+                                        出勤時間 <span class="sort-indicator" data-sort="startTime"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="endTime">
+                                        退勤時間 <span class="sort-indicator" data-sort="endTime"></span>
+                                    </th>
+                                    <th>休憩時間</th>
+                                    <th>実稼働時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-data">
+                                <!-- 勤怠データが表示されます -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- 勤怠データ編集モーダル（管理者用） -->
