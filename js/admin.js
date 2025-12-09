@@ -903,11 +903,6 @@ function switchTab(tab) {
         return;
     }
 
-    // 従業員タブの特別処理
-    if (tab === 'employee') {
-        showEmployeeManagementTab();
-        return;
-    }
 
     // 管理者依頼コンテンツを非表示
     const adminRequestsContent = document.getElementById('admin-requests-content');
@@ -5111,91 +5106,6 @@ function initAdminTabs() {
 /**
  * タブ切り替え機能
  */
-function switchTab(tabName) {
-    
-    // 全てのタブボタンを非アクティブ
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // クリックされたタブボタンをアクティブ
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-    }
-    
-    // フィルター表示/非表示の切り替え
-    document.querySelectorAll('.date-filter, .month-filter, .employee-filter, .site-filter').forEach(el => {
-        el.classList.add('hidden');
-    });
-    
-    // 対応するフィルターを表示
-    switch (tabName) {
-        case 'daily':
-            document.querySelector('.date-filter')?.classList.remove('hidden');
-            break;
-        case 'monthly':
-            document.querySelector('.month-filter')?.classList.remove('hidden');
-            break;
-        case 'employee':
-            document.querySelector('.employee-filter')?.classList.remove('hidden');
-            break;
-        case 'site':
-            document.querySelector('.site-filter')?.classList.remove('hidden');
-            break;
-        case 'site-management':
-            // 現場管理専用の処理
-            showSiteManagementTab();
-            return;
-        case 'invite':
-            // 招待管理専用の処理
-            logger.log('switchTab: inviteタブが選択されました');
-            showInviteTab();
-            return;
-        case 'admin-requests':
-            // 管理者依頼専用の処理
-            showAdminRequestsTab();
-            return;
-    }
-    
-    // 通常タブの場合は勤怠テーブルと招待コンテンツの表示を復旧
-    const attendanceContainer = document.querySelector('.attendance-table-container');
-    if (attendanceContainer) {
-        attendanceContainer.classList.remove('hidden');
-    }
-    
-    const inviteContent = document.getElementById('invite-content');
-    if (inviteContent) {
-        inviteContent.classList.add('hidden');
-    }
-    
-    const adminRequestsContent = document.getElementById('admin-requests-content');
-    if (adminRequestsContent) {
-        adminRequestsContent.classList.add('hidden');
-    }
-    
-    const siteManagementContent = document.getElementById('site-management-content');
-    if (siteManagementContent) {
-        siteManagementContent.classList.add('hidden');
-        siteManagementContent.style.display = 'none';
-    }
-    
-    
-    // フィルター行を表示
-    const filterRow = document.querySelector('.filter-row');
-    if (filterRow) {
-        logger.log('🔧 フィルター行を再表示:', {
-            hadHiddenClass: filterRow.classList.contains('hidden'),
-            currentDisplay: window.getComputedStyle(filterRow).display
-        });
-        filterRow.classList.remove('hidden');
-        filterRow.style.display = 'flex';
-        logger.log('✅ フィルター行再表示完了:', window.getComputedStyle(filterRow).display);
-    }
-    
-    // データを再読み込み
-    loadAttendanceData();
-}
 
 window.loadTenantUsers = loadTenantUsers;
 window.updateUserInfo = updateUserInfo;
