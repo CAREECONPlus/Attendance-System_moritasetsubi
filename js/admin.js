@@ -979,8 +979,10 @@ function switchTab(tab) {
     } else if (tab === 'site') {
         const siteFilter = document.querySelector('.site-filter');
         if (siteFilter) siteFilter.classList.remove('hidden');
+        // 現場別タブを開いたときに現場フィルターを更新
+        loadSiteFilterList();
     }
-    
+
     // データを再読み込み
     loadAttendanceData();
 }
