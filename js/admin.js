@@ -1051,13 +1051,13 @@ async function loadSiteFilterList() {
     try {
         const tenantId = getCurrentTenantId();
         const querySnapshot = await getAttendanceCollection().get();
-        
+
         // 管理者が設定した現場を取得
         const managedSites = tenantId ? await getTenantSites(tenantId) : [];
         const managedSiteNames = new Set(managedSites.map(site => site.name));
-        
+
         const usedSites = new Set();
-        
+
         // すべての勤怠記録から現場名を抽出
         querySnapshot.forEach(doc => {
             const record = doc.data();
@@ -1065,18 +1065,21 @@ async function loadSiteFilterList() {
                 usedSites.add(record.siteName);
             }
         });
-        
+
         const select = getElement('filter-site');
-        if (!select) return;
-        
+        if (!select) {
+            console.warn('filter-site要素が見つかりません');
+            return;
+        }
+
         // 既存のオプションをクリア（最初の「全ての現場」オプションは残す）
         while (select.options.length > 1) {
             select.remove(1);
         }
-        
+
         // 現場リストを構築（管理現場を優先、その後その他の現場）
         const allSites = [];
-        
+
         // 1. 管理者が設定した現場（使用されているもの）
         managedSites.forEach(site => {
             if (usedSites.has(site.name)) {
@@ -1087,7 +1090,7 @@ async function loadSiteFilterList() {
                 });
             }
         });
-        
+
         // 2. その他の現場（自由入力等）
         Array.from(usedSites).forEach(siteName => {
             if (!managedSiteNames.has(siteName)) {
@@ -1098,7 +1101,7 @@ async function loadSiteFilterList() {
                 });
             }
         });
-        
+
         // ソート: 管理現場を先に、アルファベット順
         allSites.sort((a, b) => {
             if (a.category !== b.category) {
@@ -1106,7 +1109,7 @@ async function loadSiteFilterList() {
             }
             return a.name.localeCompare(b.name, 'ja');
         });
-        
+
         // オプションを追加
         allSites.forEach(site => {
             const option = document.createElement('option');
@@ -1114,7 +1117,9 @@ async function loadSiteFilterList() {
             option.textContent = site.displayName;
             select.appendChild(option);
         });
-        
+
+        console.log(`現場フィルターに${allSites.length}件を追加しました (管理現場: ${managedSites.length}件, 使用中: ${usedSites.size}件)`);
+
     } catch (error) {
         console.error('現場フィルター読み込みエラー:', error);
         showError('現場リストの読み込みに失敗しました');
