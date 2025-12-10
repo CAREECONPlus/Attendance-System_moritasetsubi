@@ -39,10 +39,10 @@
     <script src="js/auth.js?v=20250124c"></script>
     <script src="js/main.js?v=20250124c"></script>
     <script src="js/tenant-settings.js?v=20250124c"></script>
-    <script src="js/employee.js?v=20250124g"></script>
+    <script src="js/employee.js?v=20251210a">
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/expense-report.js?v=20250124c"></script>
-    <script src="js/admin.js?v=20251209f"></script>
+    <script src="js/admin.js?v=20251210a">
 
     <style>
         .hidden {
@@ -140,6 +140,47 @@
             border-left: 4px solid #6c757d !important;
             padding: 15px !important;
             border-radius: var(--radius-md) !important;
+        }
+
+        /* 勤務形態バッジ */
+        .work-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .work-type-badge.normal {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .work-type-badge.nightOnly {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .work-type-badge.throughNight {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .work-type-badge.holiday {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .work-type-badge.paidLeave {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .work-type-badge.compensatoryLeave {
+            background: #e0f2f1;
+            color: #00796b;
         }
 
 
@@ -1921,6 +1962,12 @@
                                     </th>
                                     <th>休憩時間</th>
                                     <th>実稼働時間</th>
+                                    <th class="sortable" data-sort="workType">
+                                        勤務形態 <span class="sort-indicator" data-sort="workType"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="overtimeMinutes">
+                                        残業時間 <span class="sort-indicator" data-sort="overtimeMinutes"></span>
+                                    </th>
                                     <th>操作</th>
                                 </tr>
                             </thead>

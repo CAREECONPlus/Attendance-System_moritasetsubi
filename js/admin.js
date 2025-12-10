@@ -1454,34 +1454,40 @@ function renderAttendanceTable(data) {
             record.endTime,
             record.breakTimes || []
         );
-        
+
+        // 勤務形態のラベル
+        const workTypeLabels = {
+            'normal': '通常',
+            'nightOnly': '夜間',
+            'throughNight': '通し夜間',
+            'holiday': '休日',
+            'paidLeave': '有給',
+            'compensatoryLeave': '代休'
+        };
+        const workTypeLabel = workTypeLabels[record.workType] || '-';
+        const workTypeClass = record.workType || 'normal';
+
+        // 残業時間の表示
+        const overtimeMinutes = record.overtimeMinutes || 0;
+        const overtimeHours = Math.floor(overtimeMinutes / 60);
+        const overtimeMinutesRemainder = overtimeMinutes % 60;
+        const overtimeFormatted = overtimeMinutes > 0
+            ? `${overtimeHours}時間${overtimeMinutesRemainder}分`
+            : '-';
+
         return `
             <tr>
                 <td>${record.displayName || record.userName || record.userEmail || '-'}</td>
                 <td>${formatDate(record.date)}</td>
                 <td>${record.siteName || '-'}</td>
+                <td>${formatTime(record.startTime)}</td>
+                <td>${formatTime(record.endTime)}</td>
+                <td>${breakTime.formatted || '0時間0分'}</td>
+                <td>${workTime.formatted || '0時間0分'}</td>
+                <td><span class="work-type-badge ${workTypeClass}">${workTypeLabel}</span></td>
+                <td>${overtimeFormatted}</td>
                 <td>
-                    <div class="work-times">
-                        <div class="work-time-row">
-                            <span class="work-time-label">出勤:</span>
-                            <span class="work-time-value">${formatTime(record.startTime)}</span>
-                        </div>
-                        <div class="work-time-row">
-                            <span class="work-time-label">退勤:</span>
-                            <span class="work-time-value">${formatTime(record.endTime)}</span>
-                        </div>
-                        <div class="work-time-row break">
-                            <span class="work-time-label">休憩:</span>
-                            <span class="work-time-value">${breakTime.formatted || '0時間0分'}</span>
-                        </div>
-                        <div class="work-time-row total">
-                            <span class="work-time-label">実労働:</span>
-                            <span class="work-time-value">${workTime.formatted || '0時間0分'}</span>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <button onclick="showEditDialog(${JSON.stringify(record).replace(/"/g, '&quot;')})" 
+                    <button onclick="showEditDialog(${JSON.stringify(record).replace(/"/g, '&quot;')})"
                             class="btn btn-sm btn-primary edit-btn">
                         🔧 編集
                     </button>
