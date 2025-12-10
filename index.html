@@ -1436,6 +1436,60 @@
             border-radius: 3px;
         }
 
+        /* 🆕 特殊勤務バッジのスタイル */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .badge-holiday {
+            background-color: #ffe4e4;
+            color: #cc0000;
+            border: 1px solid #ffcccc;
+        }
+
+        .badge-night {
+            background-color: #e4e4ff;
+            color: #0000cc;
+            border: 1px solid #ccccff;
+        }
+
+        .record-badges {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .record-working-time,
+        .record-overtime {
+            font-size: 13px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .record-overtime {
+            color: #cc6600;
+            font-weight: 500;
+        }
+
+        .work-time-row.overtime {
+            color: #cc6600;
+            font-weight: 500;
+        }
+
+        .work-badges {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
     </style>
 
     <script>
@@ -1896,7 +1950,8 @@
                             </select>
                         </div>
                         <div class="filter-actions">
-                            <button id="export-csv" class="btn btn-primary">CSV出力</button>
+                            <button id="export-csv" class="btn btn-primary">CSV出力（弥生給与用）</button>
+                            <button id="export-special-work-csv" class="btn btn-secondary">特殊勤務CSV出力</button>
                         </div>
                     </div>
 

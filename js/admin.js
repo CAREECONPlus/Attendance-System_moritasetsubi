@@ -1454,7 +1454,32 @@ function renderAttendanceTable(data) {
             record.endTime,
             record.breakTimes || []
         );
-        
+
+        // 🆕 特殊勤務情報の整形
+        let specialWorkBadges = '';
+        let overtimeInfo = '';
+
+        // 残業時間を表示
+        if (record.overtimeMinutes && record.overtimeMinutes > 0) {
+            const overtimeHours = Math.floor(record.overtimeMinutes / 60);
+            const overtimeMins = record.overtimeMinutes % 60;
+            overtimeInfo = `
+                <div class="work-time-row overtime">
+                    <span class="work-time-label">残業:</span>
+                    <span class="work-time-value">${overtimeHours}時間${overtimeMins}分</span>
+                </div>`;
+        }
+
+        // 休日出勤・夜間勤務のバッジ
+        if (record.isHolidayWork) {
+            specialWorkBadges += '<span class="badge badge-holiday">📅 休日出勤</span>';
+        }
+        if (record.nightWorkType === 'through_night') {
+            specialWorkBadges += '<span class="badge badge-night">🌙 通し夜間</span>';
+        } else if (record.nightWorkType === 'night_only') {
+            specialWorkBadges += '<span class="badge badge-night">🌙 夜間</span>';
+        }
+
         return `
             <tr>
                 <td>${record.displayName || record.userName || record.userEmail || '-'}</td>
@@ -1478,10 +1503,12 @@ function renderAttendanceTable(data) {
                             <span class="work-time-label">実労働:</span>
                             <span class="work-time-value">${workTime.formatted || '0時間0分'}</span>
                         </div>
+                        ${overtimeInfo}
+                        ${specialWorkBadges ? `<div class="work-badges">${specialWorkBadges}</div>` : ''}
                     </div>
                 </td>
                 <td>
-                    <button onclick="showEditDialog(${JSON.stringify(record).replace(/"/g, '&quot;')})" 
+                    <button onclick="showEditDialog(${JSON.stringify(record).replace(/"/g, '&quot;')})"
                             class="btn btn-sm btn-primary edit-btn">
                         🔧 編集
                     </button>
@@ -1501,6 +1528,12 @@ function setupAdminEvents() {
     const exportBtn = getElement('export-csv');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportToCSV);
+    }
+
+    // 🆕 特殊勤務CSV出力ボタン
+    const exportSpecialWorkBtn = getElement('export-special-work-csv');
+    if (exportSpecialWorkBtn) {
+        exportSpecialWorkBtn.addEventListener('click', exportSpecialWorkToCSV);
     }
 
     // フィルター変更イベント
@@ -1935,7 +1968,7 @@ function downloadCSV(csvContent, filename) {
     const BOM = '\uFEFF';
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
@@ -1943,6 +1976,216 @@ function downloadCSV(csvContent, filename) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+}
+
+// ========================================
+// 🆕 特殊勤務CSV出力機能
+// ========================================
+
+/**
+ * 特殊勤務データをCSV出力
+ */
+async function exportSpecialWorkToCSV() {
+    let exportBtn = null;
+
+    try {
+        // ローディング表示
+        exportBtn = getElement('export-special-work-csv');
+        if (exportBtn) {
+            exportBtn.disabled = true;
+            exportBtn.textContent = '特殊勤務CSV出力中...';
+        }
+
+        // Firebase初期化確認
+        if (typeof firebase === 'undefined' || !firebase.firestore) {
+            throw new Error('Firebaseが初期化されていません');
+        }
+
+        // 認証状態確認
+        const currentUser = window.getCurrentUser ? window.getCurrentUser() : window.currentUser;
+
+        if (!currentUser) {
+            throw new Error('認証が必要です。再度ログインしてください。');
+        }
+
+        if (typeof currentUser === 'string') {
+            console.error('不正な認証状態:', currentUser);
+            throw new Error('認証状態が不正です。再度ログインしてください。');
+        }
+
+        const data = await getCurrentFilteredData();
+
+        if (!data || data.length === 0) {
+            showToast('出力するデータがありません', 'warning');
+            return;
+        }
+
+        // 🆕 特殊勤務データのみフィルタリング（オプション：全データでもOK）
+        const csvContent = generateSpecialWorkCSVContent(data);
+        if (!csvContent) {
+            throw new Error('特殊勤務CSVコンテンツの生成に失敗しました');
+        }
+
+        const filename = generateSpecialWorkCSVFilename();
+
+        downloadCSV(csvContent, filename);
+
+        showToast(`${data.length}件の特殊勤務データをCSV出力しました`, 'success');
+
+    } catch (error) {
+        console.error('特殊勤務CSV出力エラー:', {
+            name: error.name,
+            message: error.message,
+            code: error.code
+        });
+
+        let errorMessage = '特殊勤務CSV出力に失敗しました';
+        if (error.code === 'permission-denied') {
+            errorMessage = 'データアクセス権限がありません。管理者にお問い合わせください。';
+        } else if (error.message.includes('認証')) {
+            errorMessage = '認証エラーです。再度ログインしてください。';
+        } else if (error.message.includes('network') || error.message.includes('NETWORK_ERROR')) {
+            errorMessage = 'ネットワークエラーです。接続を確認してください。';
+        }
+
+        showToast(errorMessage, 'error');
+    } finally {
+        // ボタンを元に戻す
+        if (exportBtn) {
+            exportBtn.disabled = false;
+            exportBtn.textContent = '特殊勤務CSV出力';
+        }
+    }
+}
+
+/**
+ * 特殊勤務データ用のCSVコンテンツを生成
+ */
+function generateSpecialWorkCSVContent(data) {
+    // 特殊勤務データに特化したヘッダー
+    const headers = [
+        '従業員名',
+        'メールアドレス',
+        '日付',
+        '曜日',
+        '現場名',
+        '出勤時間',
+        '退勤時間',
+        '休憩時間（分）',
+        '実働時間（分）',
+        '実働時間（時:分）',
+        '残業時間（分）',
+        '残業時間（時:分）',
+        '特殊勤務区分',
+        '休日出勤',
+        '夜間勤務区分',
+        'メモ'
+    ];
+
+    const rows = data.map(record => {
+        const recordDate = new Date(record.date);
+        const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][recordDate.getDay()];
+
+        // 実働時間（分）
+        const workingMinutes = record.workingMinutes || 0;
+        const workingHours = Math.floor(workingMinutes / 60);
+        const workingMins = workingMinutes % 60;
+        const workingTimeFormatted = `${workingHours}:${String(workingMins).padStart(2, '0')}`;
+
+        // 残業時間（分）
+        const overtimeMinutes = record.overtimeMinutes || 0;
+        const overtimeHours = Math.floor(overtimeMinutes / 60);
+        const overtimeMins = overtimeMinutes % 60;
+        const overtimeTimeFormatted = `${overtimeHours}:${String(overtimeMins).padStart(2, '0')}`;
+
+        // 特殊勤務区分
+        let specialWorkLabel = '通常勤務';
+        if (record.specialWorkType === 'paid_leave') {
+            specialWorkLabel = '有給休暇';
+        } else if (record.specialWorkType === 'compensatory_leave') {
+            specialWorkLabel = '代休';
+        } else if (record.specialWorkType === 'holiday_work') {
+            specialWorkLabel = '休日出勤';
+        } else if (record.specialWorkType === 'through_night') {
+            specialWorkLabel = '通し夜間';
+        } else if (record.specialWorkType === 'night_only') {
+            specialWorkLabel = '夜間のみ';
+        } else if (record.specialWorkType === 'overtime') {
+            specialWorkLabel = '残業';
+        }
+
+        // 夜間勤務区分
+        let nightWorkLabel = 'なし';
+        if (record.nightWorkType === 'through_night') {
+            nightWorkLabel = '通し夜間';
+        } else if (record.nightWorkType === 'night_only') {
+            nightWorkLabel = '夜間のみ';
+        }
+
+        return [
+            record.userName || '不明',
+            record.userEmail || '',
+            formatDate(record.date),
+            dayOfWeek,
+            record.siteName || '',
+            formatTime(record.startTime),
+            formatTime(record.endTime) || (record.startTime ? '未退勤' : ''),
+            record.breakMinutes || 0,
+            workingMinutes,
+            workingTimeFormatted,
+            overtimeMinutes,
+            overtimeTimeFormatted,
+            specialWorkLabel,
+            record.isHolidayWork ? 'はい' : 'いいえ',
+            nightWorkLabel,
+            (record.notes || '').replace(/\n/g, ' ') // 改行をスペースに変換
+        ];
+    });
+
+    const csvArray = [headers, ...rows];
+    return csvArray.map(row =>
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+}
+
+/**
+ * 特殊勤務CSV用のファイル名を生成
+ */
+function generateSpecialWorkCSVFilename() {
+    const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+    const today = getTodayString();
+    let prefix = 'special_work';
+    let suffix = '';
+
+    // タブごとにファイル名を変更
+    switch (activeTab) {
+        case 'daily':
+            const filterDate = getElement('filter-date')?.value;
+            if (filterDate) {
+                suffix = `_${filterDate}`;
+            }
+            break;
+        case 'monthly':
+            const filterMonth = getElement('filter-month')?.value;
+            if (filterMonth) {
+                suffix = `_${filterMonth}`;
+            }
+            break;
+        case 'employee':
+            const filterEmployee = getElement('filter-employee')?.value;
+            if (filterEmployee) {
+                suffix = `_${filterEmployee.replace(/[@.]/g, '_')}`;
+            }
+            break;
+        case 'site':
+            const filterSite = getElement('filter-site')?.value;
+            if (filterSite) {
+                suffix = `_${filterSite.replace(/\s+/g, '_')}`;
+            }
+            break;
+    }
+
+    return `${prefix}${suffix}_${today}.csv`;
 }
 
 // ================== 編集機能のグローバル変数 ==================
