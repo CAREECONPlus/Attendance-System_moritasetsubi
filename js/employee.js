@@ -40,14 +40,176 @@ Object.defineProperty(window, 'currentAttendanceId', {
 // 🆕 日本時間で確実に今日の日付を取得する関数
 function getTodayJST() {
     const now = new Date();
-    
+
     // 日本時間で確実に計算（UTC + 9時間）
     const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 3600000));
     const today = jstDate.toISOString().split('T')[0];
-    
-    
+
+
     return today;
 }
+
+// ========================================
+// 🆕 特殊勤務判定用のヘルパー関数群
+// ========================================
+
+/**
+ * 時刻文字列（HH:MM:SS）をDateオブジェクトに変換
+ * @param {string} timeString - "HH:MM:SS" 形式の時刻文字列
+ * @param {string} dateString - "YYYY-MM-DD" 形式の日付文字列（オプション）
+ * @returns {Date} Dateオブジェクト
+ */
+function parseTimeString(timeString, dateString = null) {
+    const baseDate = dateString ? new Date(dateString) : new Date();
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+
+    const result = new Date(baseDate);
+    result.setHours(hours, minutes, seconds || 0, 0);
+
+    return result;
+}
+
+/**
+ * 実働時間を計算（分単位）
+ * @param {string} startTime - 出勤時刻（HH:MM:SS）
+ * @param {string} endTime - 退勤時刻（HH:MM:SS）
+ * @param {number} breakMinutes - 休憩時間（分）
+ * @param {string} dateString - 勤務日（YYYY-MM-DD）
+ * @returns {number} 実働時間（分）
+ */
+function calculateWorkingMinutes(startTime, endTime, breakMinutes, dateString) {
+    try {
+        const start = parseTimeString(startTime, dateString);
+        let end = parseTimeString(endTime, dateString);
+
+        // 退勤時刻が出勤時刻より前の場合は翌日とみなす（夜勤対応）
+        if (end < start) {
+            end.setDate(end.getDate() + 1);
+        }
+
+        // 総労働時間（ミリ秒）
+        const totalMilliseconds = end - start;
+        const totalMinutes = Math.floor(totalMilliseconds / (1000 * 60));
+
+        // 実働時間 = 総労働時間 - 休憩時間
+        const workingMinutes = totalMinutes - (breakMinutes || 0);
+
+        return Math.max(0, workingMinutes); // 負の値を防止
+    } catch (error) {
+        console.error('実働時間の計算エラー:', error);
+        return 0;
+    }
+}
+
+/**
+ * 残業時間を計算（分単位）
+ * @param {number} workingMinutes - 実働時間（分）
+ * @returns {number} 残業時間（分）
+ */
+function calculateOvertimeMinutes(workingMinutes) {
+    const standardWorkMinutes = 8 * 60; // 8時間 = 480分
+    const overtime = workingMinutes - standardWorkMinutes;
+    return Math.max(0, overtime); // 8時間以下の場合は0
+}
+
+/**
+ * 夜間勤務かどうか判定
+ * @param {string} startTime - 出勤時刻（HH:MM:SS）
+ * @param {string} endTime - 退勤時刻（HH:MM:SS）
+ * @returns {object} { isNight: boolean, type: 'none' | 'night_only' | 'through_night' }
+ */
+function detectNightWork(startTime, endTime) {
+    try {
+        const [startHour] = startTime.split(':').map(Number);
+        const [endHour] = endTime.split(':').map(Number);
+
+        // 夜勤の定義：20時以降の出勤、または退勤が深夜（22時〜翌朝5時）
+        const isStartNight = startHour >= 20 || startHour < 5; // 20:00〜翌朝5:00
+        const isEndNight = endHour >= 22 || endHour < 5; // 22:00〜翌朝5:00
+
+        // 判定ロジック
+        if (isStartNight && isEndNight) {
+            // 出勤も退勤も夜間 → 「夜間のみ」
+            return { isNight: true, type: 'night_only' };
+        } else if (!isStartNight && isEndNight) {
+            // 出勤は昼間、退勤は夜間 → 「通し夜間」
+            return { isNight: true, type: 'through_night' };
+        } else if (isStartNight && !isEndNight) {
+            // 出勤は夜間、退勤は昼間（深夜から朝まで）→ 「夜間のみ」
+            return { isNight: true, type: 'night_only' };
+        } else {
+            // どちらも昼間 → 通常勤務
+            return { isNight: false, type: 'none' };
+        }
+    } catch (error) {
+        console.error('夜間勤務判定エラー:', error);
+        return { isNight: false, type: 'none' };
+    }
+}
+
+/**
+ * 休日出勤かどうか判定（土日のみ）
+ * @param {string} dateString - 日付（YYYY-MM-DD）
+ * @returns {boolean} 休日出勤ならtrue
+ */
+function isWeekendWork(dateString) {
+    try {
+        const date = new Date(dateString);
+        const dayOfWeek = date.getDay(); // 0=日曜, 6=土曜
+        return dayOfWeek === 0 || dayOfWeek === 6;
+    } catch (error) {
+        console.error('休日判定エラー:', error);
+        return false;
+    }
+}
+
+/**
+ * 特殊勤務ステータスを総合的に判定
+ * @param {string} startTime - 出勤時刻（HH:MM:SS）
+ * @param {string} endTime - 退勤時刻（HH:MM:SS）
+ * @param {number} breakMinutes - 休憩時間（分）
+ * @param {string} dateString - 勤務日（YYYY-MM-DD）
+ * @returns {object} 特殊勤務データ
+ */
+function calculateSpecialWorkStatus(startTime, endTime, breakMinutes, dateString) {
+    // 実働時間を計算
+    const workingMinutes = calculateWorkingMinutes(startTime, endTime, breakMinutes, dateString);
+
+    // 残業時間を計算
+    const overtimeMinutes = calculateOvertimeMinutes(workingMinutes);
+
+    // 夜間勤務を判定
+    const nightWork = detectNightWork(startTime, endTime);
+
+    // 休日出勤を判定
+    const isHoliday = isWeekendWork(dateString);
+
+    // 特殊勤務タイプを決定
+    let specialWorkType = 'normal'; // デフォルトは通常勤務
+
+    if (isHoliday) {
+        specialWorkType = 'holiday_work'; // 休日出勤が最優先
+    } else if (nightWork.type === 'through_night') {
+        specialWorkType = 'through_night'; // 通し夜間
+    } else if (nightWork.type === 'night_only') {
+        specialWorkType = 'night_only'; // 夜間のみ
+    } else if (overtimeMinutes > 0) {
+        specialWorkType = 'overtime'; // 残業
+    }
+
+    return {
+        workingMinutes,           // 実働時間（分）
+        overtimeMinutes,          // 残業時間（分）
+        isNightWork: nightWork.isNight,  // 夜間勤務フラグ
+        nightWorkType: nightWork.type,   // 夜間勤務タイプ
+        isHolidayWork: isHoliday,        // 休日出勤フラグ
+        specialWorkType                   // 特殊勤務タイプ
+    };
+}
+
+// ========================================
+// ヘルパー関数群 ここまで
+// ========================================
 
 // 🔧 日付と現場設定の復元機能
 function restoreDateAndSiteSettings() {
@@ -875,39 +1037,88 @@ async function handleClockIn() {
 
 // 退勤処理（1日1回制限対応）
 async function handleClockOut() {
-    
+
     try {
         if (!currentUser || !currentAttendanceId) {
             alert('出勤記録が見つかりません');
             return;
         }
-        
+
         const now = new Date();
-        
+        const endTime = now.toLocaleTimeString('ja-JP');
+
+        // 現在の勤怠データから必要な情報を取得
+        const startTime = todayAttendanceData?.startTime;
+        const breakMinutes = todayAttendanceData?.breakMinutes || 60;
+        const dateString = todayAttendanceData?.date || getTodayJST();
+
+        if (!startTime) {
+            alert('出勤時刻が見つかりません。データに問題があります。');
+            return;
+        }
+
+        // 🆕 特殊勤務ステータスを自動判定
+        const specialWorkData = calculateSpecialWorkStatus(
+            startTime,
+            endTime,
+            breakMinutes,
+            dateString
+        );
+
+        // 🆕 更新データに特殊勤務情報を含める
         const updateData = {
-            endTime: now.toLocaleTimeString('ja-JP'),
+            endTime: endTime,
             status: 'completed',
+            workingMinutes: specialWorkData.workingMinutes,           // 実働時間（分）
+            overtimeMinutes: specialWorkData.overtimeMinutes,         // 残業時間（分）
+            isNightWork: specialWorkData.isNightWork,                 // 夜間勤務フラグ
+            nightWorkType: specialWorkData.nightWorkType,             // 夜間勤務タイプ
+            isHolidayWork: specialWorkData.isHolidayWork,             // 休日出勤フラグ
+            specialWorkType: specialWorkData.specialWorkType,         // 特殊勤務タイプ
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
-        
+
+        console.log('🔍 特殊勤務判定結果:', specialWorkData);
+
         await getAttendanceCollection()
             .doc(currentAttendanceId)
             .update(updateData);
-        
-        
+
+
         // グローバル変数更新
         todayAttendanceData = {
             ...todayAttendanceData,
-            endTime: now.toLocaleTimeString('ja-JP'),
-            status: 'completed'
+            endTime: endTime,
+            status: 'completed',
+            ...specialWorkData
         };
-        
+
         // UI更新
         updateClockButtons('completed');
         updateStatusDisplay('completed', todayAttendanceData);
 
-        alert('お疲れさまでした！');
+        // 🆕 特殊勤務情報を含むアラート
+        const workingHours = Math.floor(specialWorkData.workingMinutes / 60);
+        const workingMins = specialWorkData.workingMinutes % 60;
+        const overtimeHours = Math.floor(specialWorkData.overtimeMinutes / 60);
+        const overtimeMins = specialWorkData.overtimeMinutes % 60;
+
+        let alertMessage = 'お疲れさまでした！\n\n';
+        alertMessage += `実働時間: ${workingHours}時間${workingMins}分\n`;
+
+        if (specialWorkData.overtimeMinutes > 0) {
+            alertMessage += `残業時間: ${overtimeHours}時間${overtimeMins}分\n`;
+        }
+
+        if (specialWorkData.isHolidayWork) {
+            alertMessage += `📅 休日出勤\n`;
+        } else if (specialWorkData.nightWorkType === 'through_night') {
+            alertMessage += `🌙 通し夜間勤務\n`;
+        } else if (specialWorkData.nightWorkType === 'night_only') {
+            alertMessage += `🌙 夜間勤務\n`;
+        }
+
+        alert(alertMessage);
 
         // 最近の記録を更新
         loadRecentRecordsSafely();
@@ -1263,6 +1474,34 @@ function displayRecentRecords(snapshot) {
     records.forEach(record => {
         const statusText = getStatusText(record.status);
 
+        // 🆕 特殊勤務情報を表示用に整形
+        let specialWorkInfo = '';
+
+        // 実働時間を表示（完了済みの場合のみ）
+        if (record.status === 'completed' && record.workingMinutes) {
+            const hours = Math.floor(record.workingMinutes / 60);
+            const mins = record.workingMinutes % 60;
+            specialWorkInfo += `<div class="record-working-time">⏱️ 実働: ${hours}時間${mins}分</div>`;
+        }
+
+        // 残業時間を表示
+        if (record.overtimeMinutes && record.overtimeMinutes > 0) {
+            const overtimeHours = Math.floor(record.overtimeMinutes / 60);
+            const overtimeMins = record.overtimeMinutes % 60;
+            specialWorkInfo += `<div class="record-overtime">⏰ 残業: ${overtimeHours}時間${overtimeMins}分</div>`;
+        }
+
+        // 休日出勤・夜間勤務のバッジ
+        let badges = '';
+        if (record.isHolidayWork) {
+            badges += `<span class="badge badge-holiday">📅 休日出勤</span>`;
+        }
+        if (record.nightWorkType === 'through_night') {
+            badges += `<span class="badge badge-night">🌙 通し夜間</span>`;
+        } else if (record.nightWorkType === 'night_only') {
+            badges += `<span class="badge badge-night">🌙 夜間</span>`;
+        }
+
         html += `
             <div class="record-item">
                 <div class="record-header">
@@ -1275,6 +1514,8 @@ function displayRecentRecords(snapshot) {
                         ⏰ 出勤: ${record.startTime || '不明'}
                         ${record.endTime ? ` / 退勤: ${record.endTime}` : ' (勤務中)'}
                     </div>
+                    ${specialWorkInfo}
+                    ${badges ? `<div class="record-badges">${badges}</div>` : ''}
                     ${record.notes ? `<div class="record-notes">📝 ${record.notes}</div>` : ''}
                     ${record.editHistory && record.editHistory.length > 0 ?
                         `<div class="record-edit-badge">✏️ 編集済み (${record.editHistory.length}回)</div>` : ''
