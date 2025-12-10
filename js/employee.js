@@ -873,184 +873,46 @@ async function handleClockIn() {
     }
 }
 
-/**
- * 勤務形態を自動判定する関数
- * @param {string} startTime - 出勤時刻 (HH:MM:SS形式)
- * @param {string} endTime - 退勤時刻 (HH:MM:SS形式)
- * @param {string} date - 勤務日 (YYYY-MM-DD形式)
- * @returns {string} - 勤務形態 ('normal'|'nightOnly'|'throughNight'|'holiday')
- */
-function determineWorkType(startTime, endTime, date) {
-    try {
-        console.log('🔍 勤務形態判定開始:', { startTime, endTime, date });
-
-        // 日付の曜日を取得
-        const workDate = new Date(date);
-        const dayOfWeek = workDate.getDay(); // 0=日曜, 6=土曜
-
-        // 土日の場合は休日出勤
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-            console.log('✅ 休日出勤と判定（土日）');
-            return 'holiday';
-        }
-
-        // 時刻を時間（数値）に変換
-        const startHour = parseInt(startTime.split(':')[0]);
-        const endHour = parseInt(endTime.split(':')[0]);
-
-        console.log('  出勤時:', startHour, '時');
-        console.log('  退勤時:', endHour, '時');
-
-        // 夜間のみ: 出勤が20時以降
-        if (startHour >= 20) {
-            console.log('✅ 夜間のみと判定（出勤20時以降）');
-            return 'nightOnly';
-        }
-
-        // 通し夜間: 出勤が昼間（8〜19時）で退勤が深夜（22時以降）または早朝（0〜6時）
-        if (startHour >= 8 && startHour < 20) {
-            // 退勤が深夜（22時以降）または早朝（0〜6時）の場合
-            if (endHour >= 22 || endHour <= 6) {
-                console.log('✅ 通し夜間と判定（昼間出勤→深夜/早朝退勤）');
-                return 'throughNight';
-            }
-        }
-
-        // 上記に該当しない場合は通常勤務
-        console.log('✅ 通常勤務と判定');
-        return 'normal';
-
-    } catch (error) {
-        console.error('❌ 勤務形態判定エラー:', error);
-        return 'normal'; // エラー時はデフォルト
-    }
-}
-
-/**
- * 実労働時間と残業時間を計算する関数
- * @param {string} startTime - 出勤時刻 (HH:MM:SS形式)
- * @param {string} endTime - 退勤時刻 (HH:MM:SS形式)
- * @param {number} breakMinutes - 休憩時間（分）
- * @returns {Object} - {actualWorkMinutes: 実労働時間（分）, overtimeMinutes: 残業時間（分）}
- */
-function calculateWorkAndOvertime(startTime, endTime, breakMinutes = 60) {
-    try {
-        console.log('🔍 労働時間計算開始:', { startTime, endTime, breakMinutes });
-
-        // 時刻をDateオブジェクトに変換
-        const today = new Date().toISOString().split('T')[0];
-        const start = new Date(`${today}T${startTime}`);
-        let end = new Date(`${today}T${endTime}`);
-
-        // 日付をまたぐ場合の処理（退勤が出勤より前の時刻の場合）
-        if (end < start) {
-            console.log('  日付をまたぐ勤務を検出');
-            end = new Date(end.getTime() + 24 * 60 * 60 * 1000); // 翌日として扱う
-        }
-
-        // 総勤務時間（分）
-        const totalMinutes = Math.floor((end - start) / (1000 * 60));
-
-        // 実労働時間 = 総勤務時間 - 休憩時間
-        const actualWorkMinutes = totalMinutes - breakMinutes;
-
-        // 残業時間 = 実労働時間 - 8時間（480分）
-        const standardWorkMinutes = 8 * 60; // 8時間 = 480分
-        const overtimeMinutes = Math.max(0, actualWorkMinutes - standardWorkMinutes);
-
-        console.log('  総勤務時間:', totalMinutes, '分');
-        console.log('  休憩時間:', breakMinutes, '分');
-        console.log('  実労働時間:', actualWorkMinutes, '分 (', Math.floor(actualWorkMinutes / 60), '時間', actualWorkMinutes % 60, '分)');
-        console.log('  残業時間:', overtimeMinutes, '分 (', Math.floor(overtimeMinutes / 60), '時間', overtimeMinutes % 60, '分)');
-
-        return {
-            actualWorkMinutes: actualWorkMinutes,
-            overtimeMinutes: overtimeMinutes
-        };
-
-    } catch (error) {
-        console.error('❌ 労働時間計算エラー:', error);
-        return {
-            actualWorkMinutes: 0,
-            overtimeMinutes: 0
-        };
-    }
-}
-
-// 退勤処理（1日1回制限対応） - 自動判定機能追加版
+// 退勤処理（1日1回制限対応）
 async function handleClockOut() {
-
+    
     try {
         if (!currentUser || !currentAttendanceId) {
             alert('出勤記録が見つかりません');
             return;
         }
-
+        
         const now = new Date();
-        const endTime = now.toLocaleTimeString('ja-JP');
-
-        // 現在の勤怠データを取得
-        const currentRecord = todayAttendanceData || {};
-        const startTime = currentRecord.startTime;
-        const date = currentRecord.date;
-        const breakMinutes = currentRecord.breakMinutes || 60;
-
-        console.log('🚪 退勤処理開始:', { startTime, endTime, date, breakMinutes });
-
-        // 勤務形態を自動判定
-        const workType = determineWorkType(startTime, endTime, date);
-
-        // 実労働時間と残業時間を計算
-        const { actualWorkMinutes, overtimeMinutes } = calculateWorkAndOvertime(startTime, endTime, breakMinutes);
-
+        
         const updateData = {
-            endTime: endTime,
+            endTime: now.toLocaleTimeString('ja-JP'),
             status: 'completed',
-            workType: workType, // 🆕 勤務形態
-            actualWorkMinutes: actualWorkMinutes, // 🆕 実労働時間（分）
-            overtimeMinutes: overtimeMinutes, // 🆕 残業時間（分）
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-
-        console.log('💾 保存データ:', updateData);
-
+        
+        
         await getAttendanceCollection()
             .doc(currentAttendanceId)
             .update(updateData);
-
-
+        
+        
         // グローバル変数更新
         todayAttendanceData = {
             ...todayAttendanceData,
-            ...updateData
+            endTime: now.toLocaleTimeString('ja-JP'),
+            status: 'completed'
         };
-
+        
         // UI更新
         updateClockButtons('completed');
         updateStatusDisplay('completed', todayAttendanceData);
 
-        // 勤務形態のラベル
-        const workTypeLabels = {
-            'normal': '通常勤務',
-            'nightOnly': '夜間のみ',
-            'throughNight': '通し夜間',
-            'holiday': '休日出勤'
-        };
-
-        // 完了メッセージ
-        const overtimeHours = Math.floor(overtimeMinutes / 60);
-        const overtimeMinutesRemainder = overtimeMinutes % 60;
-        const overtimeText = overtimeMinutes > 0
-            ? `\n残業: ${overtimeHours}時間${overtimeMinutesRemainder}分`
-            : '\n残業なし';
-
-        alert(`お疲れさまでした！\n\n勤務形態: ${workTypeLabels[workType]}${overtimeText}`);
+        alert('お疲れさまでした！');
 
         // 最近の記録を更新
         loadRecentRecordsSafely();
-
+        
     } catch (error) {
-        console.error('❌ 退勤記録エラー:', error);
         alert('退勤記録でエラーが発生しました: ' + error.message);
     }
 }
@@ -1401,32 +1263,11 @@ function displayRecentRecords(snapshot) {
     records.forEach(record => {
         const statusText = getStatusText(record.status);
 
-        // 勤務形態のラベル
-        const workTypeLabels = {
-            'normal': '通常',
-            'nightOnly': '夜間',
-            'throughNight': '通し夜間',
-            'holiday': '休日',
-            'paidLeave': '有給',
-            'compensatoryLeave': '代休'
-        };
-        const workTypeLabel = workTypeLabels[record.workType] || '';
-        const workTypeBadge = record.workType && record.workType !== 'normal'
-            ? `<span class="work-type-badge ${record.workType}">${workTypeLabel}</span>`
-            : '';
-
-        // 残業時間の表示
-        const overtimeMinutes = record.overtimeMinutes || 0;
-        const overtimeDisplay = overtimeMinutes > 0
-            ? `⏱️ 残業: ${Math.floor(overtimeMinutes / 60)}時間${overtimeMinutes % 60}分`
-            : '';
-
         html += `
             <div class="record-item">
                 <div class="record-header">
                     <span class="record-date">${record.date || '日付不明'}</span>
                     <span class="record-status status-${record.status || 'unknown'}">${statusText}</span>
-                    ${workTypeBadge}
                 </div>
                 <div class="record-details">
                     <div class="record-site">📍 ${record.siteName || '現場不明'}</div>
@@ -1434,7 +1275,6 @@ function displayRecentRecords(snapshot) {
                         ⏰ 出勤: ${record.startTime || '不明'}
                         ${record.endTime ? ` / 退勤: ${record.endTime}` : ' (勤務中)'}
                     </div>
-                    ${overtimeDisplay ? `<div class="record-overtime">${overtimeDisplay}</div>` : ''}
                     ${record.notes ? `<div class="record-notes">📝 ${record.notes}</div>` : ''}
                     ${record.editHistory && record.editHistory.length > 0 ?
                         `<div class="record-edit-badge">✏️ 編集済み (${record.editHistory.length}回)</div>` : ''
