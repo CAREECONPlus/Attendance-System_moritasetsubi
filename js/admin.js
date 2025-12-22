@@ -3412,27 +3412,74 @@ function getTodayString() {
 }
 
 /**
+ * 日本語形式の時刻文字列をDateオブジェクトにパース
+ * 対応形式: "午後2:38:09", "午前9:00:00", "14:38:09", "9:00:00"
+ */
+function parseJapaneseTime(timeString) {
+    if (!timeString) return null;
+
+    try {
+        let hours, minutes, seconds;
+
+        // 日本語形式 (午前/午後) の場合
+        if (timeString.includes('午前') || timeString.includes('午後')) {
+            const isPM = timeString.includes('午後');
+            const timeMatch = timeString.match(/(\d{1,2}):(\d{2}):?(\d{2})?/);
+
+            if (!timeMatch) return null;
+
+            hours = parseInt(timeMatch[1], 10);
+            minutes = parseInt(timeMatch[2], 10);
+            seconds = parseInt(timeMatch[3] || '0', 10);
+
+            // 午後の場合、12時間を加算（12時は除く）
+            if (isPM && hours !== 12) {
+                hours += 12;
+            }
+            // 午前12時は0時として扱う
+            if (!isPM && hours === 12) {
+                hours = 0;
+            }
+        } else {
+            // 24時間形式の場合
+            const timeMatch = timeString.match(/(\d{1,2}):(\d{2}):?(\d{2})?/);
+            if (!timeMatch) return null;
+
+            hours = parseInt(timeMatch[1], 10);
+            minutes = parseInt(timeMatch[2], 10);
+            seconds = parseInt(timeMatch[3] || '0', 10);
+        }
+
+        const date = new Date(2000, 0, 1, hours, minutes, seconds);
+        return isNaN(date.getTime()) ? null : date;
+    } catch (error) {
+        console.error('時刻パースエラー:', timeString, error);
+        return null;
+    }
+}
+
+/**
  * 合計休憩時間を計算
  */
 function calculateTotalBreakTime(breakTimes) {
     if (!breakTimes || breakTimes.length === 0) {
         return { minutes: 0, formatted: '0時間0分' };
     }
-    
+
     let totalMinutes = 0;
     breakTimes.forEach(breakTime => {
         if (breakTime.start && breakTime.end) {
-            const start = new Date(`2000-01-01 ${breakTime.start}`);
-            const end = new Date(`2000-01-01 ${breakTime.end}`);
-            if (end > start) {
+            const start = parseJapaneseTime(breakTime.start);
+            const end = parseJapaneseTime(breakTime.end);
+            if (start && end && end > start) {
                 totalMinutes += Math.floor((end - start) / (1000 * 60));
             }
         }
     });
-    
+
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
+
     return {
         minutes: totalMinutes,
         formatted: `${hours}時間${minutes}分`
@@ -3446,22 +3493,26 @@ function calculateWorkingTime(startTime, endTime, breakTimes) {
     if (!startTime || !endTime) {
         return { minutes: 0, formatted: '-' };
     }
-    
+
     try {
-        const start = new Date(`2000-01-01 ${startTime}`);
-        const end = new Date(`2000-01-01 ${endTime}`);
-        
+        const start = parseJapaneseTime(startTime);
+        const end = parseJapaneseTime(endTime);
+
+        if (!start || !end) {
+            return { minutes: 0, formatted: '計算エラー' };
+        }
+
         if (end <= start) {
             return { minutes: 0, formatted: '計算エラー' };
         }
-        
+
         const totalMinutes = Math.floor((end - start) / (1000 * 60));
         const breakTime = calculateTotalBreakTime(breakTimes || []);
         const workingMinutes = totalMinutes - breakTime.minutes;
-        
+
         const hours = Math.floor(workingMinutes / 60);
         const minutes = workingMinutes % 60;
-        
+
         return {
             minutes: workingMinutes,
             formatted: `${hours}時間${minutes}分`
