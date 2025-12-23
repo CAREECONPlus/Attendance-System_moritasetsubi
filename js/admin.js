@@ -896,6 +896,13 @@ function switchTab(tab) {
         return;
     }
 
+    // 月次給与タブの特別処理
+    if (tab === 'monthly-salary') {
+        console.log('monthly-salaryタブの処理 → showMonthlySalaryTab()を呼び出し');
+        showMonthlySalaryTab();
+        return;
+    }
+
     // 設定タブの特別処理
     if (tab === 'settings') {
         console.log('settingsタブの処理 → showSettingsTab()を呼び出し');
@@ -920,6 +927,12 @@ function switchTab(tab) {
     const expenseReportContent = document.getElementById('expense-report-content');
     if (expenseReportContent) {
         expenseReportContent.classList.add('hidden');
+    }
+
+    // 月次給与コンテンツを非表示
+    const monthlySalaryContent = document.getElementById('monthly-salary-content');
+    if (monthlySalaryContent) {
+        monthlySalaryContent.classList.add('hidden');
     }
 
     // 設定コンテンツを非表示
@@ -6606,6 +6619,236 @@ function resetBreakTimeSettings() {
     document.getElementById('break-time-options').value = '30,45,60,90,120';
 }
 
+// ========================================
+// 月次給与タブの処理
+// ========================================
+
+// 月次給与の集計データを保持
+let currentMonthlySummaryData = [];
+
+/**
+ * 月次給与タブを表示
+ */
+function showMonthlySalaryTab() {
+    console.log('========== showMonthlySalaryTab 開始 ==========');
+
+    // 全てのタブコンテンツを非表示
+    document.querySelectorAll('.tab-content, .attendance-table-container').forEach(el => {
+        el.classList.add('hidden');
+    });
+
+    // フィルター行を非表示
+    const filterRow = document.querySelector('.filter-row');
+    if (filterRow) filterRow.style.display = 'none';
+
+    // 月次給与コンテンツを表示
+    const monthlySalaryContent = document.getElementById('monthly-salary-content');
+    if (monthlySalaryContent) {
+        monthlySalaryContent.classList.remove('hidden');
+        monthlySalaryContent.style.display = 'block';
+    }
+
+    // タブの状態を更新
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector('[data-tab="monthly-salary"]');
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+
+    // 初回表示時に初期化
+    initMonthlySalaryTab();
+
+    console.log('========== showMonthlySalaryTab 終了 ==========');
+}
+
+/**
+ * 月次給与タブの初期化
+ */
+function initMonthlySalaryTab() {
+    console.log('initMonthlySalaryTab: 初期化開始');
+
+    // 年月セレクトボックスを生成
+    const yearMonthSelect = document.getElementById('salary-year-month');
+    if (yearMonthSelect && yearMonthSelect.options.length === 0) {
+        const options = window.generateYearMonthOptions ? window.generateYearMonthOptions() : [];
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            yearMonthSelect.appendChild(option);
+        });
+    }
+
+    // イベントリスナーを設定（重複防止）
+    const calculateBtn = document.getElementById('salary-calculate-btn');
+    if (calculateBtn && !calculateBtn.hasAttribute('data-listener-set')) {
+        calculateBtn.addEventListener('click', handleCalculateMonthlySummary);
+        calculateBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    const exportCsvBtn = document.getElementById('salary-export-csv-btn');
+    if (exportCsvBtn && !exportCsvBtn.hasAttribute('data-listener-set')) {
+        exportCsvBtn.addEventListener('click', handleExportMonthlySummaryCSV);
+        exportCsvBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    const exportSheetsBtn = document.getElementById('salary-export-sheets-btn');
+    if (exportSheetsBtn && !exportSheetsBtn.hasAttribute('data-listener-set')) {
+        exportSheetsBtn.addEventListener('click', handleExportToSheets);
+        exportSheetsBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    const sheetsSettingsBtn = document.getElementById('sheets-settings-btn');
+    if (sheetsSettingsBtn && !sheetsSettingsBtn.hasAttribute('data-listener-set')) {
+        sheetsSettingsBtn.addEventListener('click', openSheetsSettings);
+        sheetsSettingsBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    console.log('initMonthlySalaryTab: 初期化完了');
+}
+
+/**
+ * 月次集計を実行
+ */
+async function handleCalculateMonthlySummary() {
+    const yearMonthSelect = document.getElementById('salary-year-month');
+    const calculateBtn = document.getElementById('salary-calculate-btn');
+    const tbody = document.getElementById('monthly-salary-data');
+
+    if (!yearMonthSelect || !yearMonthSelect.value) {
+        alert('対象月を選択してください');
+        return;
+    }
+
+    const yearMonth = yearMonthSelect.value;
+    console.log(`月次集計開始: ${yearMonth}`);
+
+    try {
+        // ローディング表示
+        calculateBtn.disabled = true;
+        calculateBtn.textContent = '集計中...';
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">集計中...</td></tr>';
+
+        // 月次集計を実行
+        const summaryData = await window.calculateMonthlySummary(yearMonth);
+        currentMonthlySummaryData = summaryData;
+
+        // 結果を表示
+        renderMonthlySummaryTable(summaryData);
+        updateMonthlySummarySummary(summaryData, yearMonth);
+
+        // ボタンを有効化
+        document.getElementById('salary-export-csv-btn').disabled = summaryData.length === 0;
+        // TODO: Sheets連携が完了したら有効化
+        // document.getElementById('salary-export-sheets-btn').disabled = summaryData.length === 0;
+
+        console.log(`月次集計完了: ${summaryData.length}名`);
+
+    } catch (error) {
+        console.error('月次集計エラー:', error);
+        tbody.innerHTML = `<tr><td colspan="8" class="no-data">エラー: ${error.message}</td></tr>`;
+        alert('月次集計に失敗しました: ' + error.message);
+    } finally {
+        calculateBtn.disabled = false;
+        calculateBtn.textContent = '🔄 集計する';
+    }
+}
+
+/**
+ * 月次集計結果をテーブルに表示
+ */
+function renderMonthlySummaryTable(data) {
+    const tbody = document.getElementById('monthly-salary-data');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">データがありません</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(record => `
+        <tr>
+            <td>${record.employeeName || '不明'}</td>
+            <td>${record.normalHours.toFixed(1)}</td>
+            <td>${record.nightOnlyHours.toFixed(1)}</td>
+            <td>${record.throughNightHours.toFixed(1)}</td>
+            <td>${record.holidayHours.toFixed(1)}</td>
+            <td>${record.overtimeHours.toFixed(1)}</td>
+            <td><strong>${record.totalHours.toFixed(1)}</strong></td>
+            <td>${record.workDays}日</td>
+        </tr>
+    `).join('');
+}
+
+/**
+ * サマリーカードを更新
+ */
+function updateMonthlySummarySummary(data, yearMonth) {
+    // 従業員数
+    const employeeCountEl = document.getElementById('salary-employee-count');
+    if (employeeCountEl) {
+        employeeCountEl.textContent = `${data.length}名`;
+    }
+
+    // 総勤務時間
+    const totalHours = data.reduce((sum, r) => sum + r.totalHours, 0);
+    const totalHoursEl = document.getElementById('salary-total-hours');
+    if (totalHoursEl) {
+        totalHoursEl.textContent = `${totalHours.toFixed(1)}h`;
+    }
+
+    // 対象期間
+    const periodEl = document.getElementById('salary-period');
+    if (periodEl) {
+        const [year, month] = yearMonth.split('-');
+        periodEl.textContent = `${year}年${parseInt(month)}月`;
+    }
+}
+
+/**
+ * 月次集計結果をCSV出力
+ */
+function handleExportMonthlySummaryCSV() {
+    if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
+        alert('出力するデータがありません');
+        return;
+    }
+
+    const yearMonth = document.getElementById('salary-year-month').value;
+    const csvContent = window.MonthlySummary.convertToCSV(currentMonthlySummaryData, yearMonth);
+
+    // BOM付きでダウンロード
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `monthly_salary_${yearMonth}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log('CSV出力完了');
+}
+
+/**
+ * スプレッドシートに出力（Phase 3で実装）
+ */
+function handleExportToSheets() {
+    alert('Google Sheets連携は設定画面から設定してください');
+    // TODO: Phase 3で実装
+}
+
+/**
+ * Sheets設定画面を開く（Phase 3で実装）
+ */
+function openSheetsSettings() {
+    alert('Google Sheets連携設定は次のフェーズで実装予定です');
+    // TODO: Phase 3で実装 - 設定モーダルを開く
+}
+
 // グローバルスコープに関数をエクスポート
 window.initAdminPage = initAdminPage;
 window.switchTab = switchTab;
@@ -6623,4 +6866,6 @@ window.showExpenseReportTab = showExpenseReportTab;
 window.showSettingsTab = showSettingsTab;
 window.saveBreakTimeSettings = saveBreakTimeSettings;
 window.resetBreakTimeSettings = resetBreakTimeSettings;
+window.showMonthlySalaryTab = showMonthlySalaryTab;
+window.initMonthlySalaryTab = initMonthlySalaryTab;
 
