@@ -6779,9 +6779,12 @@ async function handleExportToSheets() {
  * Sheets設定モーダルを開く
  */
 function openSheetsSettings() {
+    alert('openSheetsSettings が呼ばれました');
     const modal = document.getElementById('sheets-settings-modal');
+    alert('modal要素: ' + (modal ? '見つかった' : '見つからない'));
     if (modal) {
         modal.classList.remove('hidden');
+        modal.style.display = 'flex';  // 明示的にdisplayを設定
 
         // 現在の設定を読み込み
         const settings = window.GoogleSheets ? window.GoogleSheets.getSettings() : {};
@@ -6800,6 +6803,7 @@ function closeSheetsSettingsModal() {
     const modal = document.getElementById('sheets-settings-modal');
     if (modal) {
         modal.classList.add('hidden');
+        modal.style.display = 'none';
     }
 }
 
