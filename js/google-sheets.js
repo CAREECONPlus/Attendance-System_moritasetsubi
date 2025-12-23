@@ -73,7 +73,6 @@ async function initGoogleAPI() {
     return new Promise((resolve, reject) => {
         // GAPI (Google API Client) の読み込み確認
         if (typeof gapi === 'undefined') {
-            console.log('GAPI not loaded, loading...');
             loadScript('https://apis.google.com/js/api.js')
                 .then(() => {
                     gapi.load('client', async () => {
@@ -83,7 +82,6 @@ async function initGoogleAPI() {
                                 discoveryDocs: [GOOGLE_CONFIG.DISCOVERY_DOC]
                             });
                             gapiInited = true;
-                            console.log('✅ GAPI 初期化完了');
                             resolve();
                         } catch (error) {
                             console.error('GAPI初期化エラー:', error);
@@ -100,7 +98,6 @@ async function initGoogleAPI() {
                         discoveryDocs: [GOOGLE_CONFIG.DISCOVERY_DOC]
                     });
                     gapiInited = true;
-                    console.log('✅ GAPI 初期化完了');
                     resolve();
                 } catch (error) {
                     console.error('GAPI初期化エラー:', error);
@@ -117,7 +114,6 @@ async function initGoogleAPI() {
 async function initGIS() {
     return new Promise((resolve, reject) => {
         if (typeof google === 'undefined' || !google.accounts) {
-            console.log('GIS not loaded, loading...');
             loadScript('https://accounts.google.com/gsi/client')
                 .then(() => {
                     initTokenClient();
@@ -145,12 +141,10 @@ function initTokenClient() {
             }
             accessToken = response.access_token;
             gapi.client.setToken({ access_token: accessToken });
-            console.log('✅ アクセストークン取得成功');
             updateAuthStatusUI(true);
         }
     });
     gisInited = true;
-    console.log('✅ GIS 初期化完了');
 }
 
 /**
@@ -187,7 +181,6 @@ async function authenticateGoogle() {
 
         // 既にトークンがある場合はスキップ
         if (accessToken) {
-            console.log('既存のトークンを使用');
             return true;
         }
 
@@ -201,7 +194,6 @@ async function authenticateGoogle() {
                 }
                 accessToken = response.access_token;
                 gapi.client.setToken({ access_token: accessToken });
-                console.log('✅ 認証成功');
                 updateAuthStatusUI(true);
                 resolve(true);
             };
@@ -228,9 +220,7 @@ function isAuthenticated() {
  */
 function signOut() {
     if (accessToken) {
-        google.accounts.oauth2.revoke(accessToken, () => {
-            console.log('トークン無効化完了');
-        });
+        google.accounts.oauth2.revoke(accessToken, () => {});
         accessToken = null;
         gapi.client.setToken(null);
         updateAuthStatusUI(false);
@@ -330,7 +320,6 @@ async function writeToSheet(spreadsheetId, sheetName, data) {
             }
         });
 
-        console.log(`✅ シート "${sheetName}" に ${data.length} 行を書き込みました`);
         return response.result;
 
     } catch (error) {
@@ -389,7 +378,6 @@ async function ensureSheetExists(spreadsheetId, sheetName) {
                     }]
                 }
             });
-            console.log(`✅ シート "${sheetName}" を作成しました`);
         }
 
     } catch (error) {
@@ -534,5 +522,3 @@ window.GoogleSheets = {
     // UI更新
     updateAuthStatus: updateAuthStatusUI
 };
-
-console.log('✅ google-sheets.js 読み込み完了');
