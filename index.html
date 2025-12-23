@@ -2369,59 +2369,6 @@
                     </div>
                 </div>
 
-                <!-- Google Sheets 設定モーダル -->
-                <div id="sheets-settings-modal" class="modal hidden">
-                    <div class="modal-overlay" onclick="closeSheetsSettingsModal()"></div>
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>📊 Google Sheets 連携設定</h3>
-                            <button class="modal-close" onclick="closeSheetsSettingsModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- 認証ステータス -->
-                            <div class="sheets-auth-section">
-                                <h4>1. Google認証</h4>
-                                <div class="auth-status-card" id="modal-auth-status">
-                                    <div class="status-icon" id="modal-auth-icon">🔒</div>
-                                    <div class="status-info">
-                                        <span id="modal-auth-title">未認証</span>
-                                        <p id="modal-auth-desc">Googleアカウントで認証してください</p>
-                                    </div>
-                                    <button id="btn-google-auth" class="btn btn-primary" onclick="handleGoogleAuth()">Google認証</button>
-                                </div>
-                            </div>
-
-                            <!-- スプレッドシート設定 -->
-                            <div class="sheets-config-section">
-                                <h4>2. スプレッドシート設定</h4>
-                                <div class="form-group">
-                                    <label for="sheets-spreadsheet-id">スプレッドシートID *</label>
-                                    <input type="text" id="sheets-spreadsheet-id"
-                                           placeholder="例: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
-                                    <p class="help-text">
-                                        スプレッドシートのURLから取得できます<br>
-                                        https://docs.google.com/spreadsheets/d/<strong>[この部分]</strong>/edit
-                                    </p>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sheets-master-name">マスタシート名</label>
-                                    <input type="text" id="sheets-master-name" value="マスタ" placeholder="マスタ">
-                                    <p class="help-text">基本給などの従業員マスタデータが入ったシート名</p>
-                                </div>
-                                <div class="button-group">
-                                    <button id="btn-test-connection" class="btn btn-secondary" onclick="handleTestConnection()">接続テスト</button>
-                                    <button id="btn-open-sheet" class="btn btn-secondary" onclick="handleOpenSheet()">スプレッドシートを開く</button>
-                                </div>
-                                <div id="connection-result" class="connection-result hidden"></div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeSheetsSettingsModal()">キャンセル</button>
-                            <button type="button" class="btn btn-primary" onclick="saveSheetsSettings()">💾 設定を保存</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- ⚙️ 設定タブ -->
                 <div id="settings-content" class="tab-content hidden">
                     <div class="settings-section">
@@ -2621,6 +2568,59 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sheets 設定モーダル -->
+    <div id="sheets-settings-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeSheetsSettingsModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Google Sheets 連携設定</h3>
+                <button class="modal-close" onclick="closeSheetsSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 認証ステータス -->
+                <div class="sheets-auth-section">
+                    <h4>1. Google認証</h4>
+                    <div class="auth-status-card" id="modal-auth-status">
+                        <div class="status-icon" id="modal-auth-icon">🔒</div>
+                        <div class="status-info">
+                            <span id="modal-auth-title">未認証</span>
+                            <p id="modal-auth-desc">Googleアカウントで認証してください</p>
+                        </div>
+                        <button id="btn-google-auth" class="btn btn-primary" onclick="handleGoogleAuth()">Google認証</button>
+                    </div>
+                </div>
+
+                <!-- スプレッドシート設定 -->
+                <div class="sheets-config-section">
+                    <h4>2. スプレッドシート設定</h4>
+                    <div class="form-group">
+                        <label for="sheets-spreadsheet-id">スプレッドシートID *</label>
+                        <input type="text" id="sheets-spreadsheet-id"
+                               placeholder="例: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                        <p class="help-text">
+                            スプレッドシートのURLから取得できます<br>
+                            https://docs.google.com/spreadsheets/d/<strong>[この部分]</strong>/edit
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label for="sheets-master-name">マスタシート名</label>
+                        <input type="text" id="sheets-master-name" value="マスタ" placeholder="マスタ">
+                        <p class="help-text">基本給などの従業員マスタデータが入ったシート名</p>
+                    </div>
+                    <div class="button-group">
+                        <button id="btn-test-connection" class="btn btn-secondary" onclick="handleTestConnection()">接続テスト</button>
+                        <button id="btn-open-sheet" class="btn btn-secondary" onclick="handleOpenSheet()">スプレッドシートを開く</button>
+                    </div>
+                    <div id="connection-result" class="connection-result hidden"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSheetsSettingsModal()">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveSheetsSettings()">💾 設定を保存</button>
             </div>
         </div>
     </div>

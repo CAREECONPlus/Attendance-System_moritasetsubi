@@ -1078,8 +1078,6 @@ async function handleClockOut() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        console.log('🔍 特殊勤務判定結果:', specialWorkData);
-
         await getAttendanceCollection()
             .doc(currentAttendanceId)
             .update(updateData);

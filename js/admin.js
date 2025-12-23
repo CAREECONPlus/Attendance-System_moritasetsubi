@@ -827,15 +827,12 @@ async function initAdminPage() {
  * 管理者画面の基本的なUI初期化
  */
 function setupAdminBasics() {
-    console.log('========== setupAdminBasics() 開始 ==========');
-
     // ユーザー名を表示
     const currentUser = getCurrentUser();
     if (currentUser) {
         const userNameEl = getElement('admin-user-name');
         if (userNameEl) {
             userNameEl.textContent = currentUser.displayName || currentUser.email;
-            console.log('ユーザー名を設定:', currentUser.displayName || currentUser.email);
         }
     }
 
@@ -845,67 +842,50 @@ function setupAdminBasics() {
         logoutBtn.addEventListener('click', function() {
             signOut();
         });
-        console.log('ログアウトボタンのイベントリスナーを設定');
     }
 
     // タブ切り替えイベント
     const tabBtns = document.querySelectorAll('.tab-btn');
-    console.log('タブボタンの数:', tabBtns.length);
-    tabBtns.forEach((btn, index) => {
-        const tabName = btn.getAttribute('data-tab');
-        console.log(`タブボタン ${index}: data-tab="${tabName}"`);
+    tabBtns.forEach((btn) => {
         btn.addEventListener('click', function() {
             const tab = this.getAttribute('data-tab');
-            console.log(`タブボタンがクリックされました: ${tab}`);
             switchTab(tab);
         });
     });
-    console.log('すべてのタブボタンにイベントリスナーを設定しました');
-    console.log('========== setupAdminBasics() 終了 ==========');
 }
 
 /**
  * タブ切り替え関数
  */
 function switchTab(tab) {
-    console.log('========================================');
-    console.log('switchTab() 呼び出し - タブ:', tab);
-    console.log('========================================');
-
     // 管理者依頼タブの特別処理（スーパー管理者のみ）
     if (tab === 'admin-requests') {
-        console.log('admin-requestsタブの処理');
         if (window.currentUser && window.currentUser.role === 'super_admin') {
             showAdminRequestsTab();
-        } else {
         }
         return;
     }
 
     // 従業員招待タブの特別処理
     if (tab === 'invite') {
-        console.log('inviteタブの処理 → showInviteTab()を呼び出し');
         showInviteTab();
         return;
     }
 
     // 経費レポートタブの特別処理
     if (tab === 'expense-report') {
-        console.log('expense-reportタブの処理 → showExpenseReportTab()を呼び出し');
         showExpenseReportTab();
         return;
     }
 
     // 月次給与タブの特別処理
     if (tab === 'monthly-salary') {
-        console.log('monthly-salaryタブの処理 → showMonthlySalaryTab()を呼び出し');
         showMonthlySalaryTab();
         return;
     }
 
     // 設定タブの特別処理
     if (tab === 'settings') {
-        console.log('settingsタブの処理 → showSettingsTab()を呼び出し');
         showSettingsTab();
         return;
     }
@@ -1002,22 +982,16 @@ function switchTab(tab) {
  */
 async function loadEmployeeFilterList() {
     try {
-        console.log('👥 loadEmployeeFilterList() 開始');
         const tenantId = getCurrentTenantId();
-        console.log('  tenantId:', tenantId);
 
-        // orderByを削除して、クエリをシンプルにする
         const querySnapshot = await firebase.firestore()
             .collection('tenants').doc(tenantId)
             .collection('users')
             .where('role', '==', 'employee')
             .get();
 
-        console.log('  従業員クエリ結果:', querySnapshot.docs.length, '名');
-
         const select = getElement('filter-employee');
         if (!select) {
-            console.warn('⚠️ filter-employee要素が見つかりません');
             return;
         }
 
@@ -1035,7 +1009,6 @@ async function loadEmployeeFilterList() {
                 displayName: employee.displayName || employee.email,
                 email: employee.email
             });
-            console.log(`  従業員追加: id="${doc.id}", name="${employee.displayName || employee.email}"`);
         });
 
         // 名前順にソート
@@ -1049,10 +1022,8 @@ async function loadEmployeeFilterList() {
             select.appendChild(option);
         });
 
-        console.log(`✅ 従業員フィルターに${employees.length}名を追加しました`);
-
     } catch (error) {
-        console.error('❌ 従業員リストの読み込みエラー:', error);
+        console.error('従業員リストの読み込みエラー:', error);
         showError('従業員リストの読み込みに失敗しました');
     }
 }
@@ -1062,16 +1033,12 @@ async function loadEmployeeFilterList() {
  */
 async function loadSiteFilterList() {
     try {
-        console.log('🏢 loadSiteFilterList() 開始');
         const tenantId = getCurrentTenantId();
-        console.log('  tenantId:', tenantId);
         const querySnapshot = await getAttendanceCollection().get();
-        console.log('  勤怠レコード数:', querySnapshot.docs.length);
 
         // 管理者が設定した現場を取得
         const managedSites = tenantId ? await getTenantSites(tenantId) : [];
         const managedSiteNames = new Set(managedSites.map(site => site.name));
-        console.log('  管理現場数:', managedSites.length);
 
         const usedSites = new Set();
 
@@ -1082,12 +1049,9 @@ async function loadSiteFilterList() {
                 usedSites.add(record.siteName);
             }
         });
-        console.log('  使用中の現場数:', usedSites.size);
-        console.log('  使用中の現場:', Array.from(usedSites));
 
         const select = getElement('filter-site');
         if (!select) {
-            console.warn('⚠️ filter-site要素が見つかりません');
             return;
         }
 
@@ -1135,13 +1099,10 @@ async function loadSiteFilterList() {
             option.value = site.name;
             option.textContent = site.displayName;
             select.appendChild(option);
-            console.log(`  現場追加: value="${site.name}", text="${site.displayName}"`);
         });
 
-        console.log(`✅ 現場フィルターに${allSites.length}件を追加しました (管理現場: ${managedSites.length}件, 使用中: ${usedSites.size}件)`);
-
     } catch (error) {
-        console.error('❌ 現場フィルター読み込みエラー:', error);
+        console.error('現場フィルター読み込みエラー:', error);
         showError('現場リストの読み込みに失敗しました');
     }
 }
@@ -1232,7 +1193,6 @@ async function loadAttendanceDataForSuperAdmin(activeTab) {
 async function loadAttendanceData() {
     try {
         const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
-        console.log('🔍 loadAttendanceData() 呼び出し - activeTab:', activeTab);
         if (!activeTab) return;
 
         // スーパー管理者の場合は全テナントのデータを取得
@@ -1247,13 +1207,11 @@ async function loadAttendanceData() {
         // フィルター条件の適用
         if (activeTab === 'daily') {
             const filterDate = getElement('filter-date')?.value;
-            console.log('📅 日別タブ - フィルター日付:', filterDate);
             if (filterDate) {
                 query = query.where('date', '==', filterDate);
             }
         } else if (activeTab === 'monthly') {
             const filterMonth = getElement('filter-month')?.value;
-            console.log('📅 月別タブ - フィルター月:', filterMonth);
             if (filterMonth) {
                 // 月の最初と最後の日付を計算
                 const startDate = `${filterMonth}-01`;
@@ -1263,26 +1221,14 @@ async function loadAttendanceData() {
         } else if (activeTab === 'employee') {
             const employeeSelect = getElement('filter-employee');
             const employeeId = employeeSelect?.value;
-            console.log('👤 従業員別タブ - フィルター従業員ID:', employeeId);
-            console.log('👤 従業員selectボックス存在:', !!employeeSelect);
-            console.log('👤 従業員selectボックスvalue:', employeeSelect?.value);
             if (employeeId) {
-                console.log('✅ 従業員フィルター適用: userId ==', employeeId);
                 query = query.where('userId', '==', employeeId);
-            } else {
-                console.log('⚠️ 従業員IDが空のため、全データを表示');
             }
         } else if (activeTab === 'site') {
             const siteSelect = getElement('filter-site');
             const siteName = siteSelect?.value;
-            console.log('🏢 現場別タブ - フィルター現場名:', siteName);
-            console.log('🏢 現場selectボックス存在:', !!siteSelect);
-            console.log('🏢 現場selectボックスvalue:', siteSelect?.value);
             if (siteName) {
-                console.log('✅ 現場フィルター適用: siteName ==', siteName);
                 query = query.where('siteName', '==', siteName);
-            } else {
-                console.log('⚠️ 現場名が空のため、全データを表示');
             }
         }
 
@@ -1290,7 +1236,6 @@ async function loadAttendanceData() {
         query = query.orderBy('date', 'desc');
 
         const querySnapshot = await query.get();
-        console.log('📊 クエリ結果:', querySnapshot.docs.length, '件');
 
         // データを配列に変換
         filteredData = querySnapshot.docs.map(doc => ({
@@ -1306,13 +1251,12 @@ async function loadAttendanceData() {
 
         // グローバル currentData 配列を更新
         currentData = filteredData;
-        console.log('✅ currentData更新完了:', currentData.length, '件');
 
         // ソート機能を適用（テーブル描画も含む）
         applySortToTable();
 
     } catch (error) {
-        console.error('❌ 勤怠データ読み込みエラー:', error);
+        console.error('勤怠データ読み込みエラー:', error);
         showError('勤怠データの読み込みに失敗しました: ' + error.message);
     }
 }
@@ -1535,15 +1479,13 @@ function renderAttendanceTable(data) {
  * 管理者イベントの設定
  */
 function setupAdminEvents() {
-    console.log('🎯 setupAdminEvents() 開始');
-
     // CSV出力ボタン
     const exportBtn = getElement('export-csv');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportToCSV);
     }
 
-    // 🆕 特殊勤務CSV出力ボタン
+    // 特殊勤務CSV出力ボタン
     const exportSpecialWorkBtn = getElement('export-special-work-csv');
     if (exportSpecialWorkBtn) {
         exportSpecialWorkBtn.addEventListener('click', exportSpecialWorkToCSV);
@@ -1551,15 +1493,11 @@ function setupAdminEvents() {
 
     // フィルター変更イベント
     const filterInputs = document.querySelectorAll('#filter-date, #filter-month, #filter-employee, #filter-site');
-    console.log('🔍 フィルター要素の検索結果:', filterInputs.length, '個');
-    filterInputs.forEach((input, index) => {
-        console.log(`  フィルター${index + 1}: id="${input.id}", tag="${input.tagName}"`);
+    filterInputs.forEach((input) => {
         input.addEventListener('change', () => {
-            console.log(`🔔 フィルター変更イベント発火: ${input.id}, value="${input.value}"`);
             loadAttendanceData();
         });
     });
-    console.log('✅ setupAdminEvents() 完了 - イベントリスナー設定済み');
 
     // 設定タブ: 休憩時間設定フォーム
     const breakTimeSettingsForm = document.getElementById('break-time-settings-form');
@@ -6405,8 +6343,6 @@ async function deleteAttendanceRecordFromFirestore(recordId, tenantId) {
  * 経費レポートタブを表示
  */
 function showExpenseReportTab() {
-    console.log('========== showExpenseReportTab 開始 ==========');
-
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -6425,7 +6361,6 @@ function showExpenseReportTab() {
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
-    console.log('filterRow:', filterRow);
     if (filterRow) {
         filterRow.style.display = 'none';
         filterRow.classList.add('hidden');
@@ -6433,46 +6368,33 @@ function showExpenseReportTab() {
 
     // すべての勤怠テーブルコンテナを確実に非表示
     const attendanceContainers = document.querySelectorAll('.attendance-table-container');
-    console.log('勤怠テーブルコンテナの数:', attendanceContainers.length);
-    attendanceContainers.forEach((container, index) => {
-        console.log(`コンテナ ${index}:`, container);
+    attendanceContainers.forEach((container) => {
         container.classList.add('hidden');
         container.style.display = 'none';
-        console.log(`コンテナ ${index} を非表示にしました`);
     });
 
     // 経費レポートコンテンツを表示
     const expenseReportContent = document.getElementById('expense-report-content');
-    console.log('expense-report-content:', expenseReportContent);
     if (expenseReportContent) {
         expenseReportContent.classList.remove('hidden');
         expenseReportContent.style.display = 'block';
-        console.log('経費レポートコンテンツを表示しました');
-    } else {
-        console.error('expense-report-contentが見つかりません！');
     }
 
     // 経費レポート機能を初期化
     if (typeof window.initExpenseReport === 'function') {
-        console.log('initExpenseReportを呼び出します');
         window.initExpenseReport();
     }
 
     // 経費レポートデータを読み込み
     if (typeof window.loadExpenseReport === 'function') {
-        console.log('loadExpenseReportを呼び出します');
         window.loadExpenseReport();
     }
-
-    console.log('========== showExpenseReportTab 終了 ==========');
 }
 
 /**
  * 設定タブを表示
  */
 function showSettingsTab() {
-    console.log('========== showSettingsTab 開始 ==========');
-
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -6491,7 +6413,6 @@ function showSettingsTab() {
 
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
-    console.log('filterRow:', filterRow);
     if (filterRow) {
         filterRow.style.display = 'none';
         filterRow.classList.add('hidden');
@@ -6499,42 +6420,30 @@ function showSettingsTab() {
 
     // すべての勤怠テーブルコンテナを確実に非表示
     const attendanceContainers = document.querySelectorAll('.attendance-table-container');
-    console.log('勤怠テーブルコンテナの数:', attendanceContainers.length);
-    attendanceContainers.forEach((container, index) => {
-        console.log(`コンテナ ${index}:`, container);
+    attendanceContainers.forEach((container) => {
         container.classList.add('hidden');
         container.style.display = 'none';
-        console.log(`コンテナ ${index} を非表示にしました`);
     });
 
     // 設定コンテンツを表示
     const settingsContent = document.getElementById('settings-content');
-    console.log('settings-content:', settingsContent);
     if (settingsContent) {
         settingsContent.classList.remove('hidden');
         settingsContent.style.display = 'block';
-        console.log('設定コンテンツを表示しました');
-    } else {
-        console.error('settings-contentが見つかりません！');
     }
 
     // 設定機能を初期化
     if (typeof window.initSettings === 'function') {
-        console.log('initSettingsを呼び出します');
         window.initSettings();
     }
 
     // 現場一覧を読み込み
     if (typeof window.loadSiteList === 'function') {
-        console.log('loadSiteListを呼び出します');
         window.loadSiteList();
     }
 
     // 休憩時間設定を読み込み
-    console.log('loadBreakTimeSettingsを呼び出します');
     loadBreakTimeSettings();
-
-    console.log('========== showSettingsTab 終了 ==========');
 }
 
 /**
@@ -6630,8 +6539,6 @@ let currentMonthlySummaryData = [];
  * 月次給与タブを表示
  */
 function showMonthlySalaryTab() {
-    console.log('========== showMonthlySalaryTab 開始 ==========');
-
     // 全てのタブコンテンツを非表示
     document.querySelectorAll('.tab-content, .attendance-table-container').forEach(el => {
         el.classList.add('hidden');
@@ -6657,16 +6564,12 @@ function showMonthlySalaryTab() {
 
     // 初回表示時に初期化
     initMonthlySalaryTab();
-
-    console.log('========== showMonthlySalaryTab 終了 ==========');
 }
 
 /**
  * 月次給与タブの初期化
  */
 function initMonthlySalaryTab() {
-    console.log('initMonthlySalaryTab: 初期化開始');
-
     // 年月セレクトボックスを生成
     const yearMonthSelect = document.getElementById('salary-year-month');
     if (yearMonthSelect && yearMonthSelect.options.length === 0) {
@@ -6703,8 +6606,6 @@ function initMonthlySalaryTab() {
         sheetsSettingsBtn.addEventListener('click', openSheetsSettings);
         sheetsSettingsBtn.setAttribute('data-listener-set', 'true');
     }
-
-    console.log('initMonthlySalaryTab: 初期化完了');
 }
 
 /**
@@ -6721,7 +6622,6 @@ async function handleCalculateMonthlySummary() {
     }
 
     const yearMonth = yearMonthSelect.value;
-    console.log(`月次集計開始: ${yearMonth}`);
 
     try {
         // ローディング表示
@@ -6739,10 +6639,6 @@ async function handleCalculateMonthlySummary() {
 
         // ボタンを有効化
         document.getElementById('salary-export-csv-btn').disabled = summaryData.length === 0;
-        // TODO: Sheets連携が完了したら有効化
-        // document.getElementById('salary-export-sheets-btn').disabled = summaryData.length === 0;
-
-        console.log(`月次集計完了: ${summaryData.length}名`);
 
     } catch (error) {
         console.error('月次集計エラー:', error);
@@ -6829,8 +6725,6 @@ function handleExportMonthlySummaryCSV() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    console.log('CSV出力完了');
 }
 
 /**
