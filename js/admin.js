@@ -6834,19 +6834,219 @@ function handleExportMonthlySummaryCSV() {
 }
 
 /**
- * スプレッドシートに出力（Phase 3で実装）
+ * スプレッドシートに出力
  */
-function handleExportToSheets() {
-    alert('Google Sheets連携は設定画面から設定してください');
-    // TODO: Phase 3で実装
+async function handleExportToSheets() {
+    if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
+        alert('出力するデータがありません。先に集計を実行してください。');
+        return;
+    }
+
+    const yearMonth = document.getElementById('salary-year-month').value;
+    if (!yearMonth) {
+        alert('対象月を選択してください');
+        return;
+    }
+
+    // 認証確認
+    if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
+        alert('Google認証が必要です。連携設定から認証を行ってください。');
+        openSheetsSettings();
+        return;
+    }
+
+    const settings = window.GoogleSheets.getSettings();
+    if (!settings.spreadsheetId) {
+        alert('スプレッドシートIDが設定されていません。連携設定を行ってください。');
+        openSheetsSettings();
+        return;
+    }
+
+    const exportBtn = document.getElementById('salary-export-sheets-btn');
+
+    try {
+        exportBtn.disabled = true;
+        exportBtn.textContent = '出力中...';
+
+        const result = await window.GoogleSheets.exportMonthlySummary(currentMonthlySummaryData, yearMonth);
+
+        alert(`スプレッドシートに出力しました！\nシート名: ${result.sheetName}\n出力件数: ${result.rowCount}名`);
+
+    } catch (error) {
+        console.error('スプレッドシート出力エラー:', error);
+        alert('スプレッドシートへの出力に失敗しました: ' + error.message);
+    } finally {
+        exportBtn.disabled = false;
+        exportBtn.textContent = '📤 スプレッドシートに出力';
+    }
 }
 
 /**
- * Sheets設定画面を開く（Phase 3で実装）
+ * Sheets設定モーダルを開く
  */
 function openSheetsSettings() {
-    alert('Google Sheets連携設定は次のフェーズで実装予定です');
-    // TODO: Phase 3で実装 - 設定モーダルを開く
+    const modal = document.getElementById('sheets-settings-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+
+        // 現在の設定を読み込み
+        const settings = window.GoogleSheets ? window.GoogleSheets.getSettings() : {};
+        document.getElementById('sheets-spreadsheet-id').value = settings.spreadsheetId || '';
+        document.getElementById('sheets-master-name').value = settings.masterSheetName || 'マスタ';
+
+        // 認証状態を更新
+        updateModalAuthStatus();
+    }
+}
+
+/**
+ * Sheets設定モーダルを閉じる
+ */
+function closeSheetsSettingsModal() {
+    const modal = document.getElementById('sheets-settings-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+/**
+ * Google認証を実行
+ */
+async function handleGoogleAuth() {
+    const authBtn = document.getElementById('btn-google-auth');
+
+    try {
+        authBtn.disabled = true;
+        authBtn.textContent = '認証中...';
+
+        await window.GoogleSheets.authenticate();
+
+        updateModalAuthStatus();
+        alert('Google認証に成功しました！');
+
+    } catch (error) {
+        console.error('認証エラー:', error);
+        alert('認証に失敗しました: ' + error.message);
+    } finally {
+        authBtn.disabled = false;
+        authBtn.textContent = 'Google認証';
+    }
+}
+
+/**
+ * モーダルの認証状態UIを更新
+ */
+function updateModalAuthStatus() {
+    const isAuthed = window.GoogleSheets && window.GoogleSheets.isAuthenticated();
+    const statusCard = document.getElementById('modal-auth-status');
+    const icon = document.getElementById('modal-auth-icon');
+    const title = document.getElementById('modal-auth-title');
+    const desc = document.getElementById('modal-auth-desc');
+    const authBtn = document.getElementById('btn-google-auth');
+
+    if (isAuthed) {
+        statusCard.classList.add('authenticated');
+        icon.textContent = '✅';
+        title.textContent = '認証済み';
+        desc.textContent = 'Googleアカウントで認証されています';
+        authBtn.textContent = '再認証';
+    } else {
+        statusCard.classList.remove('authenticated');
+        icon.textContent = '🔒';
+        title.textContent = '未認証';
+        desc.textContent = 'Googleアカウントで認証してください';
+        authBtn.textContent = 'Google認証';
+    }
+
+    // メイン画面の認証状態も更新
+    if (window.GoogleSheets) {
+        window.GoogleSheets.updateAuthStatus(isAuthed);
+    }
+}
+
+/**
+ * 接続テスト
+ */
+async function handleTestConnection() {
+    const spreadsheetId = document.getElementById('sheets-spreadsheet-id').value.trim();
+    const resultDiv = document.getElementById('connection-result');
+
+    if (!spreadsheetId) {
+        alert('スプレッドシートIDを入力してください');
+        return;
+    }
+
+    if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
+        alert('先にGoogle認証を行ってください');
+        return;
+    }
+
+    try {
+        resultDiv.classList.remove('hidden', 'success', 'error');
+        resultDiv.textContent = '接続テスト中...';
+
+        const result = await window.GoogleSheets.testConnection(spreadsheetId);
+
+        resultDiv.classList.add('success');
+        resultDiv.innerHTML = `
+            <strong>✅ 接続成功！</strong><br>
+            スプレッドシート名: ${result.title}<br>
+            シート数: ${result.sheets.length}枚（${result.sheets.join(', ')}）
+        `;
+
+    } catch (error) {
+        console.error('接続テストエラー:', error);
+        resultDiv.classList.add('error');
+        resultDiv.innerHTML = `
+            <strong>❌ 接続失敗</strong><br>
+            ${error.message}<br>
+            スプレッドシートIDが正しいか、アクセス権限があるか確認してください。
+        `;
+    }
+}
+
+/**
+ * スプレッドシートを開く
+ */
+function handleOpenSheet() {
+    const spreadsheetId = document.getElementById('sheets-spreadsheet-id').value.trim();
+    if (spreadsheetId) {
+        window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`, '_blank');
+    } else {
+        alert('スプレッドシートIDを入力してください');
+    }
+}
+
+/**
+ * Sheets設定を保存
+ */
+function saveSheetsSettings() {
+    const spreadsheetId = document.getElementById('sheets-spreadsheet-id').value.trim();
+    const masterSheetName = document.getElementById('sheets-master-name').value.trim() || 'マスタ';
+
+    if (!spreadsheetId) {
+        alert('スプレッドシートIDを入力してください');
+        return;
+    }
+
+    const settings = {
+        spreadsheetId: spreadsheetId,
+        masterSheetName: masterSheetName,
+        settingsSheetName: '設定'
+    };
+
+    if (window.GoogleSheets) {
+        window.GoogleSheets.saveSettings(settings);
+    }
+
+    // スプレッドシート出力ボタンの状態を更新
+    const exportBtn = document.getElementById('salary-export-sheets-btn');
+    if (exportBtn && window.GoogleSheets && window.GoogleSheets.isAuthenticated()) {
+        exportBtn.disabled = false;
+    }
+
+    alert('設定を保存しました！');
+    closeSheetsSettingsModal();
 }
 
 // グローバルスコープに関数をエクスポート
@@ -6868,4 +7068,10 @@ window.saveBreakTimeSettings = saveBreakTimeSettings;
 window.resetBreakTimeSettings = resetBreakTimeSettings;
 window.showMonthlySalaryTab = showMonthlySalaryTab;
 window.initMonthlySalaryTab = initMonthlySalaryTab;
+window.openSheetsSettings = openSheetsSettings;
+window.closeSheetsSettingsModal = closeSheetsSettingsModal;
+window.handleGoogleAuth = handleGoogleAuth;
+window.handleTestConnection = handleTestConnection;
+window.handleOpenSheet = handleOpenSheet;
+window.saveSheetsSettings = saveSheetsSettings;
 
