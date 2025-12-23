@@ -2803,3 +2803,335 @@ textarea:focus-visible {
         overflow-x: auto;
     }
 }
+
+/* ========================================
+   月次給与計算タブ
+   ======================================== */
+
+.monthly-salary-section {
+    padding: 1.5rem;
+}
+
+.monthly-salary-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.monthly-salary-header h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+.monthly-salary-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* 月次給与フィルター */
+.monthly-salary-filter-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+.monthly-salary-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.salary-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.salary-filter-item label {
+    font-weight: 600;
+    color: var(--careecon-navy);
+    font-size: 0.9rem;
+}
+
+/* 月次給与サマリー */
+.monthly-salary-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.salary-summary-card {
+    background: linear-gradient(135deg, var(--careecon-primary-blue), var(--careecon-secondary-blue));
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.salary-summary-card:nth-child(2) {
+    background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.salary-summary-card:nth-child(3) {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+}
+
+.salary-summary-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.salary-summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* 月次給与テーブルセクション */
+.monthly-salary-table-section {
+    margin-bottom: 2rem;
+}
+
+.monthly-salary-table-section h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid var(--careecon-primary-blue);
+}
+
+.monthly-salary-table-section .attendance-table th {
+    background: linear-gradient(135deg, var(--careecon-background-blue), var(--careecon-white));
+    font-weight: 700;
+    text-align: center;
+}
+
+.monthly-salary-table-section .attendance-table td {
+    text-align: right;
+}
+
+.monthly-salary-table-section .attendance-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+}
+
+.monthly-salary-table-section .attendance-table td:last-child {
+    font-weight: 700;
+    color: var(--careecon-primary-blue);
+}
+
+/* アクションボタン */
+.monthly-salary-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--careecon-background-blue);
+    border-radius: var(--radius-lg);
+}
+
+.monthly-salary-actions .btn {
+    min-width: 180px;
+}
+
+.monthly-salary-actions .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Google Sheets連携ステータス */
+.sheets-connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+}
+
+.status-indicator.disconnected {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.status-indicator.connected {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--careecon-primary-blue);
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.btn-link:hover {
+    color: var(--careecon-navy);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .monthly-salary-filter-row {
+        flex-direction: column;
+    }
+
+    .monthly-salary-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-salary-actions {
+        flex-direction: column;
+    }
+
+    .monthly-salary-actions .btn {
+        width: 100%;
+    }
+
+    .sheets-connection-status {
+        flex-direction: column;
+    }
+}
+
+/* ========================================
+   Google Sheets 設定モーダル
+   ======================================== */
+
+#sheets-settings-modal .modal-content {
+    max-width: 600px;
+}
+
+.sheets-auth-section,
+.sheets-config-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--careecon-background-blue);
+    border-radius: var(--radius-lg);
+}
+
+.sheets-auth-section h4,
+.sheets-config-section h4 {
+    margin-bottom: 1rem;
+    color: var(--careecon-navy);
+    font-size: 1.1rem;
+}
+
+#modal-auth-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+#modal-auth-status .status-icon {
+    font-size: 2rem;
+}
+
+#modal-auth-status .status-info {
+    flex: 1;
+}
+
+#modal-auth-status .status-info span {
+    font-weight: 600;
+    color: var(--careecon-navy);
+}
+
+#modal-auth-status .status-info p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0.25rem 0 0 0;
+}
+
+#modal-auth-status.authenticated {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+#modal-auth-status.authenticated .status-icon {
+    color: #16a34a;
+}
+
+.sheets-config-section .form-group {
+    margin-bottom: 1rem;
+}
+
+.sheets-config-section label {
+    display: block;
+    font-weight: 600;
+    color: var(--careecon-navy);
+    margin-bottom: 0.5rem;
+}
+
+.sheets-config-section input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--careecon-gray-blue);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+}
+
+.sheets-config-section input:focus {
+    outline: none;
+    border-color: var(--careecon-primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.sheets-config-section .help-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.sheets-config-section .help-text strong {
+    color: var(--careecon-primary-blue);
+}
+
+.sheets-config-section .button-group {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.connection-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+}
+
+.connection-result.success {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #16a34a;
+}
+
+.connection-result.error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+}

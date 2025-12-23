@@ -42,7 +42,9 @@
     <script src="js/employee.js?v=20250124g"></script>
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/expense-report.js?v=20250124c"></script>
-    <script src="js/admin.js?v=20251209f"></script>
+    <script src="js/monthly-summary.js?v=20251223a"></script>
+    <script src="js/google-sheets.js?v=20251223a"></script>
+    <script src="js/admin.js?v=20251223b"></script>
 
     <style>
         .hidden {
@@ -1907,6 +1909,7 @@
                     <button class="tab-btn" data-tab="employee">👥 従業員別</button>
                     <button class="tab-btn" data-tab="site">🏢 現場別</button>
                     <button class="tab-btn" data-tab="expense-report">💰 経費精算</button>
+                    <button class="tab-btn" data-tab="monthly-salary">📊 月次給与</button>
                     <button class="tab-btn" data-tab="settings">⚙️ 設定</button>
                     <button class="tab-btn" data-tab="invite">✉️ 従業員招待</button>
                     <button class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;">従業員管理</button>
@@ -2282,6 +2285,139 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📊 月次給与タブ -->
+                <div id="monthly-salary-content" class="tab-content hidden">
+                    <div class="monthly-salary-section">
+                        <div class="monthly-salary-header">
+                            <h3>📊 月次給与計算</h3>
+                            <p class="monthly-salary-description">月次の勤務時間を集計し、スプレッドシートに出力できます。</p>
+                        </div>
+
+                        <!-- フィルターセクション -->
+                        <div class="monthly-salary-filter-section">
+                            <div class="monthly-salary-filter-row">
+                                <div class="salary-filter-item">
+                                    <label for="salary-year-month">📅 対象月</label>
+                                    <select id="salary-year-month" class="filter-input">
+                                        <!-- JavaScriptで動的に生成 -->
+                                    </select>
+                                </div>
+                                <div class="salary-filter-item">
+                                    <button id="salary-calculate-btn" class="btn btn-primary">🔄 集計する</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- サマリーカード -->
+                        <div class="monthly-salary-summary">
+                            <div class="salary-summary-card">
+                                <div class="salary-summary-label">👥 対象従業員数</div>
+                                <div class="salary-summary-value" id="salary-employee-count">0名</div>
+                            </div>
+                            <div class="salary-summary-card">
+                                <div class="salary-summary-label">⏱️ 総勤務時間</div>
+                                <div class="salary-summary-value" id="salary-total-hours">0.0h</div>
+                            </div>
+                            <div class="salary-summary-card">
+                                <div class="salary-summary-label">📅 対象期間</div>
+                                <div class="salary-summary-value" id="salary-period">-</div>
+                            </div>
+                        </div>
+
+                        <!-- 集計結果テーブル -->
+                        <div class="monthly-salary-table-section">
+                            <h4>📋 従業員別勤務時間集計</h4>
+                            <div class="attendance-table-container">
+                                <table class="attendance-table" id="monthly-salary-table">
+                                    <thead>
+                                        <tr>
+                                            <th>従業員名</th>
+                                            <th>通常勤務(h)</th>
+                                            <th>夜間勤務(h)</th>
+                                            <th>通し夜間(h)</th>
+                                            <th>休日出勤(h)</th>
+                                            <th>残業(h)</th>
+                                            <th>合計(h)</th>
+                                            <th>出勤日数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthly-salary-data">
+                                        <tr><td colspan="8" class="no-data">「集計する」ボタンを押して集計を開始してください</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- アクションボタン -->
+                        <div class="monthly-salary-actions">
+                            <button id="salary-export-csv-btn" class="btn btn-secondary" disabled>📥 CSV出力</button>
+                            <button id="salary-export-sheets-btn" class="btn btn-primary" disabled>📤 スプレッドシートに出力</button>
+                        </div>
+
+                        <!-- Google Sheets連携ステータス -->
+                        <div class="sheets-connection-status" id="sheets-status">
+                            <div class="status-indicator disconnected">
+                                <span class="status-icon">🔒</span>
+                                <span class="status-text">Google Sheets未連携</span>
+                            </div>
+                            <button id="sheets-settings-btn" class="btn btn-link">⚙️ 連携設定</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Sheets 設定モーダル -->
+                <div id="sheets-settings-modal" class="modal hidden">
+                    <div class="modal-overlay" onclick="closeSheetsSettingsModal()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📊 Google Sheets 連携設定</h3>
+                            <button class="modal-close" onclick="closeSheetsSettingsModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- 認証ステータス -->
+                            <div class="sheets-auth-section">
+                                <h4>1. Google認証</h4>
+                                <div class="auth-status-card" id="modal-auth-status">
+                                    <div class="status-icon" id="modal-auth-icon">🔒</div>
+                                    <div class="status-info">
+                                        <span id="modal-auth-title">未認証</span>
+                                        <p id="modal-auth-desc">Googleアカウントで認証してください</p>
+                                    </div>
+                                    <button id="btn-google-auth" class="btn btn-primary" onclick="handleGoogleAuth()">Google認証</button>
+                                </div>
+                            </div>
+
+                            <!-- スプレッドシート設定 -->
+                            <div class="sheets-config-section">
+                                <h4>2. スプレッドシート設定</h4>
+                                <div class="form-group">
+                                    <label for="sheets-spreadsheet-id">スプレッドシートID *</label>
+                                    <input type="text" id="sheets-spreadsheet-id"
+                                           placeholder="例: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                                    <p class="help-text">
+                                        スプレッドシートのURLから取得できます<br>
+                                        https://docs.google.com/spreadsheets/d/<strong>[この部分]</strong>/edit
+                                    </p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sheets-master-name">マスタシート名</label>
+                                    <input type="text" id="sheets-master-name" value="マスタ" placeholder="マスタ">
+                                    <p class="help-text">基本給などの従業員マスタデータが入ったシート名</p>
+                                </div>
+                                <div class="button-group">
+                                    <button id="btn-test-connection" class="btn btn-secondary" onclick="handleTestConnection()">接続テスト</button>
+                                    <button id="btn-open-sheet" class="btn btn-secondary" onclick="handleOpenSheet()">スプレッドシートを開く</button>
+                                </div>
+                                <div id="connection-result" class="connection-result hidden"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeSheetsSettingsModal()">キャンセル</button>
+                            <button type="button" class="btn btn-primary" onclick="saveSheetsSettings()">💾 設定を保存</button>
                         </div>
                     </div>
                 </div>
