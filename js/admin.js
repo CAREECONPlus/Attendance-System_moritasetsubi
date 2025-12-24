@@ -6164,6 +6164,114 @@ function closeEditModal() {
     currentEditingRecordId = null;
 }
 
+// ========================================
+// 勤務時間計算ヘルパー関数
+// ========================================
+
+/**
+ * 出勤・退勤時刻から実働時間を計算（分単位）
+ * @param {string} startTime - 出勤時刻（HH:MM形式）
+ * @param {string} endTime - 退勤時刻（HH:MM形式）
+ * @param {number} breakMinutes - 休憩時間（分）
+ * @returns {number} 実働時間（分）
+ */
+function calculateWorkingMinutesFromTimes(startTime, endTime, breakMinutes) {
+    try {
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [endHour, endMin] = endTime.split(':').map(Number);
+
+        let startTotalMins = startHour * 60 + startMin;
+        let endTotalMins = endHour * 60 + endMin;
+
+        // 退勤が出勤より前の場合は翌日とみなす（夜勤対応）
+        if (endTotalMins <= startTotalMins) {
+            endTotalMins += 24 * 60;
+        }
+
+        const totalMinutes = endTotalMins - startTotalMins;
+        const workingMinutes = totalMinutes - (breakMinutes || 0);
+
+        return Math.max(0, workingMinutes);
+    } catch (error) {
+        console.error('勤務時間計算エラー:', error);
+        return 0;
+    }
+}
+
+/**
+ * 夜間勤務かどうか判定
+ * @param {string} startTime - 出勤時刻（HH:MM形式）
+ * @param {string} endTime - 退勤時刻（HH:MM形式）
+ * @returns {object} { isNight: boolean, type: 'none' | 'night_only' | 'through_night' }
+ */
+function detectNightWorkFromTimes(startTime, endTime) {
+    try {
+        const [startHour] = startTime.split(':').map(Number);
+        const [endHour] = endTime.split(':').map(Number);
+
+        // 夜間の定義：20時以降または翌朝5時前
+        const isStartNight = startHour >= 20 || startHour < 5;
+        const isEndNight = endHour >= 22 || endHour < 5;
+
+        if (isStartNight) {
+            return { isNight: true, type: 'night_only' };
+        } else if (isEndNight) {
+            return { isNight: true, type: 'through_night' };
+        } else {
+            return { isNight: false, type: 'none' };
+        }
+    } catch (error) {
+        console.error('夜間勤務判定エラー:', error);
+        return { isNight: false, type: 'none' };
+    }
+}
+
+/**
+ * 指定日が休日かどうか判定
+ * @param {string} dateString - 日付（YYYY-MM-DD形式）
+ * @returns {boolean} 休日ならtrue
+ */
+function isHolidayDate(dateString) {
+    try {
+        const date = new Date(dateString);
+        const dayOfWeek = date.getDay();
+
+        // 土曜(6)または日曜(0)
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            return true;
+        }
+
+        // 祝日判定（簡易版：主要な祝日のみ）
+        const holidays = getJapaneseHolidays(date.getFullYear());
+        return holidays.includes(dateString);
+    } catch (error) {
+        console.error('休日判定エラー:', error);
+        return false;
+    }
+}
+
+/**
+ * 日本の祝日リストを取得（簡易版）
+ * @param {number} year - 年
+ * @returns {Array<string>} 祝日の日付リスト（YYYY-MM-DD形式）
+ */
+function getJapaneseHolidays(year) {
+    // 固定祝日
+    const holidays = [
+        `${year}-01-01`, // 元日
+        `${year}-02-11`, // 建国記念日
+        `${year}-02-23`, // 天皇誕生日
+        `${year}-04-29`, // 昭和の日
+        `${year}-05-03`, // 憲法記念日
+        `${year}-05-04`, // みどりの日
+        `${year}-05-05`, // こどもの日
+        `${year}-08-11`, // 山の日
+        `${year}-11-03`, // 文化の日
+        `${year}-11-23`, // 勤労感謝の日
+    ];
+    return holidays;
+}
+
 /**
  * 勤怠レコードを保存
  */
@@ -6221,12 +6329,29 @@ async function saveAttendanceRecordInternal() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedBy: firebase.auth().currentUser?.email || 'admin'
         };
-        
-        // 退勤時刻がある場合のみ追加
+
+        // 退勤時刻がある場合は勤務時間も計算
         if (endTime) {
             updateData.endTime = endTime;
+            updateData.status = 'completed';
+
+            // 勤務時間を計算
+            const workingMinutes = calculateWorkingMinutesFromTimes(startTime, endTime, breakDuration);
+            updateData.workingMinutes = workingMinutes;
+
+            // 残業時間を計算（8時間超過分）
+            const standardWorkMinutes = 8 * 60;
+            updateData.overtimeMinutes = Math.max(0, workingMinutes - standardWorkMinutes);
+
+            // 夜間勤務判定
+            const nightWork = detectNightWorkFromTimes(startTime, endTime);
+            updateData.isNightWork = nightWork.isNight;
+            updateData.nightWorkType = nightWork.type;
+
+            // 休日出勤判定
+            updateData.isHolidayWork = isHolidayDate(date);
         }
-        
+
         // メモがある場合のみ追加
         if (notes) {
             updateData.notes = notes;
