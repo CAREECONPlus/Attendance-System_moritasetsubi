@@ -6783,7 +6783,7 @@ function renderMonthlySummaryTable(data) {
     if (!tbody) return;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data">データがありません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">データがありません</td></tr>';
         return;
     }
 
@@ -6795,6 +6795,7 @@ function renderMonthlySummaryTable(data) {
             <td>${record.throughNightHours.toFixed(1)}</td>
             <td>${record.holidayHours.toFixed(1)}</td>
             <td>${record.overtimeHours.toFixed(1)}</td>
+            <td>${(record.breakHours || 0).toFixed(1)}</td>
             <td><strong>${record.totalHours.toFixed(1)}</strong></td>
             <td>${record.workDays}日</td>
         </tr>

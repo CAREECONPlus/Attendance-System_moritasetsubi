@@ -171,6 +171,7 @@ function aggregateWorkHours(records, userInfo) {
     let throughNightMinutes = 0; // 通し夜間
     let holidayMinutes = 0;     // 休日出勤
     let overtimeMinutes = 0;    // 残業時間
+    let breakMinutes = 0;       // 休憩時間
 
     let workDays = 0;           // 出勤日数
     let paidLeaveDays = 0;      // 有給日数
@@ -192,6 +193,10 @@ function aggregateWorkHours(records, userInfo) {
         if (workingMins === 0) return;
 
         workDays++;
+
+        // 休憩時間の集計
+        const breakMins = record.breakDuration || record.breakMinutes || 0;
+        breakMinutes += breakMins;
 
         // 残業時間の集計（8h超過分）
         const overtimeMins = record.overtimeMinutes || 0;
@@ -231,6 +236,7 @@ function aggregateWorkHours(records, userInfo) {
         throughNightHours: toHours(throughNightMinutes),
         holidayHours: toHours(holidayMinutes),
         overtimeHours: toHours(overtimeMinutes),
+        breakHours: toHours(breakMinutes),
 
         // 合計時間
         totalHours: toHours(normalMinutes + nightOnlyMinutes + throughNightMinutes + holidayMinutes + overtimeMinutes),
@@ -246,7 +252,8 @@ function aggregateWorkHours(records, userInfo) {
             nightOnlyMinutes,
             throughNightMinutes,
             holidayMinutes,
-            overtimeMinutes
+            overtimeMinutes,
+            breakMinutes
         }
     };
 }
@@ -303,6 +310,7 @@ function convertSummaryToCSV(summaryData, yearMonth) {
         '通し夜間(h)',
         '休日出勤(h)',
         '残業(h)',
+        '休憩(h)',
         '合計(h)',
         '出勤日数',
         '有給日数',
@@ -317,6 +325,7 @@ function convertSummaryToCSV(summaryData, yearMonth) {
         record.throughNightHours,
         record.holidayHours,
         record.overtimeHours,
+        record.breakHours || 0,
         record.totalHours,
         record.workDays,
         record.paidLeaveDays,
