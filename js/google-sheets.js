@@ -27,6 +27,57 @@ let accessToken = null;
 
 // 設定をlocalStorageに保存
 const STORAGE_KEY = 'moritasetsubi_sheets_settings';
+const TOKEN_STORAGE_KEY = 'moritasetsubi_sheets_token';
+
+/**
+ * トークンをlocalStorageに保存
+ */
+function saveToken(token, expiresIn) {
+    try {
+        const tokenData = {
+            access_token: token,
+            expires_at: Date.now() + (expiresIn * 1000) // 有効期限をミリ秒で保存
+        };
+        localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData));
+    } catch (e) {
+        console.error('トークン保存エラー:', e);
+    }
+}
+
+/**
+ * 保存されたトークンを取得
+ */
+function loadStoredToken() {
+    try {
+        const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (!stored) return null;
+
+        const tokenData = JSON.parse(stored);
+
+        // 有効期限チェック（5分の余裕を持たせる）
+        if (tokenData.expires_at && tokenData.expires_at > Date.now() + 5 * 60 * 1000) {
+            return tokenData.access_token;
+        } else {
+            // 期限切れの場合は削除
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            return null;
+        }
+    } catch (e) {
+        console.error('トークン読み込みエラー:', e);
+        return null;
+    }
+}
+
+/**
+ * 保存されたトークンをクリア
+ */
+function clearStoredToken() {
+    try {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+    } catch (e) {
+        console.error('トークン削除エラー:', e);
+    }
+}
 
 /**
  * Sheets設定を取得
@@ -141,6 +192,9 @@ function initTokenClient() {
             }
             accessToken = response.access_token;
             gapi.client.setToken({ access_token: accessToken });
+            // トークンを保存（デフォルト1時間の有効期限）
+            const expiresIn = response.expires_in || 3600;
+            saveToken(accessToken, expiresIn);
             updateAuthStatusUI(true);
         }
     });
@@ -194,6 +248,9 @@ async function authenticateGoogle() {
                 }
                 accessToken = response.access_token;
                 gapi.client.setToken({ access_token: accessToken });
+                // トークンを保存（デフォルト1時間の有効期限）
+                const expiresIn = response.expires_in || 3600;
+                saveToken(accessToken, expiresIn);
                 updateAuthStatusUI(true);
                 resolve(true);
             };
@@ -223,6 +280,7 @@ function signOut() {
         google.accounts.oauth2.revoke(accessToken, () => {});
         accessToken = null;
         gapi.client.setToken(null);
+        clearStoredToken();
         updateAuthStatusUI(false);
     }
 }
@@ -501,6 +559,14 @@ window.GoogleSheets = {
     init: async function() {
         await initGoogleAPI();
         await initGIS();
+
+        // 保存されたトークンを復元
+        const storedToken = loadStoredToken();
+        if (storedToken) {
+            accessToken = storedToken;
+            gapi.client.setToken({ access_token: accessToken });
+            updateAuthStatusUI(true);
+        }
     },
 
     // 認証
