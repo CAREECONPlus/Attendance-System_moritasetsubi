@@ -28,6 +28,7 @@ let accessToken = null;
 // 設定をlocalStorageに保存
 const STORAGE_KEY = 'moritasetsubi_sheets_settings';
 const TOKEN_STORAGE_KEY = 'moritasetsubi_sheets_token';
+const AUTH_FLAG_KEY = 'moritasetsubi_sheets_authorized'; // 認証済みフラグ（サイレント再認証用）
 
 /**
  * トークンをlocalStorageに保存
@@ -77,6 +78,74 @@ function clearStoredToken() {
     } catch (e) {
         console.error('トークン削除エラー:', e);
     }
+}
+
+/**
+ * 認証済みフラグを保存
+ */
+function setAuthorizedFlag(authorized) {
+    try {
+        if (authorized) {
+            localStorage.setItem(AUTH_FLAG_KEY, 'true');
+        } else {
+            localStorage.removeItem(AUTH_FLAG_KEY);
+        }
+    } catch (e) {
+        console.error('認証フラグ保存エラー:', e);
+    }
+}
+
+/**
+ * 認証済みフラグを確認
+ */
+function hasAuthorizedBefore() {
+    try {
+        return localStorage.getItem(AUTH_FLAG_KEY) === 'true';
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * サイレント再認証を試行
+ * ユーザーがGoogleにログイン済みで、以前に認可していればポップアップなしで認証
+ */
+async function trySilentAuth() {
+    return new Promise((resolve) => {
+        if (!tokenClient) {
+            resolve(false);
+            return;
+        }
+
+        // タイムアウト設定（サイレント認証は素早く完了するはず）
+        const timeout = setTimeout(() => {
+            resolve(false);
+        }, 5000);
+
+        tokenClient.callback = (response) => {
+            clearTimeout(timeout);
+            if (response.error) {
+                // サイレント認証失敗（ユーザーがGoogleにログインしていないなど）
+                resolve(false);
+                return;
+            }
+            accessToken = response.access_token;
+            gapi.client.setToken({ access_token: accessToken });
+            const expiresIn = response.expires_in || 3600;
+            saveToken(accessToken, expiresIn);
+            updateAuthStatusUI(true);
+            resolve(true);
+        };
+
+        // prompt: '' でサイレント認証を試行
+        // ユーザーが以前に許可していれば、ポップアップなしでトークンを取得
+        try {
+            tokenClient.requestAccessToken({ prompt: '' });
+        } catch (e) {
+            clearTimeout(timeout);
+            resolve(false);
+        }
+    });
 }
 
 /**
@@ -195,6 +264,7 @@ function initTokenClient() {
             // トークンを保存（デフォルト1時間の有効期限）
             const expiresIn = response.expires_in || 3600;
             saveToken(accessToken, expiresIn);
+            setAuthorizedFlag(true);
             updateAuthStatusUI(true);
         }
     });
@@ -251,6 +321,8 @@ async function authenticateGoogle() {
                 // トークンを保存（デフォルト1時間の有効期限）
                 const expiresIn = response.expires_in || 3600;
                 saveToken(accessToken, expiresIn);
+                // 認証済みフラグを保存（次回以降のサイレント再認証用）
+                setAuthorizedFlag(true);
                 updateAuthStatusUI(true);
                 resolve(true);
             };
@@ -281,6 +353,7 @@ function signOut() {
         accessToken = null;
         gapi.client.setToken(null);
         clearStoredToken();
+        setAuthorizedFlag(false); // 認証済みフラグもクリア
         updateAuthStatusUI(false);
     }
 }
@@ -560,12 +633,24 @@ window.GoogleSheets = {
         await initGoogleAPI();
         await initGIS();
 
-        // 保存されたトークンを復元
+        // 1. まず保存されたトークンを復元
         const storedToken = loadStoredToken();
         if (storedToken) {
             accessToken = storedToken;
             gapi.client.setToken({ access_token: accessToken });
             updateAuthStatusUI(true);
+            return; // 有効なトークンがあれば完了
+        }
+
+        // 2. トークンが期限切れだが以前認証済みの場合、サイレント再認証を試行
+        if (hasAuthorizedBefore()) {
+            const silentSuccess = await trySilentAuth();
+            if (silentSuccess) {
+                // サイレント再認証成功
+                return;
+            }
+            // サイレント認証失敗の場合は手動認証が必要
+            // （Googleからログアウトしている等）
         }
     },
 
