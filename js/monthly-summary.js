@@ -173,18 +173,29 @@ function aggregateWorkHours(records, userInfo) {
     let overtimeMinutes = 0;    // 残業時間
     let breakMinutes = 0;       // 休憩時間
 
+    // 日数カウント
     let workDays = 0;           // 出勤日数
     let paidLeaveDays = 0;      // 有給日数
     let compensatoryDays = 0;   // 代休日数
+    let absenceDays = 0;        // 欠勤日数
+    let holidayWorkDays = 0;    // 休日出勤日数
+    let nightWorkDays = 0;      // 夜間勤務日数
+    let throughNightDays = 0;   // 通し夜間日数
 
     records.forEach(record => {
-        // 有給・代休の場合
+        // 有給の場合
         if (record.specialWorkType === 'paid_leave') {
             paidLeaveDays++;
             return;
         }
+        // 代休の場合
         if (record.specialWorkType === 'compensatory_leave') {
             compensatoryDays++;
+            return;
+        }
+        // 欠勤の場合
+        if (record.specialWorkType === 'absence') {
+            absenceDays++;
             return;
         }
 
@@ -205,16 +216,19 @@ function aggregateWorkHours(records, userInfo) {
         // 基本労働時間（残業を除いた分）
         const baseWorkingMins = workingMins - overtimeMins;
 
-        // 勤務区分による分類
+        // 勤務区分による分類（時間と日数両方カウント）
         if (record.isHolidayWork) {
             // 休日出勤
             holidayMinutes += baseWorkingMins;
+            holidayWorkDays++;
         } else if (record.nightWorkType === 'through_night') {
             // 通し夜間
             throughNightMinutes += baseWorkingMins;
-        } else if (record.nightWorkType === 'night_only') {
+            throughNightDays++;
+        } else if (record.nightWorkType === 'night_only' || record.isNightWork) {
             // 夜間のみ
             nightOnlyMinutes += baseWorkingMins;
+            nightWorkDays++;
         } else {
             // 通常勤務
             normalMinutes += baseWorkingMins;
@@ -241,10 +255,16 @@ function aggregateWorkHours(records, userInfo) {
         // 合計時間
         totalHours: toHours(normalMinutes + nightOnlyMinutes + throughNightMinutes + holidayMinutes + overtimeMinutes),
 
-        // 日数
+        // 日数（従来）
         workDays: workDays,
         paidLeaveDays: paidLeaveDays,
         compensatoryDays: compensatoryDays,
+
+        // 日数（新規追加 - 弥生用）
+        absenceDays: absenceDays,
+        holidayWorkDays: holidayWorkDays,
+        nightWorkDays: nightWorkDays,
+        throughNightDays: throughNightDays,
 
         // 生データ（分単位、デバッグ用）
         _raw: {
@@ -296,7 +316,7 @@ function getCurrentYearMonth() {
 }
 
 /**
- * 集計結果をCSV形式に変換
+ * 集計結果をCSV形式に変換（生データ形式）
  * @param {Array} summaryData - 集計結果
  * @param {string} yearMonth - 対象年月
  * @returns {string} CSV文字列
@@ -313,6 +333,10 @@ function convertSummaryToCSV(summaryData, yearMonth) {
         '休憩(h)',
         '合計(h)',
         '出勤日数',
+        '休日出勤日数',
+        '夜間勤務日数',
+        '通し夜間日数',
+        '欠勤日数',
         '有給日数',
         '代休日数'
     ];
@@ -328,9 +352,62 @@ function convertSummaryToCSV(summaryData, yearMonth) {
         record.breakHours || 0,
         record.totalHours,
         record.workDays,
+        record.holidayWorkDays || 0,
+        record.nightWorkDays || 0,
+        record.throughNightDays || 0,
+        record.absenceDays || 0,
         record.paidLeaveDays,
         record.compensatoryDays
     ]);
+
+    const csvArray = [headers, ...rows];
+    return csvArray.map(row =>
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+}
+
+/**
+ * 集計結果を弥生給与Next用CSV形式に変換
+ * @param {Array} summaryData - 集計結果
+ * @param {Object} masterData - マスタデータ（従業員コード用）
+ * @returns {string} CSV文字列
+ */
+function convertSummaryToYayoiCSV(summaryData, masterData = {}) {
+    // 弥生給与Next用ヘッダー
+    const headers = [
+        '従業員コード',
+        '出勤日数',
+        '休日出勤日数',
+        '欠勤日数',
+        '残業時間',
+        '代休',
+        '有給休暇',
+        '夜間勤務日数',
+        '通し夜間勤務'
+    ];
+
+    const rows = summaryData.map(record => {
+        // 従業員コードをマスタから取得（なければメールアドレスの@前を使用）
+        const employeeCode = masterData[record.email]?.employeeCode ||
+                            masterData[record.employeeName]?.employeeCode ||
+                            record.email?.split('@')[0] ||
+                            record.employeeName;
+
+        // 残業時間を分から時間に変換（小数点1桁）
+        const overtimeHours = record.overtimeHours || 0;
+
+        return [
+            employeeCode,
+            record.workDays || 0,
+            record.holidayWorkDays || 0,
+            record.absenceDays || 0,
+            overtimeHours,
+            record.compensatoryDays || 0,
+            record.paidLeaveDays || 0,
+            record.nightWorkDays || 0,
+            record.throughNightDays || 0
+        ];
+    });
 
     const csvArray = [headers, ...rows];
     return csvArray.map(row =>
@@ -346,12 +423,14 @@ window.MonthlySummary = {
     calculate: calculateMonthlySummary,
     generateYearMonthOptions: generateYearMonthOptions,
     getCurrentYearMonth: getCurrentYearMonth,
-    convertToCSV: convertSummaryToCSV
+    convertToCSV: convertSummaryToCSV,
+    convertToYayoiCSV: convertSummaryToYayoiCSV
 };
 
 // 後方互換性のため個別関数もエクスポート
 window.calculateMonthlySummary = calculateMonthlySummary;
 window.generateYearMonthOptions = generateYearMonthOptions;
 window.getCurrentYearMonth = getCurrentYearMonth;
+window.convertSummaryToYayoiCSV = convertSummaryToYayoiCSV;
 
 logger.log('✅ monthly-summary.js 読み込み完了');

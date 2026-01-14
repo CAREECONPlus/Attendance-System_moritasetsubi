@@ -1707,6 +1707,18 @@
                         <div class="status-waiting">出勤ボタンを押してください</div>
                     </div>
 
+                    <!-- 勤務タイプ選択（チェックボックス） -->
+                    <div class="work-type-checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="is-holiday-work">
+                            <span class="checkbox-text">📅 休日出勤</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="is-night-work">
+                            <span class="checkbox-text">🌙 夜間勤務</span>
+                        </label>
+                    </div>
+
                     <!-- 出退勤ボタン -->
                     <div class="clock-buttons">
                         <div class="button-row">
@@ -1756,9 +1768,14 @@
                         </div>
                     </div>
 
-                    <!-- 直近3日間の記録 -->
+                    <!-- 勤怠記録 -->
                     <section class="recent-records">
-                        <h3>📋 直近3日間の記録</h3>
+                        <div class="records-header">
+                            <h3>📋 勤怠記録</h3>
+                            <select id="employee-month-selector" class="month-selector">
+                                <!-- JavaScriptで動的に生成 -->
+                            </select>
+                        </div>
                         <div id="recent-list">
                             <div class="loading-message">🔄 記録を読み込み中...</div>
                         </div>
@@ -2355,8 +2372,16 @@
 
                         <!-- アクションボタン -->
                         <div class="monthly-salary-actions">
-                            <button id="salary-export-csv-btn" class="btn btn-secondary" disabled>📥 CSV出力</button>
-                            <button id="salary-export-sheets-btn" class="btn btn-primary" disabled>📤 スプレッドシートに出力</button>
+                            <div class="export-group">
+                                <span class="export-group-label">📊 生データ出力</span>
+                                <button id="salary-export-csv-btn" class="btn btn-secondary" disabled>📥 CSV</button>
+                                <button id="salary-export-sheets-btn" class="btn btn-primary" disabled>📤 スプレッドシート</button>
+                            </div>
+                            <div class="export-group">
+                                <span class="export-group-label">💼 弥生給与用</span>
+                                <button id="salary-export-yayoi-csv-btn" class="btn btn-secondary" disabled>📥 CSV</button>
+                                <button id="salary-export-yayoi-sheets-btn" class="btn btn-primary" disabled>📤 スプレッドシート</button>
+                            </div>
                         </div>
 
                         <!-- Google Sheets連携ステータス -->
@@ -2622,6 +2647,121 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeSheetsSettingsModal()">キャンセル</button>
                 <button type="button" class="btn btn-primary" onclick="saveSheetsSettings()">💾 設定を保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 従業員用 勤怠編集モーダル -->
+    <div id="employee-attendance-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeEmployeeAttendanceModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 勤怠記録の編集</h3>
+                <button class="modal-close-btn" onclick="closeEmployeeAttendanceModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="employee-attendance-form">
+                    <input type="hidden" id="emp-attendance-id">
+                    <input type="hidden" id="emp-attendance-date">
+
+                    <!-- 勤務タイプ選択 -->
+                    <div class="form-group">
+                        <label>📋 勤務タイプ <span class="required">*</span></label>
+                        <div class="work-type-radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="normal" checked>
+                                <span>出勤</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="holiday_work">
+                                <span>休日出勤</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="night_work">
+                                <span>夜間勤務</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="through_night">
+                                <span>通し夜間</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="absence">
+                                <span>欠勤</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="paid_leave">
+                                <span>有給休暇</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="compensatory_leave">
+                                <span>代休</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 時刻入力（出勤系の場合のみ表示） -->
+                    <div id="emp-time-inputs">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="emp-start-time">🕐 出勤時刻</label>
+                                <input type="time" id="emp-start-time" value="08:00">
+                            </div>
+                            <div class="form-group">
+                                <label for="emp-end-time">🕐 退勤時刻</label>
+                                <input type="time" id="emp-end-time" value="17:00">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="emp-break-minutes">☕ 休憩時間</label>
+                                <select id="emp-break-minutes">
+                                    <option value="0">休憩なし</option>
+                                    <option value="30">30分</option>
+                                    <option value="45">45分</option>
+                                    <option value="60" selected>60分</option>
+                                    <option value="90">90分</option>
+                                    <option value="120">120分</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="emp-overtime-minutes">⏰ 残業時間（分）</label>
+                                <input type="number" id="emp-overtime-minutes" min="0" max="480" value="0" placeholder="自動計算">
+                                <small class="form-hint">空欄で時刻から自動計算</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 現場選択 -->
+                    <div class="form-group" id="emp-site-group">
+                        <label for="emp-site-name">🏢 現場名</label>
+                        <select id="emp-site-name">
+                            <!-- JavaScriptで動的に生成 -->
+                        </select>
+                    </div>
+
+                    <!-- メモ -->
+                    <div class="form-group">
+                        <label for="emp-notes">📝 メモ</label>
+                        <textarea id="emp-notes" rows="2" placeholder="備考"></textarea>
+                    </div>
+
+                    <!-- 計算結果表示 -->
+                    <div class="calculation-preview" id="emp-calculation-preview">
+                        <div class="preview-item">
+                            <span class="preview-label">実働時間:</span>
+                            <span class="preview-value" id="emp-preview-working">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">残業時間:</span>
+                            <span class="preview-value" id="emp-preview-overtime">-</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEmployeeAttendanceModal()">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployeeAttendance()">💾 保存</button>
             </div>
         </div>
     </div>

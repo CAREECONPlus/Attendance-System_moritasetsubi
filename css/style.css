@@ -2931,21 +2931,39 @@ textarea:focus-visible {
 /* アクションボタン */
 .monthly-salary-actions {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     justify-content: center;
     margin-bottom: 2rem;
     padding: 1rem;
     background: var(--careecon-background-blue);
     border-radius: var(--radius-lg);
+    flex-wrap: wrap;
 }
 
 .monthly-salary-actions .btn {
-    min-width: 180px;
+    min-width: 100px;
 }
 
 .monthly-salary-actions .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.export-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--careecon-gray-blue);
+}
+
+.export-group-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--careecon-navy);
+    white-space: nowrap;
 }
 
 /* Google Sheets連携ステータス */
@@ -3134,4 +3152,201 @@ textarea:focus-visible {
     background: #fef2f2;
     color: #dc2626;
     border: 1px solid #dc2626;
+}
+
+/* ========================================
+   従業員画面 - 勤務タイプチェックボックス
+   ======================================== */
+
+.work-type-checkboxes {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--careecon-background-blue);
+    border-radius: var(--radius-md);
+}
+
+.work-type-checkboxes .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: background 0.2s;
+}
+
+.work-type-checkboxes .checkbox-label:hover {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.work-type-checkboxes input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+}
+
+.work-type-checkboxes .checkbox-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   従業員画面 - 勤怠記録ヘッダー
+   ======================================== */
+
+.records-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.records-header h3 {
+    margin: 0;
+}
+
+.month-selector {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--careecon-gray-blue);
+    border-radius: var(--radius-md);
+    background: white;
+    cursor: pointer;
+}
+
+.month-selector:focus {
+    outline: none;
+    border-color: var(--careecon-primary-blue);
+}
+
+/* ========================================
+   従業員用 勤怠編集モーダル
+   ======================================== */
+
+#employee-attendance-modal .modal-content {
+    max-width: 550px;
+}
+
+.work-type-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.work-type-radio-group .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--careecon-gray-blue);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.work-type-radio-group .radio-label:hover {
+    border-color: var(--careecon-primary-blue);
+    background: var(--careecon-background-blue);
+}
+
+.work-type-radio-group input[type="radio"]:checked + span {
+    color: var(--careecon-primary-blue);
+    font-weight: 600;
+}
+
+.work-type-radio-group input[type="radio"]:checked ~ span {
+    color: var(--careecon-primary-blue);
+}
+
+.work-type-radio-group .radio-label:has(input:checked) {
+    border-color: var(--careecon-primary-blue);
+    background: var(--careecon-background-blue);
+}
+
+.calculation-preview {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background: var(--careecon-background-blue);
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+}
+
+.preview-item {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.preview-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.preview-value {
+    font-weight: 600;
+    color: var(--careecon-navy);
+}
+
+/* 勤怠記録リストの編集ボタン */
+.record-item {
+    position: relative;
+}
+
+.record-edit-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    background: var(--careecon-primary-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.record-item:hover .record-edit-btn {
+    opacity: 1;
+}
+
+.record-edit-btn:hover {
+    background: var(--careecon-primary-blue-dark);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 480px) {
+    .work-type-checkboxes {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .work-type-radio-group {
+        gap: 0.25rem;
+    }
+
+    .work-type-radio-group .radio-label {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .calculation-preview {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .records-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .month-selector {
+        width: 100%;
+    }
 }

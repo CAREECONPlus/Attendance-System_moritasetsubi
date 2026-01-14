@@ -538,7 +538,7 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             throw new Error('Google認証が必要です');
         }
 
-        // ヘッダー行
+        // ヘッダー行（生データ形式）
         const headers = [
             '従業員名',
             'メールアドレス',
@@ -550,6 +550,10 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             '休憩(h)',
             '合計(h)',
             '出勤日数',
+            '休日出勤日数',
+            '夜間勤務日数',
+            '通し夜間日数',
+            '欠勤日数',
             '有給日数',
             '代休日数'
         ];
@@ -566,6 +570,10 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             record.breakHours || 0,
             record.totalHours,
             record.workDays,
+            record.holidayWorkDays || 0,
+            record.nightWorkDays || 0,
+            record.throughNightDays || 0,
+            record.absenceDays || 0,
             record.paidLeaveDays,
             record.compensatoryDays
         ]);
@@ -587,6 +595,75 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
 
     } catch (error) {
         console.error('月次データ出力エラー:', error);
+        throw error;
+    }
+}
+
+/**
+ * 弥生給与用データをスプレッドシートに出力
+ * @param {Array} summaryData - 月次集計データ
+ * @param {string} yearMonth - 対象年月（YYYY-MM）
+ */
+async function exportYayoiSummaryToSheets(summaryData, yearMonth) {
+    try {
+        const settings = getSheetsSettings();
+
+        if (!settings.spreadsheetId) {
+            throw new Error('スプレッドシートIDが設定されていません');
+        }
+
+        if (!accessToken) {
+            throw new Error('Google認証が必要です');
+        }
+
+        // 弥生給与Next用ヘッダー
+        const headers = [
+            '従業員コード',
+            '出勤日数',
+            '休日出勤日数',
+            '欠勤日数',
+            '残業時間',
+            '代休',
+            '有給休暇',
+            '夜間勤務日数',
+            '通し夜間勤務'
+        ];
+
+        // データ行
+        const rows = summaryData.map(record => {
+            // 従業員コード（メールの@前を使用）
+            const employeeCode = record.email?.split('@')[0] || record.employeeName;
+
+            return [
+                employeeCode,
+                record.workDays || 0,
+                record.holidayWorkDays || 0,
+                record.absenceDays || 0,
+                record.overtimeHours || 0,
+                record.compensatoryDays || 0,
+                record.paidLeaveDays || 0,
+                record.nightWorkDays || 0,
+                record.throughNightDays || 0
+            ];
+        });
+
+        // 書き込みデータ
+        const data = [headers, ...rows];
+
+        // シート名（YYYY-MM_弥生形式）
+        const sheetName = `${yearMonth}_弥生`;
+
+        // 書き込み実行
+        await writeToSheet(settings.spreadsheetId, sheetName, data);
+
+        return {
+            success: true,
+            sheetName: sheetName,
+            rowCount: rows.length
+        };
+
+    } catch (error) {
+        console.error('弥生用データ出力エラー:', error);
         throw error;
     }
 }
@@ -670,6 +747,7 @@ window.GoogleSheets = {
 
     // 月次データ
     exportMonthlySummary: exportMonthlySummaryToSheets,
+    exportYayoiSummary: exportYayoiSummaryToSheets,
     fetchMasterData: fetchMasterData,
 
     // UI更新

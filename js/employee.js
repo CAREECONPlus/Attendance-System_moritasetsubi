@@ -979,14 +979,42 @@ async function handleClockIn() {
         const breakMinutesElement = document.getElementById('break-minutes');
         const breakMinutes = breakMinutesElement ? parseInt(breakMinutesElement.value) || 60 : 60;
 
+        // チェックボックスの状態を取得
+        const isHolidayWork = document.getElementById('is-holiday-work')?.checked || false;
+        const isNightWork = document.getElementById('is-night-work')?.checked || false;
+
+        // デフォルト時刻: 8:00-17:00（実働8時間、休憩1時間）
+        const defaultStartTime = '08:00:00';
+        const defaultEndTime = '17:00:00';
+        const workingMinutes = 480; // 8時間
+        const overtimeMinutes = 0;
+
+        // 勤務タイプを判定
+        let nightWorkType = 'none';
+        let specialWorkType = 'normal';
+
+        if (isHolidayWork) {
+            specialWorkType = 'holiday_work';
+        } else if (isNightWork) {
+            nightWorkType = 'night_only';
+            specialWorkType = 'night_work';
+        }
+
         const attendanceData = {
             userId: currentUser.uid,
             userEmail: currentUser.email,
             date: today,
             siteName: siteName,
-            startTime: now.toLocaleTimeString('ja-JP'),
+            startTime: defaultStartTime,
+            endTime: defaultEndTime,
             breakMinutes: breakMinutes,
-            status: 'working',
+            workingMinutes: workingMinutes,
+            overtimeMinutes: overtimeMinutes,
+            status: 'completed', // 即座に完了状態
+            isHolidayWork: isHolidayWork,
+            isNightWork: isNightWork,
+            nightWorkType: nightWorkType,
+            specialWorkType: specialWorkType,
             notes: workNotes,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1007,14 +1035,28 @@ async function handleClockIn() {
             updatedAt: now
         };
 
-        // UI更新
-        updateClockButtons('working');
-        updateStatusDisplay('working', todayAttendanceData);
+        // UI更新（即座に完了状態）
+        updateClockButtons('completed');
+        updateStatusDisplay('completed', todayAttendanceData);
 
         // 現場を履歴に追加
         addSiteToHistory(siteName);
 
-        alert(`✅ 出勤しました！\n現場: ${siteName}\n時刻: ${attendanceData.startTime}\n日付: ${today}`);
+        // チェックボックスをリセット
+        const holidayCheckbox = document.getElementById('is-holiday-work');
+        const nightCheckbox = document.getElementById('is-night-work');
+        if (holidayCheckbox) holidayCheckbox.checked = false;
+        if (nightCheckbox) nightCheckbox.checked = false;
+
+        let alertMsg = `✅ 勤怠を登録しました！\n`;
+        alertMsg += `現場: ${siteName}\n`;
+        alertMsg += `日付: ${today}\n`;
+        alertMsg += `時間: 08:00 - 17:00（実働8時間）\n`;
+        if (isHolidayWork) alertMsg += `📅 休日出勤\n`;
+        if (isNightWork) alertMsg += `🌙 夜間勤務\n`;
+        alertMsg += `\n※ 編集が必要な場合は下の記録から編集できます`;
+
+        alert(alertMsg);
 
         // フォームをクリア
         if (workNotesElement) workNotesElement.value = '';
@@ -2643,4 +2685,470 @@ window.selectSiteFromHistory = selectSiteFromHistory;
 window.loadEmployeeSiteList = loadEmployeeSiteList;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
+
+// ========================================
+// 🆕 月選択機能・勤怠編集機能
+// ========================================
+
+/**
+ * 月選択ドロップダウンを初期化
+ */
+function initMonthSelector() {
+    const selector = document.getElementById('employee-month-selector');
+    if (!selector) return;
+
+    const options = [];
+    const now = new Date();
+
+    // 過去12ヶ月分の選択肢を生成
+    for (let i = 0; i < 12; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const value = `${year}-${month}`;
+        const label = `${year}年${date.getMonth() + 1}月`;
+
+        options.push({ value, label });
+    }
+
+    selector.innerHTML = options.map(opt =>
+        `<option value="${opt.value}">${opt.label}</option>`
+    ).join('');
+
+    // 変更イベントを設定
+    selector.addEventListener('change', () => {
+        loadMonthlyRecords(selector.value);
+    });
+
+    // 初期表示：当月
+    if (options.length > 0) {
+        loadMonthlyRecords(options[0].value);
+    }
+}
+
+/**
+ * 指定月の勤怠記録を読み込み
+ */
+async function loadMonthlyRecords(yearMonth) {
+    const listContainer = document.getElementById('recent-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div class="loading-message">🔄 記録を読み込み中...</div>';
+
+    try {
+        if (!currentUser) {
+            listContainer.innerHTML = '<div class="no-records">ログインが必要です</div>';
+            return;
+        }
+
+        // 月の開始日と終了日を計算
+        const startDate = `${yearMonth}-01`;
+        const [year, month] = yearMonth.split('-').map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
+
+        // Firestoreからデータ取得
+        const snapshot = await getAttendanceCollection()
+            .where('userId', '==', currentUser.uid)
+            .where('date', '>=', startDate)
+            .where('date', '<=', endDate)
+            .orderBy('date', 'desc')
+            .get();
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = '<div class="no-records">📭 この月の記録はありません</div>';
+            return;
+        }
+
+        // 記録を表示
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += renderAttendanceRecord(doc.id, data);
+        });
+
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error('月次記録読み込みエラー:', error);
+        listContainer.innerHTML = '<div class="error-message">❌ 記録の読み込みに失敗しました</div>';
+    }
+}
+
+/**
+ * 勤怠記録をHTMLにレンダリング
+ */
+function renderAttendanceRecord(recordId, data) {
+    const date = data.date || '';
+    const dateObj = new Date(date);
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+    const startTime = data.startTime ? data.startTime.substring(0, 5) : '-';
+    const endTime = data.endTime ? data.endTime.substring(0, 5) : '-';
+    const siteName = data.siteName || '-';
+
+    // 勤務タイプの表示
+    let workTypeLabel = '';
+    let workTypeClass = '';
+
+    if (data.specialWorkType === 'paid_leave') {
+        workTypeLabel = '🏖️ 有給';
+        workTypeClass = 'type-leave';
+    } else if (data.specialWorkType === 'compensatory_leave') {
+        workTypeLabel = '🔄 代休';
+        workTypeClass = 'type-leave';
+    } else if (data.specialWorkType === 'absence') {
+        workTypeLabel = '❌ 欠勤';
+        workTypeClass = 'type-absence';
+    } else if (data.isHolidayWork) {
+        workTypeLabel = '📅 休日出勤';
+        workTypeClass = 'type-holiday';
+    } else if (data.nightWorkType === 'through_night') {
+        workTypeLabel = '🌙 通し夜間';
+        workTypeClass = 'type-night';
+    } else if (data.nightWorkType === 'night_only' || data.isNightWork) {
+        workTypeLabel = '🌙 夜間';
+        workTypeClass = 'type-night';
+    } else {
+        workTypeLabel = '✅ 出勤';
+        workTypeClass = 'type-normal';
+    }
+
+    // 勤務時間の計算表示
+    const workingHours = data.workingMinutes ? Math.floor(data.workingMinutes / 60) : 0;
+    const workingMins = data.workingMinutes ? data.workingMinutes % 60 : 0;
+    const workingTimeStr = data.workingMinutes ? `${workingHours}h${workingMins}m` : '-';
+
+    return `
+        <div class="record-item ${workTypeClass}" data-record-id="${recordId}">
+            <button class="record-edit-btn" onclick="openEmployeeAttendanceModal('${recordId}')">編集</button>
+            <div class="record-date ${isWeekend ? 'weekend' : ''}">
+                ${date} (${dayOfWeek})
+            </div>
+            <div class="record-details">
+                <span class="record-time">${startTime} - ${endTime}</span>
+                <span class="record-site">${siteName}</span>
+                <span class="record-type ${workTypeClass}">${workTypeLabel}</span>
+                <span class="record-working">${workingTimeStr}</span>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 従業員用勤怠編集モーダルを開く
+ */
+async function openEmployeeAttendanceModal(recordId) {
+    const modal = document.getElementById('employee-attendance-modal');
+    if (!modal) return;
+
+    try {
+        // 記録を取得
+        const doc = await getAttendanceCollection().doc(recordId).get();
+        if (!doc.exists) {
+            alert('記録が見つかりません');
+            return;
+        }
+
+        const data = doc.data();
+
+        // フォームに値をセット
+        document.getElementById('emp-attendance-id').value = recordId;
+        document.getElementById('emp-attendance-date').value = data.date || '';
+
+        // 勤務タイプのラジオボタンをセット
+        let workType = 'normal';
+        if (data.specialWorkType === 'paid_leave') {
+            workType = 'paid_leave';
+        } else if (data.specialWorkType === 'compensatory_leave') {
+            workType = 'compensatory_leave';
+        } else if (data.specialWorkType === 'absence') {
+            workType = 'absence';
+        } else if (data.isHolidayWork) {
+            workType = 'holiday_work';
+        } else if (data.nightWorkType === 'through_night') {
+            workType = 'through_night';
+        } else if (data.nightWorkType === 'night_only' || data.isNightWork) {
+            workType = 'night_work';
+        }
+
+        const radioBtn = document.querySelector(`input[name="emp-work-type"][value="${workType}"]`);
+        if (radioBtn) radioBtn.checked = true;
+
+        // 時刻をセット
+        const startTime = data.startTime ? data.startTime.substring(0, 5) : '08:00';
+        const endTime = data.endTime ? data.endTime.substring(0, 5) : '17:00';
+        document.getElementById('emp-start-time').value = startTime;
+        document.getElementById('emp-end-time').value = endTime;
+
+        // 休憩時間をセット
+        const breakMinutes = data.breakMinutes || data.breakDuration || 60;
+        document.getElementById('emp-break-minutes').value = breakMinutes;
+
+        // 残業時間をセット
+        document.getElementById('emp-overtime-minutes').value = data.overtimeMinutes || 0;
+
+        // 現場名をセット
+        await populateEmployeeSiteSelector();
+        document.getElementById('emp-site-name').value = data.siteName || '';
+
+        // メモをセット
+        document.getElementById('emp-notes').value = data.notes || '';
+
+        // 計算プレビューを更新
+        updateEmployeeCalculationPreview();
+
+        // 勤務タイプに応じて入力欄の表示/非表示を切り替え
+        toggleEmployeeTimeInputs();
+
+        // モーダルを表示
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+
+    } catch (error) {
+        console.error('モーダル表示エラー:', error);
+        alert('記録の読み込みに失敗しました');
+    }
+}
+
+/**
+ * 従業員用勤怠編集モーダルを閉じる
+ */
+function closeEmployeeAttendanceModal() {
+    const modal = document.getElementById('employee-attendance-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * 現場セレクターを埋める
+ */
+async function populateEmployeeSiteSelector() {
+    const selector = document.getElementById('emp-site-name');
+    if (!selector) return;
+
+    try {
+        const sitesCollection = window.getTenantFirestore
+            ? window.getTenantFirestore('sites')
+            : firebase.firestore().collection('sites');
+
+        const snapshot = await sitesCollection.where('isActive', '!=', false).get();
+
+        let html = '<option value="">選択してください</option>';
+        snapshot.forEach(doc => {
+            const site = doc.data();
+            html += `<option value="${site.name}">${site.name}</option>`;
+        });
+
+        selector.innerHTML = html;
+
+    } catch (error) {
+        console.error('現場リスト取得エラー:', error);
+    }
+}
+
+/**
+ * 勤務タイプに応じて時刻入力欄の表示/非表示を切り替え
+ */
+function toggleEmployeeTimeInputs() {
+    const selectedType = document.querySelector('input[name="emp-work-type"]:checked')?.value;
+    const timeInputs = document.getElementById('emp-time-inputs');
+    const siteGroup = document.getElementById('emp-site-group');
+
+    const hideTimeTypes = ['absence', 'paid_leave', 'compensatory_leave'];
+
+    if (hideTimeTypes.includes(selectedType)) {
+        if (timeInputs) timeInputs.style.display = 'none';
+        if (siteGroup) siteGroup.style.display = 'none';
+    } else {
+        if (timeInputs) timeInputs.style.display = 'block';
+        if (siteGroup) siteGroup.style.display = 'block';
+    }
+}
+
+/**
+ * 計算プレビューを更新
+ */
+function updateEmployeeCalculationPreview() {
+    const startTime = document.getElementById('emp-start-time')?.value || '08:00';
+    const endTime = document.getElementById('emp-end-time')?.value || '17:00';
+    const breakMinutes = parseInt(document.getElementById('emp-break-minutes')?.value) || 0;
+
+    // 実働時間計算
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+
+    let startTotalMins = startH * 60 + startM;
+    let endTotalMins = endH * 60 + endM;
+
+    // 日をまたぐ場合
+    if (endTotalMins <= startTotalMins) {
+        endTotalMins += 24 * 60;
+    }
+
+    const totalMinutes = endTotalMins - startTotalMins;
+    const workingMinutes = Math.max(0, totalMinutes - breakMinutes);
+    const overtimeMinutes = Math.max(0, workingMinutes - 480);
+
+    // 表示更新
+    const workingH = Math.floor(workingMinutes / 60);
+    const workingM = workingMinutes % 60;
+    const overtimeH = Math.floor(overtimeMinutes / 60);
+    const overtimeM = overtimeMinutes % 60;
+
+    const workingEl = document.getElementById('emp-preview-working');
+    const overtimeEl = document.getElementById('emp-preview-overtime');
+
+    if (workingEl) workingEl.textContent = `${workingH}時間${workingM}分`;
+    if (overtimeEl) overtimeEl.textContent = `${overtimeH}時間${overtimeM}分`;
+}
+
+/**
+ * 従業員用勤怠記録を保存
+ */
+async function saveEmployeeAttendance() {
+    try {
+        const recordId = document.getElementById('emp-attendance-id').value;
+        const date = document.getElementById('emp-attendance-date').value;
+        const workType = document.querySelector('input[name="emp-work-type"]:checked')?.value || 'normal';
+
+        if (!recordId) {
+            alert('記録IDが見つかりません');
+            return;
+        }
+
+        const updateData = {
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // 勤務タイプによって保存データを変更
+        if (workType === 'absence') {
+            updateData.specialWorkType = 'absence';
+            updateData.status = 'completed';
+            updateData.workingMinutes = 0;
+            updateData.overtimeMinutes = 0;
+            updateData.isNightWork = false;
+            updateData.nightWorkType = 'none';
+            updateData.isHolidayWork = false;
+        } else if (workType === 'paid_leave') {
+            updateData.specialWorkType = 'paid_leave';
+            updateData.status = 'completed';
+            updateData.workingMinutes = 0;
+            updateData.overtimeMinutes = 0;
+            updateData.isNightWork = false;
+            updateData.nightWorkType = 'none';
+            updateData.isHolidayWork = false;
+        } else if (workType === 'compensatory_leave') {
+            updateData.specialWorkType = 'compensatory_leave';
+            updateData.status = 'completed';
+            updateData.workingMinutes = 0;
+            updateData.overtimeMinutes = 0;
+            updateData.isNightWork = false;
+            updateData.nightWorkType = 'none';
+            updateData.isHolidayWork = false;
+        } else {
+            // 出勤系
+            const startTime = document.getElementById('emp-start-time').value + ':00';
+            const endTime = document.getElementById('emp-end-time').value + ':00';
+            const breakMinutes = parseInt(document.getElementById('emp-break-minutes').value) || 60;
+            const manualOvertime = document.getElementById('emp-overtime-minutes').value;
+            const siteName = document.getElementById('emp-site-name').value;
+            const notes = document.getElementById('emp-notes').value;
+
+            // 実働時間計算
+            const [startH, startM] = startTime.split(':').map(Number);
+            const [endH, endM] = endTime.split(':').map(Number);
+            let startTotalMins = startH * 60 + startM;
+            let endTotalMins = endH * 60 + endM;
+            if (endTotalMins <= startTotalMins) endTotalMins += 24 * 60;
+
+            const totalMinutes = endTotalMins - startTotalMins;
+            const workingMinutes = Math.max(0, totalMinutes - breakMinutes);
+            const overtimeMinutes = manualOvertime ? parseInt(manualOvertime) : Math.max(0, workingMinutes - 480);
+
+            updateData.startTime = startTime;
+            updateData.endTime = endTime;
+            updateData.breakMinutes = breakMinutes;
+            updateData.breakDuration = breakMinutes;
+            updateData.workingMinutes = workingMinutes;
+            updateData.overtimeMinutes = overtimeMinutes;
+            updateData.status = 'completed';
+            updateData.siteName = siteName;
+            updateData.notes = notes;
+
+            // 勤務タイプフラグ
+            if (workType === 'holiday_work') {
+                updateData.isHolidayWork = true;
+                updateData.isNightWork = false;
+                updateData.nightWorkType = 'none';
+                updateData.specialWorkType = 'holiday_work';
+            } else if (workType === 'night_work') {
+                updateData.isHolidayWork = false;
+                updateData.isNightWork = true;
+                updateData.nightWorkType = 'night_only';
+                updateData.specialWorkType = 'night_work';
+            } else if (workType === 'through_night') {
+                updateData.isHolidayWork = false;
+                updateData.isNightWork = true;
+                updateData.nightWorkType = 'through_night';
+                updateData.specialWorkType = 'through_night';
+            } else {
+                updateData.isHolidayWork = false;
+                updateData.isNightWork = false;
+                updateData.nightWorkType = 'none';
+                updateData.specialWorkType = 'normal';
+            }
+        }
+
+        // Firestoreに保存
+        await getAttendanceCollection().doc(recordId).update(updateData);
+
+        alert('✅ 勤怠記録を更新しました');
+
+        // モーダルを閉じる
+        closeEmployeeAttendanceModal();
+
+        // 一覧を更新
+        const monthSelector = document.getElementById('employee-month-selector');
+        if (monthSelector) {
+            loadMonthlyRecords(monthSelector.value);
+        }
+
+    } catch (error) {
+        console.error('勤怠保存エラー:', error);
+        alert('❌ 保存に失敗しました: ' + error.message);
+    }
+}
+
+// イベントリスナー設定
+document.addEventListener('DOMContentLoaded', () => {
+    // 月選択セレクターの初期化
+    setTimeout(initMonthSelector, 500);
+
+    // 勤務タイプ変更時の処理
+    document.querySelectorAll('input[name="emp-work-type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            toggleEmployeeTimeInputs();
+            updateEmployeeCalculationPreview();
+        });
+    });
+
+    // 時刻変更時の計算プレビュー更新
+    ['emp-start-time', 'emp-end-time', 'emp-break-minutes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', updateEmployeeCalculationPreview);
+        }
+    });
+});
+
+// グローバルスコープに公開
+window.openEmployeeAttendanceModal = openEmployeeAttendanceModal;
+window.closeEmployeeAttendanceModal = closeEmployeeAttendanceModal;
+window.saveEmployeeAttendance = saveEmployeeAttendance;
+window.loadMonthlyRecords = loadMonthlyRecords;
+window.initMonthSelector = initMonthSelector;
 
