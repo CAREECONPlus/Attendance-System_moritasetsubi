@@ -3028,24 +3028,33 @@ async function saveEmployeeAttendance() {
         if (workType === 'absence') {
             updateData.specialWorkType = 'absence';
             updateData.status = 'completed';
+            updateData.startTime = null;
+            updateData.endTime = null;
             updateData.workingMinutes = 0;
             updateData.overtimeMinutes = 0;
+            updateData.breakMinutes = 0;
             updateData.isNightWork = false;
             updateData.nightWorkType = 'none';
             updateData.isHolidayWork = false;
         } else if (workType === 'paid_leave') {
             updateData.specialWorkType = 'paid_leave';
             updateData.status = 'completed';
+            updateData.startTime = null;
+            updateData.endTime = null;
             updateData.workingMinutes = 0;
             updateData.overtimeMinutes = 0;
+            updateData.breakMinutes = 0;
             updateData.isNightWork = false;
             updateData.nightWorkType = 'none';
             updateData.isHolidayWork = false;
         } else if (workType === 'compensatory_leave') {
             updateData.specialWorkType = 'compensatory_leave';
             updateData.status = 'completed';
+            updateData.startTime = null;
+            updateData.endTime = null;
             updateData.workingMinutes = 0;
             updateData.overtimeMinutes = 0;
+            updateData.breakMinutes = 0;
             updateData.isNightWork = false;
             updateData.nightWorkType = 'none';
             updateData.isHolidayWork = false;
