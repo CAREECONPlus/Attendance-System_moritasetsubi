@@ -6726,6 +6726,19 @@ function initMonthlySalaryTab() {
         exportSheetsBtn.setAttribute('data-listener-set', 'true');
     }
 
+    // 弥生用エクスポートボタン
+    const exportYayoiCsvBtn = document.getElementById('salary-export-yayoi-csv-btn');
+    if (exportYayoiCsvBtn && !exportYayoiCsvBtn.hasAttribute('data-listener-set')) {
+        exportYayoiCsvBtn.addEventListener('click', handleExportYayoiCSV);
+        exportYayoiCsvBtn.setAttribute('data-listener-set', 'true');
+    }
+
+    const exportYayoiSheetsBtn = document.getElementById('salary-export-yayoi-sheets-btn');
+    if (exportYayoiSheetsBtn && !exportYayoiSheetsBtn.hasAttribute('data-listener-set')) {
+        exportYayoiSheetsBtn.addEventListener('click', handleExportYayoiToSheets);
+        exportYayoiSheetsBtn.setAttribute('data-listener-set', 'true');
+    }
+
     const sheetsSettingsBtn = document.getElementById('sheets-settings-btn');
     if (sheetsSettingsBtn && !sheetsSettingsBtn.hasAttribute('data-listener-set')) {
         sheetsSettingsBtn.addEventListener('click', openSheetsSettings);
@@ -6763,7 +6776,10 @@ async function handleCalculateMonthlySummary() {
         updateMonthlySummarySummary(summaryData, yearMonth);
 
         // ボタンを有効化
-        document.getElementById('salary-export-csv-btn').disabled = summaryData.length === 0;
+        const hasData = summaryData.length > 0;
+        document.getElementById('salary-export-csv-btn').disabled = !hasData;
+        document.getElementById('salary-export-yayoi-csv-btn').disabled = !hasData;
+        document.getElementById('salary-export-yayoi-sheets-btn').disabled = !hasData;
 
     } catch (error) {
         console.error('月次集計エラー:', error);
@@ -6897,7 +6913,81 @@ async function handleExportToSheets() {
         alert('スプレッドシートへの出力に失敗しました: ' + error.message);
     } finally {
         exportBtn.disabled = false;
-        exportBtn.textContent = '📤 スプレッドシートに出力';
+        exportBtn.textContent = '📤 スプレッドシート';
+    }
+}
+
+/**
+ * 弥生給与用CSV出力
+ */
+function handleExportYayoiCSV() {
+    if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
+        alert('出力するデータがありません');
+        return;
+    }
+
+    const yearMonth = document.getElementById('salary-year-month').value;
+    const csvContent = window.MonthlySummary.convertToYayoiCSV(currentMonthlySummaryData, {});
+
+    // BOM付きでダウンロード
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `yayoi_salary_${yearMonth}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * 弥生給与用スプレッドシート出力
+ */
+async function handleExportYayoiToSheets() {
+    if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
+        alert('出力するデータがありません。先に集計を実行してください。');
+        return;
+    }
+
+    const yearMonth = document.getElementById('salary-year-month').value;
+    if (!yearMonth) {
+        alert('対象月を選択してください');
+        return;
+    }
+
+    // 認証確認
+    if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
+        alert('Google認証が必要です。連携設定から認証を行ってください。');
+        openSheetsSettings();
+        return;
+    }
+
+    const settings = window.GoogleSheets.getSettings();
+    if (!settings.spreadsheetId) {
+        alert('スプレッドシートIDが設定されていません。連携設定を行ってください。');
+        openSheetsSettings();
+        return;
+    }
+
+    const exportBtn = document.getElementById('salary-export-yayoi-sheets-btn');
+
+    try {
+        exportBtn.disabled = true;
+        exportBtn.textContent = '出力中...';
+
+        const result = await window.GoogleSheets.exportYayoiSummary(currentMonthlySummaryData, yearMonth);
+
+        alert(`弥生用データをスプレッドシートに出力しました！\nシート名: ${result.sheetName}\n出力件数: ${result.rowCount}名`);
+
+    } catch (error) {
+        console.error('弥生用スプレッドシート出力エラー:', error);
+        alert('スプレッドシートへの出力に失敗しました: ' + error.message);
+    } finally {
+        exportBtn.disabled = false;
+        exportBtn.textContent = '📤 スプレッドシート';
     }
 }
 

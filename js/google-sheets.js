@@ -27,6 +27,126 @@ let accessToken = null;
 
 // 設定をlocalStorageに保存
 const STORAGE_KEY = 'moritasetsubi_sheets_settings';
+const TOKEN_STORAGE_KEY = 'moritasetsubi_sheets_token';
+const AUTH_FLAG_KEY = 'moritasetsubi_sheets_authorized'; // 認証済みフラグ（サイレント再認証用）
+
+/**
+ * トークンをlocalStorageに保存
+ */
+function saveToken(token, expiresIn) {
+    try {
+        const tokenData = {
+            access_token: token,
+            expires_at: Date.now() + (expiresIn * 1000) // 有効期限をミリ秒で保存
+        };
+        localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData));
+    } catch (e) {
+        console.error('トークン保存エラー:', e);
+    }
+}
+
+/**
+ * 保存されたトークンを取得
+ */
+function loadStoredToken() {
+    try {
+        const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (!stored) return null;
+
+        const tokenData = JSON.parse(stored);
+
+        // 有効期限チェック（5分の余裕を持たせる）
+        if (tokenData.expires_at && tokenData.expires_at > Date.now() + 5 * 60 * 1000) {
+            return tokenData.access_token;
+        } else {
+            // 期限切れの場合は削除
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            return null;
+        }
+    } catch (e) {
+        console.error('トークン読み込みエラー:', e);
+        return null;
+    }
+}
+
+/**
+ * 保存されたトークンをクリア
+ */
+function clearStoredToken() {
+    try {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+    } catch (e) {
+        console.error('トークン削除エラー:', e);
+    }
+}
+
+/**
+ * 認証済みフラグを保存
+ */
+function setAuthorizedFlag(authorized) {
+    try {
+        if (authorized) {
+            localStorage.setItem(AUTH_FLAG_KEY, 'true');
+        } else {
+            localStorage.removeItem(AUTH_FLAG_KEY);
+        }
+    } catch (e) {
+        console.error('認証フラグ保存エラー:', e);
+    }
+}
+
+/**
+ * 認証済みフラグを確認
+ */
+function hasAuthorizedBefore() {
+    try {
+        return localStorage.getItem(AUTH_FLAG_KEY) === 'true';
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * サイレント再認証を試行
+ * ユーザーがGoogleにログイン済みで、以前に認可していればポップアップなしで認証
+ */
+async function trySilentAuth() {
+    return new Promise((resolve) => {
+        if (!tokenClient) {
+            resolve(false);
+            return;
+        }
+
+        // タイムアウト設定（サイレント認証は素早く完了するはず）
+        const timeout = setTimeout(() => {
+            resolve(false);
+        }, 5000);
+
+        tokenClient.callback = (response) => {
+            clearTimeout(timeout);
+            if (response.error) {
+                // サイレント認証失敗（ユーザーがGoogleにログインしていないなど）
+                resolve(false);
+                return;
+            }
+            accessToken = response.access_token;
+            gapi.client.setToken({ access_token: accessToken });
+            const expiresIn = response.expires_in || 3600;
+            saveToken(accessToken, expiresIn);
+            updateAuthStatusUI(true);
+            resolve(true);
+        };
+
+        // prompt: '' でサイレント認証を試行
+        // ユーザーが以前に許可していれば、ポップアップなしでトークンを取得
+        try {
+            tokenClient.requestAccessToken({ prompt: '' });
+        } catch (e) {
+            clearTimeout(timeout);
+            resolve(false);
+        }
+    });
+}
 
 /**
  * Sheets設定を取得
@@ -141,6 +261,10 @@ function initTokenClient() {
             }
             accessToken = response.access_token;
             gapi.client.setToken({ access_token: accessToken });
+            // トークンを保存（デフォルト1時間の有効期限）
+            const expiresIn = response.expires_in || 3600;
+            saveToken(accessToken, expiresIn);
+            setAuthorizedFlag(true);
             updateAuthStatusUI(true);
         }
     });
@@ -194,6 +318,11 @@ async function authenticateGoogle() {
                 }
                 accessToken = response.access_token;
                 gapi.client.setToken({ access_token: accessToken });
+                // トークンを保存（デフォルト1時間の有効期限）
+                const expiresIn = response.expires_in || 3600;
+                saveToken(accessToken, expiresIn);
+                // 認証済みフラグを保存（次回以降のサイレント再認証用）
+                setAuthorizedFlag(true);
                 updateAuthStatusUI(true);
                 resolve(true);
             };
@@ -223,6 +352,8 @@ function signOut() {
         google.accounts.oauth2.revoke(accessToken, () => {});
         accessToken = null;
         gapi.client.setToken(null);
+        clearStoredToken();
+        setAuthorizedFlag(false); // 認証済みフラグもクリア
         updateAuthStatusUI(false);
     }
 }
@@ -407,7 +538,7 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             throw new Error('Google認証が必要です');
         }
 
-        // ヘッダー行
+        // ヘッダー行（生データ形式）
         const headers = [
             '従業員名',
             'メールアドレス',
@@ -419,6 +550,10 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             '休憩(h)',
             '合計(h)',
             '出勤日数',
+            '休日出勤日数',
+            '夜間勤務日数',
+            '通し夜間日数',
+            '欠勤日数',
             '有給日数',
             '代休日数'
         ];
@@ -435,6 +570,10 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
             record.breakHours || 0,
             record.totalHours,
             record.workDays,
+            record.holidayWorkDays || 0,
+            record.nightWorkDays || 0,
+            record.throughNightDays || 0,
+            record.absenceDays || 0,
             record.paidLeaveDays,
             record.compensatoryDays
         ]);
@@ -456,6 +595,75 @@ async function exportMonthlySummaryToSheets(summaryData, yearMonth) {
 
     } catch (error) {
         console.error('月次データ出力エラー:', error);
+        throw error;
+    }
+}
+
+/**
+ * 弥生給与用データをスプレッドシートに出力
+ * @param {Array} summaryData - 月次集計データ
+ * @param {string} yearMonth - 対象年月（YYYY-MM）
+ */
+async function exportYayoiSummaryToSheets(summaryData, yearMonth) {
+    try {
+        const settings = getSheetsSettings();
+
+        if (!settings.spreadsheetId) {
+            throw new Error('スプレッドシートIDが設定されていません');
+        }
+
+        if (!accessToken) {
+            throw new Error('Google認証が必要です');
+        }
+
+        // 弥生給与Next用ヘッダー
+        const headers = [
+            '従業員コード',
+            '出勤日数',
+            '休日出勤日数',
+            '欠勤日数',
+            '残業時間',
+            '代休',
+            '有給休暇',
+            '夜間勤務日数',
+            '通し夜間勤務'
+        ];
+
+        // データ行
+        const rows = summaryData.map(record => {
+            // 従業員コード（メールの@前を使用）
+            const employeeCode = record.email?.split('@')[0] || record.employeeName;
+
+            return [
+                employeeCode,
+                record.workDays || 0,
+                record.holidayWorkDays || 0,
+                record.absenceDays || 0,
+                record.overtimeHours || 0,
+                record.compensatoryDays || 0,
+                record.paidLeaveDays || 0,
+                record.nightWorkDays || 0,
+                record.throughNightDays || 0
+            ];
+        });
+
+        // 書き込みデータ
+        const data = [headers, ...rows];
+
+        // シート名（YYYY-MM_弥生形式）
+        const sheetName = `${yearMonth}_弥生`;
+
+        // 書き込み実行
+        await writeToSheet(settings.spreadsheetId, sheetName, data);
+
+        return {
+            success: true,
+            sheetName: sheetName,
+            rowCount: rows.length
+        };
+
+    } catch (error) {
+        console.error('弥生用データ出力エラー:', error);
         throw error;
     }
 }
@@ -501,6 +709,26 @@ window.GoogleSheets = {
     init: async function() {
         await initGoogleAPI();
         await initGIS();
+
+        // 1. まず保存されたトークンを復元
+        const storedToken = loadStoredToken();
+        if (storedToken) {
+            accessToken = storedToken;
+            gapi.client.setToken({ access_token: accessToken });
+            updateAuthStatusUI(true);
+            return; // 有効なトークンがあれば完了
+        }
+
+        // 2. トークンが期限切れだが以前認証済みの場合、サイレント再認証を試行
+        if (hasAuthorizedBefore()) {
+            const silentSuccess = await trySilentAuth();
+            if (silentSuccess) {
+                // サイレント再認証成功
+                return;
+            }
+            // サイレント認証失敗の場合は手動認証が必要
+            // （Googleからログアウトしている等）
+        }
     },
 
     // 認証
@@ -519,6 +747,7 @@ window.GoogleSheets = {
 
     // 月次データ
     exportMonthlySummary: exportMonthlySummaryToSheets,
+    exportYayoiSummary: exportYayoiSummaryToSheets,
     fetchMasterData: fetchMasterData,
 
     // UI更新
