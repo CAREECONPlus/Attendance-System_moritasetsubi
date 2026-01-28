@@ -2853,6 +2853,11 @@ async function openEmployeeAttendanceModal(recordId) {
 
         const data = doc.data();
 
+        // 編集モードを設定
+        document.getElementById('emp-attendance-mode').value = 'edit';
+        document.getElementById('emp-modal-title').textContent = '📝 勤怠記録の編集';
+        document.getElementById('emp-date-group').style.display = 'none';
+
         // フォームに値をセット
         document.getElementById('emp-attendance-id').value = recordId;
         document.getElementById('emp-attendance-date').value = data.date || '';
@@ -2924,6 +2929,59 @@ function closeEmployeeAttendanceModal() {
 }
 
 /**
+ * 新規勤怠記録追加モーダルを開く
+ */
+async function openNewAttendanceModal() {
+    const modal = document.getElementById('employee-attendance-modal');
+    if (!modal) return;
+
+    try {
+        // 新規追加モードを設定
+        document.getElementById('emp-attendance-mode').value = 'add';
+        document.getElementById('emp-modal-title').textContent = '➕ 勤怠記録の追加';
+        document.getElementById('emp-date-group').style.display = 'block';
+
+        // フォームをリセット
+        document.getElementById('emp-attendance-id').value = '';
+
+        // デフォルトで今日の日付を設定
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('emp-attendance-date').value = today;
+
+        // 勤務タイプを「有給休暇」にデフォルト設定（出勤していない日の追加が多いため）
+        const paidLeaveRadio = document.querySelector('input[name="emp-work-type"][value="paid_leave"]');
+        if (paidLeaveRadio) paidLeaveRadio.checked = true;
+
+        // 時刻をデフォルト値に
+        document.getElementById('emp-start-time').value = '08:00';
+        document.getElementById('emp-end-time').value = '17:00';
+        document.getElementById('emp-break-minutes').value = '60';
+        document.getElementById('emp-overtime-minutes').value = '0';
+
+        // 現場セレクターを埋める
+        await populateEmployeeSiteSelector();
+        document.getElementById('emp-site-name').value = '';
+
+        // メモをクリア
+        document.getElementById('emp-notes').value = '';
+
+        // 計算プレビューを更新
+        updateEmployeeCalculationPreview();
+
+        // 勤務タイプに応じて入力欄の表示/非表示を切り替え
+        toggleEmployeeTimeInputs();
+
+        // モーダルを表示
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+
+    } catch (error) {
+        console.error('モーダル表示エラー:', error);
+        alert('モーダルの表示に失敗しました');
+    }
+}
+
+/**
  * 現場セレクターを埋める
  */
 async function populateEmployeeSiteSelector() {
@@ -2931,15 +2989,16 @@ async function populateEmployeeSiteSelector() {
     if (!selector) return;
 
     try {
-        const sitesCollection = window.getTenantFirestore
-            ? window.getTenantFirestore('sites')
-            : firebase.firestore().collection('sites');
+        const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        if (!tenantId) {
+            console.error('テナントIDが取得できません');
+            return;
+        }
 
-        const snapshot = await sitesCollection.where('isActive', '!=', false).get();
+        const sites = await window.getTenantSites(tenantId);
 
         let html = '<option value="">選択してください</option>';
-        snapshot.forEach(doc => {
-            const site = doc.data();
+        sites.filter(s => s.active !== false).forEach(site => {
             html += `<option value="${site.name}">${site.name}</option>`;
         });
 
@@ -3011,11 +3070,19 @@ function updateEmployeeCalculationPreview() {
  */
 async function saveEmployeeAttendance() {
     try {
+        const mode = document.getElementById('emp-attendance-mode').value;
         const recordId = document.getElementById('emp-attendance-id').value;
         const date = document.getElementById('emp-attendance-date').value;
         const workType = document.querySelector('input[name="emp-work-type"]:checked')?.value || 'normal';
 
-        if (!recordId) {
+        // 新規追加モードの場合は日付が必須
+        if (mode === 'add' && !date) {
+            alert('日付を選択してください');
+            return;
+        }
+
+        // 編集モードの場合はrecordIdが必須
+        if (mode === 'edit' && !recordId) {
             alert('記録IDが見つかりません');
             return;
         }
@@ -3113,9 +3180,55 @@ async function saveEmployeeAttendance() {
         }
 
         // Firestoreに保存
-        await getAttendanceCollection().doc(recordId).update(updateData);
+        if (mode === 'add') {
+            // 新規追加モード
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert('ログインが必要です');
+                return;
+            }
 
-        alert('✅ 勤怠記録を更新しました');
+            const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+            if (!tenantId) {
+                alert('テナント情報が取得できません');
+                return;
+            }
+
+            // 同じ日付の記録が既にあるかチェック
+            const existingRecords = await getAttendanceCollection()
+                .where('userId', '==', user.uid)
+                .where('date', '==', date)
+                .get();
+
+            if (!existingRecords.empty) {
+                alert('この日付には既に記録があります。編集から修正してください。');
+                return;
+            }
+
+            // ユーザー情報を取得
+            const userDoc = await firebase.firestore()
+                .collection('tenants').doc(tenantId)
+                .collection('users').doc(user.uid)
+                .get();
+            const userData = userDoc.exists ? userDoc.data() : {};
+
+            // 新規ドキュメントを作成
+            const newData = {
+                ...updateData,
+                userId: user.uid,
+                userName: userData.name || user.displayName || 'Unknown',
+                tenantId: tenantId,
+                date: date,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await getAttendanceCollection().add(newData);
+            alert('✅ 勤怠記録を追加しました');
+        } else {
+            // 編集モード
+            await getAttendanceCollection().doc(recordId).update(updateData);
+            alert('✅ 勤怠記録を更新しました');
+        }
 
         // モーダルを閉じる
         closeEmployeeAttendanceModal();
@@ -3156,6 +3269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // グローバルスコープに公開
 window.openEmployeeAttendanceModal = openEmployeeAttendanceModal;
+window.openNewAttendanceModal = openNewAttendanceModal;
 window.closeEmployeeAttendanceModal = closeEmployeeAttendanceModal;
 window.saveEmployeeAttendance = saveEmployeeAttendance;
 window.loadMonthlyRecords = loadMonthlyRecords;

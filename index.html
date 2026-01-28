@@ -1772,9 +1772,14 @@
                     <section class="recent-records">
                         <div class="records-header">
                             <h3>📋 勤怠記録</h3>
-                            <select id="employee-month-selector" class="month-selector">
-                                <!-- JavaScriptで動的に生成 -->
-                            </select>
+                            <div class="records-header-actions">
+                                <select id="employee-month-selector" class="month-selector">
+                                    <!-- JavaScriptで動的に生成 -->
+                                </select>
+                                <button type="button" class="btn btn-primary btn-small" onclick="openNewAttendanceModal()">
+                                    ➕ 記録を追加
+                                </button>
+                            </div>
                         </div>
                         <div id="recent-list">
                             <div class="loading-message">🔄 記録を読み込み中...</div>
@@ -2656,13 +2661,19 @@
         <div class="modal-overlay" onclick="closeEmployeeAttendanceModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3>📝 勤怠記録の編集</h3>
+                <h3 id="emp-modal-title">📝 勤怠記録の編集</h3>
                 <button class="modal-close-btn" onclick="closeEmployeeAttendanceModal()">×</button>
             </div>
             <div class="modal-body">
                 <form id="employee-attendance-form">
                     <input type="hidden" id="emp-attendance-id">
-                    <input type="hidden" id="emp-attendance-date">
+                    <input type="hidden" id="emp-attendance-mode" value="edit">
+
+                    <!-- 日付選択（新規追加時のみ表示） -->
+                    <div class="form-group" id="emp-date-group">
+                        <label for="emp-attendance-date">📅 日付 <span class="required">*</span></label>
+                        <input type="date" id="emp-attendance-date" required>
+                    </div>
 
                     <!-- 勤務タイプ選択 -->
                     <div class="form-group">
