@@ -3075,6 +3075,10 @@ async function saveEmployeeAttendance() {
         const date = document.getElementById('emp-attendance-date').value;
         const workType = document.querySelector('input[name="emp-work-type"]:checked')?.value || 'normal';
 
+        // 共通で取得する値
+        const siteName = document.getElementById('emp-site-name').value;
+        const notes = document.getElementById('emp-notes').value;
+
         // 新規追加モードの場合は日付が必須
         if (mode === 'add' && !date) {
             alert('日付を選択してください');
@@ -3088,7 +3092,9 @@ async function saveEmployeeAttendance() {
         }
 
         const updateData = {
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            siteName: siteName,
+            notes: notes
         };
 
         // 勤務タイプによって保存データを変更
@@ -3131,8 +3137,6 @@ async function saveEmployeeAttendance() {
             const endTime = document.getElementById('emp-end-time').value + ':00';
             const breakMinutes = parseInt(document.getElementById('emp-break-minutes').value) || 60;
             const manualOvertime = document.getElementById('emp-overtime-minutes').value;
-            const siteName = document.getElementById('emp-site-name').value;
-            const notes = document.getElementById('emp-notes').value;
 
             // 実働時間計算
             const [startH, startM] = startTime.split(':').map(Number);
@@ -3152,8 +3156,6 @@ async function saveEmployeeAttendance() {
             updateData.workingMinutes = workingMinutes;
             updateData.overtimeMinutes = overtimeMinutes;
             updateData.status = 'completed';
-            updateData.siteName = siteName;
-            updateData.notes = notes;
 
             // 勤務タイプフラグ
             if (workType === 'holiday_work') {
