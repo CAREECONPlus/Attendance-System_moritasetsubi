@@ -3348,19 +3348,31 @@ textarea:focus-visible {
 
     .work-type-radio-group {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
 
     .work-type-radio-group .radio-label {
-        padding: 0.6rem 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.75rem 0.5rem;
         font-size: 0.85rem;
-        justify-content: flex-start;
-        white-space: nowrap;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .work-type-radio-group .radio-label input[type="radio"] {
+        flex-shrink: 0;
+        margin: 0;
+        width: 18px;
+        height: 18px;
     }
 
     .work-type-radio-group .radio-label span {
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .calculation-preview {
