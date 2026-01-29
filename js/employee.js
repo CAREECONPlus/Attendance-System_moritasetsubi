@@ -2948,9 +2948,9 @@ async function openNewAttendanceModal() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('emp-attendance-date').value = today;
 
-        // 勤務タイプを「有給休暇」にデフォルト設定（出勤していない日の追加が多いため）
-        const paidLeaveRadio = document.querySelector('input[name="emp-work-type"][value="paid_leave"]');
-        if (paidLeaveRadio) paidLeaveRadio.checked = true;
+        // 勤務タイプを「出勤」にデフォルト設定（編集画面と同じ項目を表示するため）
+        const normalRadio = document.querySelector('input[name="emp-work-type"][value="normal"]');
+        if (normalRadio) normalRadio.checked = true;
 
         // 時刻をデフォルト値に
         document.getElementById('emp-start-time').value = '08:00';
