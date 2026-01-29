@@ -5283,7 +5283,18 @@ async function initAdminPage() {
         
         // 編集機能の初期化
         initAdminEditFeatures();
-        
+
+        // Google Sheets連携の初期化（トークン復元）
+        if (window.GoogleSheets && window.GoogleSheets.init) {
+            try {
+                await window.GoogleSheets.init();
+                logger.log('initAdminPage: Google Sheets初期化完了');
+            } catch (sheetsError) {
+                console.error('Google Sheets初期化エラー:', sheetsError);
+                // Sheets初期化失敗は致命的ではないので続行
+            }
+        }
+
         // 初期データの読み込み
         loadAttendanceData();
         
