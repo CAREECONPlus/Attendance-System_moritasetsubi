@@ -2759,6 +2759,22 @@ textarea:focus-visible {
     margin-bottom: 2.5rem;
 }
 
+.expense-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid var(--careecon-primary-blue);
+}
+
+.expense-table-header h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin: 0;
+}
+
 .expense-report-table-section h4 {
     font-size: 1.25rem;
     font-weight: 700;

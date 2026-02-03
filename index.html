@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠管理システム</title>
-    <link rel="stylesheet" href="css/style.css?v=20250124c">
+    <link rel="stylesheet" href="css/style.css?v=20260203a">
     
     <!-- Favicon追加 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -41,7 +41,7 @@
     <script src="js/tenant-settings.js?v=20250124c"></script>
     <script src="js/employee.js?v=20250124g"></script>
     <script src="js/expense.js?v=20250124c"></script>
-    <script src="js/expense-report.js?v=20250124c"></script>
+    <script src="js/expense-report.js?v=20260203a"></script>
     <script src="js/monthly-summary.js?v=20251223a"></script>
     <script src="js/google-sheets.js?v=20251223a"></script>
     <script src="js/admin.js?v=20251223b"></script>
@@ -2245,7 +2245,10 @@
 
                         <!-- 従業員別集計 -->
                         <div class="expense-report-table-section">
-                            <h4>👥 従業員別集計</h4>
+                            <div class="expense-table-header">
+                                <h4>👥 従業員別集計</h4>
+                                <button id="expense-employee-csv-btn" class="btn btn-secondary btn-small">📥 CSV出力</button>
+                            </div>
                             <div class="attendance-table-container">
                                 <table class="attendance-table">
                                     <thead>
@@ -2268,7 +2271,10 @@
 
                         <!-- 現場別集計 -->
                         <div class="expense-report-table-section">
-                            <h4>🏢 現場別集計</h4>
+                            <div class="expense-table-header">
+                                <h4>🏢 現場別集計</h4>
+                                <button id="expense-site-csv-btn" class="btn btn-secondary btn-small">📥 CSV出力</button>
+                            </div>
                             <div class="attendance-table-container">
                                 <table class="attendance-table">
                                     <thead>
@@ -2291,7 +2297,10 @@
 
                         <!-- 月次集計 -->
                         <div class="expense-report-table-section">
-                            <h4>📅 月次集計（カテゴリー別）</h4>
+                            <div class="expense-table-header">
+                                <h4>📅 月次集計（カテゴリー別）</h4>
+                                <button id="expense-category-csv-btn" class="btn btn-secondary btn-small">📥 CSV出力</button>
+                            </div>
                             <div class="attendance-table-container">
                                 <table class="attendance-table">
                                     <thead>
