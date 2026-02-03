@@ -50,15 +50,30 @@ function get20thCutoffPeriod(yearMonth) {
 /**
  * 指定月の勤怠データを従業員ごとに集計
  * @param {string} yearMonth - 対象年月（YYYY-MM形式）
+ * @param {Object} filters - フィルターオプション
+ * @param {string} filters.employeeId - 特定の従業員IDでフィルター
+ * @param {string} filters.siteName - 特定の現場名でフィルター
  * @returns {Promise<Array>} 従業員ごとの集計結果
  */
-async function calculateMonthlySummary(yearMonth) {
+async function calculateMonthlySummary(yearMonth, filters = {}) {
     try {
         logger.log(`📊 月次集計開始: ${yearMonth}`);
+        if (filters.employeeId) logger.log(`  従業員フィルター: ${filters.employeeId}`);
+        if (filters.siteName) logger.log(`  現場フィルター: ${filters.siteName}`);
 
         // 1. 対象月の勤怠データを取得
-        const attendanceData = await fetchMonthlyAttendanceData(yearMonth);
+        let attendanceData = await fetchMonthlyAttendanceData(yearMonth);
         logger.log(`  取得件数: ${attendanceData.length}件`);
+
+        if (attendanceData.length === 0) {
+            return [];
+        }
+
+        // 1.5 現場フィルターを適用
+        if (filters.siteName) {
+            attendanceData = attendanceData.filter(record => record.siteName === filters.siteName);
+            logger.log(`  現場フィルター後: ${attendanceData.length}件`);
+        }
 
         if (attendanceData.length === 0) {
             return [];
@@ -68,7 +83,17 @@ async function calculateMonthlySummary(yearMonth) {
         const userMap = await fetchUserMap();
 
         // 3. 従業員ごとにグループ化
-        const groupedByUser = groupAttendanceByUser(attendanceData);
+        let groupedByUser = groupAttendanceByUser(attendanceData);
+
+        // 3.5 従業員フィルターを適用
+        if (filters.employeeId) {
+            const filteredGroup = {};
+            if (groupedByUser[filters.employeeId]) {
+                filteredGroup[filters.employeeId] = groupedByUser[filters.employeeId];
+            }
+            groupedByUser = filteredGroup;
+            logger.log(`  従業員フィルター後: ${Object.keys(groupedByUser).length}名`);
+        }
 
         // 4. 各従業員の勤務時間を集計
         const summaryResults = [];

@@ -2759,6 +2759,22 @@ textarea:focus-visible {
     margin-bottom: 2.5rem;
 }
 
+.expense-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid var(--careecon-primary-blue);
+}
+
+.expense-table-header h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--careecon-navy);
+    margin: 0;
+}
+
 .expense-report-table-section h4 {
     font-size: 1.25rem;
     font-weight: 700;
@@ -3311,36 +3327,59 @@ textarea:focus-visible {
     color: var(--careecon-navy);
 }
 
-/* 勤怠記録リストの編集ボタン */
+/* 勤怠記録リストの編集・削除ボタン */
 .record-item {
     position: relative;
 }
 
-.record-edit-btn {
+.record-buttons {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    background: var(--careecon-primary-blue);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
+    display: flex;
+    gap: 0.25rem;
     opacity: 0;
     transition: opacity 0.2s;
 }
 
-.record-item:hover .record-edit-btn {
+.record-item:hover .record-buttons {
     opacity: 1;
+}
+
+.record-edit-btn,
+.record-delete-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.record-edit-btn {
+    background: var(--careecon-primary-blue);
 }
 
 .record-edit-btn:hover {
     background: var(--careecon-primary-blue-dark);
 }
 
+.record-delete-btn {
+    background: #dc3545;
+}
+
+.record-delete-btn:hover {
+    background: #c82333;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 480px) {
+    /* モバイルでは常にボタンを表示 */
+    .record-buttons {
+        opacity: 1;
+    }
+
     .work-type-checkboxes {
         flex-direction: column;
         gap: 0.5rem;

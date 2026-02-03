@@ -2833,7 +2833,10 @@ function renderAttendanceRecord(recordId, data) {
 
     return `
         <div class="record-item ${workTypeClass}" data-record-id="${recordId}">
-            <button class="record-edit-btn" onclick="openEmployeeAttendanceModal('${recordId}')">編集</button>
+            <div class="record-buttons">
+                <button class="record-edit-btn" onclick="openEmployeeAttendanceModal('${recordId}')">編集</button>
+                <button class="record-delete-btn" onclick="deleteAttendanceRecord('${recordId}')">削除</button>
+            </div>
             <div class="record-date ${isWeekend ? 'weekend' : ''}">
                 ${date} (${dayOfWeek})
             </div>
@@ -3258,6 +3261,29 @@ async function saveEmployeeAttendance() {
     }
 }
 
+/**
+ * 勤怠記録を削除
+ */
+async function deleteAttendanceRecord(recordId) {
+    if (!confirm('この勤怠記録を削除しますか？\n削除すると元に戻せません。')) {
+        return;
+    }
+
+    try {
+        await getAttendanceCollection().doc(recordId).delete();
+        alert('✅ 勤怠記録を削除しました');
+
+        // 一覧を更新
+        const monthSelector = document.getElementById('employee-month-selector');
+        if (monthSelector) {
+            loadMonthlyRecords(monthSelector.value);
+        }
+    } catch (error) {
+        console.error('勤怠削除エラー:', error);
+        alert('❌ 削除に失敗しました: ' + error.message);
+    }
+}
+
 // イベントリスナー設定
 document.addEventListener('DOMContentLoaded', () => {
     // 月選択セレクターの初期化
@@ -3287,4 +3313,5 @@ window.closeEmployeeAttendanceModal = closeEmployeeAttendanceModal;
 window.saveEmployeeAttendance = saveEmployeeAttendance;
 window.loadMonthlyRecords = loadMonthlyRecords;
 window.initMonthSelector = initMonthSelector;
+window.deleteAttendanceRecord = deleteAttendanceRecord;
 
