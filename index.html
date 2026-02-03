@@ -42,9 +42,9 @@
     <script src="js/employee.js?v=20260203a"></script>
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/expense-report.js?v=20260203a"></script>
-    <script src="js/monthly-summary.js?v=20251223a"></script>
+    <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-sheets.js?v=20251223a"></script>
-    <script src="js/admin.js?v=20251223b"></script>
+    <script src="js/admin.js?v=20260203a"></script>
 
     <style>
         .hidden {
@@ -2334,6 +2334,20 @@
                                 <div class="salary-filter-item">
                                     <label for="salary-year-month">📅 対象月</label>
                                     <select id="salary-year-month" class="filter-input">
+                                        <!-- JavaScriptで動的に生成 -->
+                                    </select>
+                                </div>
+                                <div class="salary-filter-item">
+                                    <label for="salary-employee-filter">👤 従業員</label>
+                                    <select id="salary-employee-filter" class="filter-input">
+                                        <option value="">全員</option>
+                                        <!-- JavaScriptで動的に生成 -->
+                                    </select>
+                                </div>
+                                <div class="salary-filter-item">
+                                    <label for="salary-site-filter">🏢 現場</label>
+                                    <select id="salary-site-filter" class="filter-input">
+                                        <option value="">すべて</option>
                                         <!-- JavaScriptで動的に生成 -->
                                     </select>
                                 </div>

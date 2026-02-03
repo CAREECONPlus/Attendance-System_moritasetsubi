@@ -6705,7 +6705,7 @@ function showMonthlySalaryTab() {
 /**
  * 月次給与タブの初期化
  */
-function initMonthlySalaryTab() {
+async function initMonthlySalaryTab() {
     // 年月セレクトボックスを生成
     const yearMonthSelect = document.getElementById('salary-year-month');
     if (yearMonthSelect && yearMonthSelect.options.length === 0) {
@@ -6716,6 +6716,50 @@ function initMonthlySalaryTab() {
             option.textContent = opt.label;
             yearMonthSelect.appendChild(option);
         });
+    }
+
+    // 従業員フィルターを生成
+    const employeeFilter = document.getElementById('salary-employee-filter');
+    if (employeeFilter && employeeFilter.options.length <= 1) {
+        try {
+            const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+            if (tenantId) {
+                const usersSnapshot = await firebase.firestore()
+                    .collection('tenants')
+                    .doc(tenantId)
+                    .collection('users')
+                    .get();
+
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = userData.displayName || userData.email || doc.id;
+                    employeeFilter.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('従業員リスト読み込みエラー:', error);
+        }
+    }
+
+    // 現場フィルターを生成
+    const siteFilter = document.getElementById('salary-site-filter');
+    if (siteFilter && siteFilter.options.length <= 1) {
+        try {
+            const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+            if (tenantId && typeof window.getTenantSites === 'function') {
+                const sites = await window.getTenantSites(tenantId);
+                sites.filter(s => s.active).forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.name;
+                    option.textContent = site.name;
+                    siteFilter.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('現場リスト読み込みエラー:', error);
+        }
     }
 
     // イベントリスナーを設定（重複防止）
@@ -6762,6 +6806,8 @@ function initMonthlySalaryTab() {
  */
 async function handleCalculateMonthlySummary() {
     const yearMonthSelect = document.getElementById('salary-year-month');
+    const employeeFilter = document.getElementById('salary-employee-filter');
+    const siteFilter = document.getElementById('salary-site-filter');
     const calculateBtn = document.getElementById('salary-calculate-btn');
     const tbody = document.getElementById('monthly-salary-data');
 
@@ -6771,6 +6817,8 @@ async function handleCalculateMonthlySummary() {
     }
 
     const yearMonth = yearMonthSelect.value;
+    const selectedEmployeeId = employeeFilter ? employeeFilter.value : '';
+    const selectedSiteName = siteFilter ? siteFilter.value : '';
 
     try {
         // ローディング表示
@@ -6778,8 +6826,11 @@ async function handleCalculateMonthlySummary() {
         calculateBtn.textContent = '集計中...';
         tbody.innerHTML = '<tr><td colspan="8" class="no-data">集計中...</td></tr>';
 
-        // 月次集計を実行
-        const summaryData = await window.calculateMonthlySummary(yearMonth);
+        // 月次集計を実行（フィルターを渡す）
+        const summaryData = await window.calculateMonthlySummary(yearMonth, {
+            employeeId: selectedEmployeeId,
+            siteName: selectedSiteName
+        });
         currentMonthlySummaryData = summaryData;
 
         // 結果を表示
