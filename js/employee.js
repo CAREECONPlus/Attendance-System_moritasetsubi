@@ -37,16 +37,29 @@ Object.defineProperty(window, 'currentAttendanceId', {
     }
 });
 
-// 🆕 日本時間で確実に今日の日付を取得する関数
+// 🆕 日本時間で確実に日付を取得する関数
+// 🔧 修正: toISOString()はUTCを返すため、早朝打刻が前日になるバグを修正
+function getDateJST(date = new Date()) {
+    // Intl APIを使用して日本時間の日付を取得（最も確実な方法）
+    const formatter = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    return formatter.format(date); // YYYY-MM-DD形式
+}
+
+// 今日の日付を日本時間で取得
 function getTodayJST() {
-    const now = new Date();
+    return getDateJST(new Date());
+}
 
-    // 日本時間で確実に計算（UTC + 9時間）
-    const jstDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 3600000));
-    const today = jstDate.toISOString().split('T')[0];
-
-
-    return today;
+// N日前の日付を日本時間で取得
+function getDaysAgoJST(daysAgo) {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    return getDateJST(date);
 }
 
 // ========================================
@@ -1418,11 +1431,9 @@ async function loadRecentRecordsSafely() {
             return;
         }
 
-        // 直近3日間の日付範囲を計算
+        // 直近3日間の日付範囲を計算（日本時間）
         const today = getTodayJST();
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 2); // 今日含めて3日間
-        const threeDaysAgoString = threeDaysAgo.toISOString().split('T')[0];
+        const threeDaysAgoString = getDaysAgoJST(2); // 今日含めて3日間
 
         // インデックス不要の簡素化クエリ（ユーザーIDのみでフィルター）
         const query = getAttendanceCollection()
@@ -2944,8 +2955,8 @@ async function openNewAttendanceModal() {
         // フォームをリセット
         document.getElementById('emp-attendance-id').value = '';
 
-        // デフォルトで今日の日付を設定
-        const today = new Date().toISOString().split('T')[0];
+        // デフォルトで今日の日付を設定（日本時間）
+        const today = getTodayJST();
         document.getElementById('emp-attendance-date').value = today;
 
         // 勤務タイプを「出勤」にデフォルト設定（編集画面と同じ項目を表示するため）
