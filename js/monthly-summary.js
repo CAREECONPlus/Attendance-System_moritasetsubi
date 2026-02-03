@@ -7,7 +7,41 @@
  * - 通し夜間時間（昼出勤→深夜退勤）
  * - 休日出勤時間
  * - 残業時間（8h超過分）
+ *
+ * 【20日締め対応】
+ * - 集計期間: 前月21日〜当月20日
+ * - 例: 2025年1月度 = 2024/12/21 〜 2025/1/20
  */
+
+// ========================================
+// 20日締め用ユーティリティ
+// ========================================
+
+/**
+ * 20日締めの期間文字列を取得
+ * @param {string} yearMonth - YYYY-MM形式
+ * @returns {Object} { startDate, endDate, periodLabel }
+ */
+function get20thCutoffPeriod(yearMonth) {
+    const [year, month] = yearMonth.split('-').map(Number);
+
+    // 開始日: 前月21日
+    let startYear = year;
+    let startMonth = month - 1;
+    if (startMonth === 0) {
+        startMonth = 12;
+        startYear = year - 1;
+    }
+    const startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-21`;
+
+    // 終了日: 当月20日
+    const endDate = `${year}-${String(month).padStart(2, '0')}-20`;
+
+    // 表示用ラベル
+    const periodLabel = `${year}年${month}月度 (${startYear}/${startMonth}/21〜${year}/${month}/20)`;
+
+    return { startDate, endDate, periodLabel };
+}
 
 // ========================================
 // 月次集計のメイン関数
@@ -63,18 +97,28 @@ async function calculateMonthlySummary(yearMonth) {
 
 /**
  * 指定月の勤怠データをFirestoreから取得
- * @param {string} yearMonth - YYYY-MM形式
+ * 20日締め対応: 前月21日〜当月20日の期間で集計
+ * @param {string} yearMonth - YYYY-MM形式（締め月を指定）
  * @returns {Promise<Array>} 勤怠データ配列
  */
 async function fetchMonthlyAttendanceData(yearMonth) {
     try {
-        // 月の開始日と終了日を計算
-        const startDate = `${yearMonth}-01`;
+        // 20日締め: 前月21日〜当月20日
         const [year, month] = yearMonth.split('-').map(Number);
-        const lastDay = new Date(year, month, 0).getDate();
-        const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
 
-        logger.log(`  期間: ${startDate} 〜 ${endDate}`);
+        // 開始日: 前月21日
+        let startYear = year;
+        let startMonth = month - 1;
+        if (startMonth === 0) {
+            startMonth = 12;
+            startYear = year - 1;
+        }
+        const startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-21`;
+
+        // 終了日: 当月20日
+        const endDate = `${year}-${String(month).padStart(2, '0')}-20`;
+
+        logger.log(`  期間（20日締め）: ${startDate} 〜 ${endDate}`);
 
         // テナント対応のコレクション取得
         const attendanceCollection = window.getTenantFirestore
@@ -284,20 +328,46 @@ function aggregateWorkHours(records, userInfo) {
 
 /**
  * 年月のリストを生成（過去12ヶ月）
- * @returns {Array} [{value: 'YYYY-MM', label: 'YYYY年MM月'}, ...]
+ * 20日締め対応: ラベルに期間を表示
+ * @returns {Array} [{value: 'YYYY-MM', label: 'YYYY年MM月度 (MM/21-MM/20)'}, ...]
  */
 function generateYearMonthOptions() {
     const options = [];
     const now = new Date();
 
+    // 現在の締め月を計算（21日以降は翌月度）
+    let currentPeriodMonth = now.getMonth() + 1; // 1-12
+    let currentPeriodYear = now.getFullYear();
+    if (now.getDate() >= 21) {
+        currentPeriodMonth++;
+        if (currentPeriodMonth > 12) {
+            currentPeriodMonth = 1;
+            currentPeriodYear++;
+        }
+    }
+
     for (let i = 0; i < 12; i++) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+        let targetMonth = currentPeriodMonth - i;
+        let targetYear = currentPeriodYear;
+
+        while (targetMonth <= 0) {
+            targetMonth += 12;
+            targetYear--;
+        }
+
+        const month = String(targetMonth).padStart(2, '0');
+
+        // 前月を計算（期間表示用）
+        let prevMonth = targetMonth - 1;
+        let prevYear = targetYear;
+        if (prevMonth === 0) {
+            prevMonth = 12;
+            prevYear--;
+        }
 
         options.push({
-            value: `${year}-${month}`,
-            label: `${year}年${date.getMonth() + 1}月`
+            value: `${targetYear}-${month}`,
+            label: `${targetYear}年${targetMonth}月度 (${prevMonth}/21-${targetMonth}/20)`
         });
     }
 
@@ -305,14 +375,25 @@ function generateYearMonthOptions() {
 }
 
 /**
- * 現在の年月を取得
+ * 現在の締め月を取得（20日締め対応）
+ * 21日以降は翌月度として扱う
  * @returns {string} YYYY-MM形式
  */
 function getCurrentYearMonth() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1; // 1-12
+
+    // 21日以降は翌月度
+    if (now.getDate() >= 21) {
+        month++;
+        if (month > 12) {
+            month = 1;
+            year++;
+        }
+    }
+
+    return `${year}-${String(month).padStart(2, '0')}`;
 }
 
 /**
@@ -424,7 +505,8 @@ window.MonthlySummary = {
     generateYearMonthOptions: generateYearMonthOptions,
     getCurrentYearMonth: getCurrentYearMonth,
     convertToCSV: convertSummaryToCSV,
-    convertToYayoiCSV: convertSummaryToYayoiCSV
+    convertToYayoiCSV: convertSummaryToYayoiCSV,
+    get20thCutoffPeriod: get20thCutoffPeriod
 };
 
 // 後方互換性のため個別関数もエクスポート
@@ -432,5 +514,6 @@ window.calculateMonthlySummary = calculateMonthlySummary;
 window.generateYearMonthOptions = generateYearMonthOptions;
 window.getCurrentYearMonth = getCurrentYearMonth;
 window.convertSummaryToYayoiCSV = convertSummaryToYayoiCSV;
+window.get20thCutoffPeriod = get20thCutoffPeriod;
 
 logger.log('✅ monthly-summary.js 読み込み完了');
