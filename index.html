@@ -44,7 +44,7 @@
     <script src="js/expense-report.js?v=20260209a"></script>
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-sheets.js?v=20251223a"></script>
-    <script src="js/admin.js?v=20260209b"></script>
+    <script src="js/admin.js?v=20260209c"></script>
 
     <style>
         .hidden {
@@ -1384,6 +1384,121 @@
             border: none;
         }
 
+        /* テナント管理者向け従業員一覧の改善スタイル */
+        .employee-info-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .employee-name-large {
+            font-size: 15px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .employee-role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .employee-role-badge.admin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .employee-role-badge.employee {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .employee-role-badge.super_admin {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .employee-email {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .employee-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .employee-status-badge.active {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+        }
+
+        .employee-status-badge.inactive {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(235, 51, 73, 0.3);
+        }
+
+        .employee-action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-icon {
+            font-size: 14px;
+        }
+
+        .action-text {
+            white-space: nowrap;
+        }
+
+        .action-btn-warning {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            color: #212529;
+        }
+
+        .action-btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .action-btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
         /* 従業員管理のレスポンシブ対応 */
         @media (max-width: 768px) {
             .employee-list-header {
@@ -1413,6 +1528,21 @@
             .employee-list-table th,
             .employee-list-table td {
                 padding: 8px 12px;
+            }
+
+            .employee-action-buttons {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 10px;
+            }
+
+            .action-text {
+                display: inline;
             }
         }
 

@@ -4838,15 +4838,25 @@ function displayAllTenantsEmployeeList(employees) {
 // 従業員一覧を表示（通常の管理者用）
 function displayEmployeeList(employees) {
     const tableBody = document.getElementById('employee-list-data');
+    const tableHead = document.querySelector('#employee-management-content .employee-list-table thead tr');
     if (!tableBody) return;
 
-    // 現在のテナント名を取得
-    const currentTenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : '';
+    // テナント管理者用のヘッダーに変更（テナント・最終ログイン列を削除）
+    if (tableHead) {
+        tableHead.innerHTML = `
+            <th style="min-width: 180px;">氏名</th>
+            <th>メールアドレス</th>
+            <th>役割</th>
+            <th>登録日</th>
+            <th style="min-width: 100px;">ステータス</th>
+            <th style="min-width: 200px;">操作</th>
+        `;
+    }
 
     if (employees.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="loading-cell">従業員が登録されていません</td>
+                <td colspan="6" class="loading-cell">従業員が登録されていません</td>
             </tr>
         `;
         return;
@@ -4859,48 +4869,39 @@ function displayEmployeeList(employees) {
         const createdDate = employee.createdAt ?
             employee.createdAt.toDate().toLocaleDateString('ja-JP') : '不明';
 
-        const lastLoginDate = employee.lastLogin ?
-            employee.lastLogin.toDate().toLocaleDateString('ja-JP') : '未ログイン';
-
         const statusClass = employee.isActive ? 'active' : 'inactive';
         const statusText = employee.isActive ? 'アクティブ' : '無効';
 
         html += `
             <tr data-employee-id="${employee.id}" data-employee-uid="${employee.uid}">
                 <td>
-                    <div class="employee-info">
-                        <div class="employee-name">${employee.displayName}</div>
-                        <div class="employee-role-badge">${getRoleDisplayName(employee.role)}</div>
+                    <div class="employee-info-cell">
+                        <div class="employee-name-large">${employee.displayName}</div>
+                        <div class="employee-role-badge ${employee.role}">${getRoleDisplayName(employee.role)}</div>
                     </div>
                 </td>
-                <td>${employee.email}</td>
-                <td>
-                    <div class="tenant-info">
-                        <div class="tenant-id">${currentTenantId}</div>
-                    </div>
-                </td>
+                <td class="employee-email">${employee.email}</td>
                 <td>${getRoleDisplayName(employee.role)}</td>
                 <td>${createdDate}</td>
-                <td>${lastLoginDate}</td>
                 <td>
-                    <span class="employee-status ${statusClass}">${statusText}</span>
+                    <span class="employee-status-badge ${statusClass}">${statusText}</span>
                 </td>
                 <td>
-                    <div class="employee-actions">
-                        <button class="btn btn-edit" onclick="editEmployee('${employee.id}')">
-                            ✏️ 編集
-                        </button>
+                    <div class="employee-action-buttons">
                         ${employee.isActive ? `
-                            <button class="btn btn-deactivate" onclick="deactivateEmployee('${employee.id}', '${employee.displayName}')">
-                                ⏸️ 無効化
+                            <button class="action-btn action-btn-warning" onclick="deactivateEmployee('${employee.id}', '${employee.displayName}')" title="無効化">
+                                <span class="action-icon">⏸️</span>
+                                <span class="action-text">無効化</span>
                             </button>
                         ` : `
-                            <button class="btn btn-activate" onclick="activateEmployee('${employee.id}', '${employee.displayName}')">
-                                ▶️ 有効化
+                            <button class="action-btn action-btn-success" onclick="activateEmployee('${employee.id}', '${employee.displayName}')" title="有効化">
+                                <span class="action-icon">▶️</span>
+                                <span class="action-text">有効化</span>
                             </button>
                         `}
-                        <button class="btn btn-delete" onclick="deleteEmployee('${employee.id}', '${employee.displayName}', '${employee.email}')">
-                            🗑️ 削除
+                        <button class="action-btn action-btn-danger" onclick="deleteEmployee('${employee.id}', '${employee.displayName}', '${employee.email}')" title="削除">
+                            <span class="action-icon">🗑️</span>
+                            <span class="action-text">削除</span>
                         </button>
                     </div>
                 </td>
