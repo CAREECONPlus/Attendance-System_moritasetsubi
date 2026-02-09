@@ -4960,6 +4960,8 @@ async function activateEmployee(employeeId, employeeName) {
 
 // 従業員を完全削除
 async function deleteEmployee(employeeId, employeeName, employeeEmail) {
+    console.log('[deleteEmployee] 関数呼び出し:', { employeeId, employeeName, employeeEmail });
+
     const confirmation = prompt(
         `⚠️ 重要な操作です ⚠️\n\n${employeeName}さん（${employeeEmail}）のアカウントを完全に削除します。\n\n` +
         `この操作は元に戻せません。関連する勤怠データもすべて削除されます。\n\n` +
@@ -4967,13 +4969,15 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
     );
 
     if (confirmation !== 'DELETE') {
+        console.log('[deleteEmployee] ユーザーがキャンセル');
         alert('削除がキャンセルされました');
         return;
     }
 
     try {
         const tenantId = window.getCurrentTenantId();
-        
+        console.log('[deleteEmployee] tenantId:', tenantId);
+
         logger.log('従業員削除開始:', employeeId, employeeName);
 
         // 1. テナント内のユーザーデータを削除
@@ -5030,12 +5034,25 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
             }
         });
 
+        console.log('[deleteEmployee] 削除完了:', {
+            employeeId,
+            employeeName,
+            attendanceDeleted: attendanceSnapshot.size,
+            breaksDeleted: breakSnapshot.size
+        });
+
         alert(`${employeeName}さんのアカウントと関連データを完全に削除しました`);
         loadEmployeeList();
 
     } catch (error) {
-        console.error('従業員削除エラー:', error);
-        alert('削除処理でエラーが発生しました');
+        console.error('[deleteEmployee] 削除エラー:', error);
+        console.error('[deleteEmployee] エラー詳細:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        alert('削除処理でエラーが発生しました: ' + error.message);
     }
 }
 
@@ -7248,4 +7265,12 @@ window.handleGoogleAuth = handleGoogleAuth;
 window.handleTestConnection = handleTestConnection;
 window.handleOpenSheet = handleOpenSheet;
 window.saveSheetsSettings = saveSheetsSettings;
+
+// 従業員管理関連（削除・無効化・有効化）
+window.deleteEmployee = deleteEmployee;
+window.deleteEmployeeFromAllTenants = deleteEmployeeFromAllTenants;
+window.deactivateEmployee = deactivateEmployee;
+window.activateEmployee = activateEmployee;
+window.deactivateEmployeeFromAllTenants = deactivateEmployeeFromAllTenants;
+window.activateEmployeeFromAllTenants = activateEmployeeFromAllTenants;
 
