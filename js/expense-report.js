@@ -406,9 +406,12 @@ async function exportExpenseReportCSV() {
  * 従業員別集計CSV出力
  */
 async function exportEmployeeExpenseCSV() {
+    console.log('[exportEmployeeExpenseCSV] 関数呼び出し開始');
     try {
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        console.log('[exportEmployeeExpenseCSV] tenantId:', tenantId);
         if (!tenantId) {
+            console.error('[exportEmployeeExpenseCSV] テナントIDが取得できません');
             alert('テナントIDが取得できません');
             return;
         }
@@ -492,17 +495,27 @@ async function exportEmployeeExpenseCSV() {
 
         // ダウンロード
         const filename = `経費_従業員別集計_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
+        console.log('[exportEmployeeExpenseCSV] ファイル名:', filename);
+        console.log('[exportEmployeeExpenseCSV] 集計データ件数:', Object.keys(employeeData).length);
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = filename;
         link.click();
 
+        console.log('[exportEmployeeExpenseCSV] CSV出力完了');
         alert('従業員別集計CSVを出力しました');
 
     } catch (error) {
-        console.error('従業員別CSV出力エラー:', error);
-        alert('CSV出力に失敗しました');
+        console.error('[exportEmployeeExpenseCSV] エラー:', error);
+        console.error('[exportEmployeeExpenseCSV] エラー詳細:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        alert('CSV出力に失敗しました: ' + error.message);
     }
 }
 
@@ -510,9 +523,12 @@ async function exportEmployeeExpenseCSV() {
  * 現場別集計CSV出力
  */
 async function exportSiteExpenseCSV() {
+    console.log('[exportSiteExpenseCSV] 関数呼び出し開始');
     try {
         const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
+        console.log('[exportSiteExpenseCSV] tenantId:', tenantId);
         if (!tenantId) {
+            console.error('[exportSiteExpenseCSV] テナントIDが取得できません');
             alert('テナントIDが取得できません');
             return;
         }
@@ -594,17 +610,27 @@ async function exportSiteExpenseCSV() {
 
         // ダウンロード
         const filename = `経費_現場別集計_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
+        console.log('[exportSiteExpenseCSV] ファイル名:', filename);
+        console.log('[exportSiteExpenseCSV] 集計データ件数:', Object.keys(siteData).length);
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = filename;
         link.click();
 
+        console.log('[exportSiteExpenseCSV] CSV出力完了');
         alert('現場別集計CSVを出力しました');
 
     } catch (error) {
-        console.error('現場別CSV出力エラー:', error);
-        alert('CSV出力に失敗しました');
+        console.error('[exportSiteExpenseCSV] エラー:', error);
+        console.error('[exportSiteExpenseCSV] エラー詳細:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        alert('CSV出力に失敗しました: ' + error.message);
     }
 }
 
