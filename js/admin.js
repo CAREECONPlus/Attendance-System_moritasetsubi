@@ -114,16 +114,18 @@ function showAdminRequestsTab() {
 }
 
 /**
- * 従業員管理の初期化（スーパー管理者のみ）
+ * 従業員管理の初期化（管理者以上）
  */
 function initEmployeeManagement() {
-    // スーパー管理者チェック
-    if (!window.currentUser || window.currentUser.role !== 'super_admin') {
-        logger.log('従業員管理機能: スーパー管理者のみアクセス可能');
+    // 管理者権限チェック（admin または super_admin）
+    if (!window.currentUser || (window.currentUser.role !== 'super_admin' && window.currentUser.role !== 'admin')) {
+        logger.log('従業員管理機能: 管理者のみアクセス可能');
         return;
     }
-    
-    // スーパー管理者の場合のみタブを表示
+
+    console.log('[initEmployeeManagement] 従業員管理タブを初期化:', window.currentUser.role);
+
+    // 管理者の場合タブを表示
     const employeeManagementTab = document.getElementById('employee-management-tab');
     if (employeeManagementTab) {
         employeeManagementTab.style.display = 'block';
@@ -134,40 +136,47 @@ function initEmployeeManagement() {
 }
 
 /**
- * 従業員管理タブを表示（スーパー管理者のみ）
+ * 従業員管理タブを表示（管理者以上）
  */
 function showEmployeeManagementTab() {
     logger.log('従業員管理タブを表示中...');
-    
-    // スーパー管理者権限チェック
-    if (!window.currentUser || window.currentUser.role !== 'super_admin') {
-        logger.log('従業員管理タブ: スーパー管理者のみアクセス可能');
-        alert('この機能はスーパー管理者のみアクセス可能です。');
+    console.log('[showEmployeeManagementTab] ユーザー権限:', window.currentUser?.role);
+
+    // 管理者権限チェック（admin または super_admin）
+    if (!window.currentUser || (window.currentUser.role !== 'super_admin' && window.currentUser.role !== 'admin')) {
+        logger.log('従業員管理タブ: 管理者のみアクセス可能');
+        alert('この機能は管理者のみアクセス可能です。');
         return;
     }
-    
+
     // 全てのタブコンテンツを非表示
     document.querySelectorAll('.tab-content, .attendance-table-container').forEach(el => {
         el.classList.add('hidden');
     });
-    
+
     // フィルター行を非表示
     const filterRow = document.querySelector('.filter-row');
     if (filterRow) filterRow.style.display = 'none';
-    
+
     // 従業員管理コンテンツを表示
     const employeeContent = document.getElementById('employee-management-content');
     if (employeeContent) {
         employeeContent.classList.remove('hidden');
         employeeContent.style.display = 'block';
     }
-    
+
     // タブの状態を更新
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('employee-management-tab').classList.add('active');
-    
-    // 全テナント従業員一覧を読み込み
-    loadAllTenantsEmployeeList();
+
+    // 権限に応じて適切な従業員一覧を読み込み
+    if (window.currentUser.role === 'super_admin') {
+        console.log('[showEmployeeManagementTab] スーパー管理者: 全テナント従業員を読み込み');
+        loadAllTenantsEmployeeList();
+    } else {
+        console.log('[showEmployeeManagementTab] テナント管理者: 自テナント従業員を読み込み');
+        loadEmployeeList();
+    }
 }
 
 /**
@@ -4831,21 +4840,26 @@ function displayEmployeeList(employees) {
     const tableBody = document.getElementById('employee-list-data');
     if (!tableBody) return;
 
+    // 現在のテナント名を取得
+    const currentTenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : '';
+
     if (employees.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="loading-cell">従業員が登録されていません</td>
+                <td colspan="8" class="loading-cell">従業員が登録されていません</td>
             </tr>
         `;
         return;
     }
 
+    console.log('[displayEmployeeList] 従業員数:', employees.length);
+
     let html = '';
     employees.forEach(employee => {
-        const createdDate = employee.createdAt ? 
+        const createdDate = employee.createdAt ?
             employee.createdAt.toDate().toLocaleDateString('ja-JP') : '不明';
-        
-        const lastLoginDate = employee.lastLogin ? 
+
+        const lastLoginDate = employee.lastLogin ?
             employee.lastLogin.toDate().toLocaleDateString('ja-JP') : '未ログイン';
 
         const statusClass = employee.isActive ? 'active' : 'inactive';
@@ -4860,6 +4874,11 @@ function displayEmployeeList(employees) {
                     </div>
                 </td>
                 <td>${employee.email}</td>
+                <td>
+                    <div class="tenant-info">
+                        <div class="tenant-id">${currentTenantId}</div>
+                    </div>
+                </td>
                 <td>${getRoleDisplayName(employee.role)}</td>
                 <td>${createdDate}</td>
                 <td>${lastLoginDate}</td>
@@ -7273,4 +7292,7 @@ window.deactivateEmployee = deactivateEmployee;
 window.activateEmployee = activateEmployee;
 window.deactivateEmployeeFromAllTenants = deactivateEmployeeFromAllTenants;
 window.activateEmployeeFromAllTenants = activateEmployeeFromAllTenants;
+window.showEmployeeManagementTab = showEmployeeManagementTab;
+window.loadEmployeeList = loadEmployeeList;
+window.loadAllTenantsEmployeeList = loadAllTenantsEmployeeList;
 
