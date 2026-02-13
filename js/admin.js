@@ -1736,8 +1736,6 @@ async function getCurrentFilteredData() {
 
         let querySnapshot;
         let needsClientSideSort = false;
-        const sortField = getElement('sort-field')?.value || 'date';
-        const sortDirection = getElement('sort-direction')?.value || 'desc';
 
         try {
             querySnapshot = await query.get();
