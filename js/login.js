@@ -402,9 +402,29 @@ async function handleAuthStateChange(user) {
                                     const globalUserData = globalUserDoc.data();
                                     logger.log('✅ global_usersからデータ取得:', globalUserData);
 
-                                    // 削除済みユーザーのチェック
+                                    // 削除済みユーザーのチェック（global_usersのフラグ）
                                     if (globalUserData.isDeleted) {
-                                        logger.log('🚫 削除済みユーザーのログインを拒否:', user.email);
+                                        logger.log('🚫 削除済みユーザーのログインを拒否 (global_users):', user.email);
+                                        await firebase.auth().signOut();
+                                        localStorage.removeItem('currentUser');
+                                        hideLoadingOverlay();
+                                        window.isAuthStateChanging = false;
+                                        window.isInitializingUser = false;
+                                        alert('このアカウントは削除されています。管理者にお問い合わせください。');
+                                        showPage('login');
+                                        return;
+                                    }
+
+                                    // テナント内のdeleted_usersコレクションをチェック
+                                    const deletedUserDoc = await firebase.firestore()
+                                        .collection('tenants')
+                                        .doc(userTenantId)
+                                        .collection('deleted_users')
+                                        .doc(normalizedEmail)
+                                        .get();
+
+                                    if (deletedUserDoc.exists) {
+                                        logger.log('🚫 削除済みユーザーのログインを拒否 (deleted_users):', user.email);
                                         await firebase.auth().signOut();
                                         localStorage.removeItem('currentUser');
                                         hideLoadingOverlay();

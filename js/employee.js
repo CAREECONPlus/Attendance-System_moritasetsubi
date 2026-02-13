@@ -1500,7 +1500,7 @@ function showWelcomeMessage() {
 function displayRecentRecords(snapshot) {
     const recentList = document.getElementById('recent-list');
     if (!recentList) return;
-    
+
     const records = [];
     // カスタムスナップショットオブジェクトに対応
     if (snapshot.docs && Array.isArray(snapshot.docs)) {
@@ -1513,7 +1513,7 @@ function displayRecentRecords(snapshot) {
             records.push({ id: doc.id, ...doc.data() });
         });
     }
-    
+
     // 日付でソート
     records.sort((a, b) => {
         const dateA = a.date || '';
@@ -1521,67 +1521,10 @@ function displayRecentRecords(snapshot) {
         return dateB.localeCompare(dateA);
     });
 
+    // renderAttendanceRecordを使用して統一されたUIを表示
     let html = '';
     records.forEach(record => {
-        const statusText = getStatusText(record.status);
-
-        // 🆕 特殊勤務情報を表示用に整形
-        let specialWorkInfo = '';
-
-        // 実働時間を表示（完了済みの場合のみ）
-        if (record.status === 'completed' && record.workingMinutes) {
-            const hours = Math.floor(record.workingMinutes / 60);
-            const mins = record.workingMinutes % 60;
-            specialWorkInfo += `<div class="record-working-time">⏱️ 実働: ${hours}時間${mins}分</div>`;
-        }
-
-        // 残業時間を表示
-        if (record.overtimeMinutes && record.overtimeMinutes > 0) {
-            const overtimeHours = Math.floor(record.overtimeMinutes / 60);
-            const overtimeMins = record.overtimeMinutes % 60;
-            specialWorkInfo += `<div class="record-overtime">⏰ 残業: ${overtimeHours}時間${overtimeMins}分</div>`;
-        }
-
-        // 休日出勤・夜間勤務のバッジ
-        let badges = '';
-        if (record.isHolidayWork) {
-            badges += `<span class="badge badge-holiday">📅 休日出勤</span>`;
-        }
-        if (record.nightWorkType === 'through_night') {
-            badges += `<span class="badge badge-night">🌙 通し夜間</span>`;
-        } else if (record.nightWorkType === 'night_only') {
-            badges += `<span class="badge badge-night">🌙 夜間</span>`;
-        }
-
-        html += `
-            <div class="record-item">
-                <div class="record-header">
-                    <span class="record-date">${record.date || '日付不明'}</span>
-                    <span class="record-status status-${record.status || 'unknown'}">${statusText}</span>
-                </div>
-                <div class="record-details">
-                    <div class="record-site">📍 ${record.siteName || '現場不明'}</div>
-                    <div class="record-time">
-                        ⏰ 出勤: ${record.startTime || '不明'}
-                        ${record.endTime ? ` / 退勤: ${record.endTime}` : ' (勤務中)'}
-                    </div>
-                    ${specialWorkInfo}
-                    ${badges ? `<div class="record-badges">${badges}</div>` : ''}
-                    ${record.notes ? `<div class="record-notes">📝 ${record.notes}</div>` : ''}
-                    ${record.editHistory && record.editHistory.length > 0 ?
-                        `<div class="record-edit-badge">✏️ 編集済み (${record.editHistory.length}回)</div>` : ''
-                    }
-                </div>
-                <div class="record-actions">
-                    <button class="btn btn-secondary btn-small btn-edit-record" onclick="openEmployeeAttendanceModal('${record.id}')">
-                        ✏️ 編集
-                    </button>
-                    <button class="btn btn-danger btn-small btn-delete-record" onclick="deleteEmployeeAttendanceRecord('${record.id}')">
-                        🗑️ 削除
-                    </button>
-                </div>
-            </div>
-        `;
+        html += renderAttendanceRecord(record.id, record);
     });
 
     recentList.innerHTML = html;
