@@ -1576,6 +1576,9 @@ function displayRecentRecords(snapshot) {
                     <button class="btn btn-secondary btn-small btn-edit-record" onclick="openEmployeeAttendanceModal('${record.id}')">
                         ✏️ 編集
                     </button>
+                    <button class="btn btn-danger btn-small btn-delete-record" onclick="deleteEmployeeAttendanceRecord('${record.id}')">
+                        🗑️ 削除
+                    </button>
                 </div>
             </div>
         `;
