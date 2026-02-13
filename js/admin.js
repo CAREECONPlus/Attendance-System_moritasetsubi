@@ -5068,32 +5068,40 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
             .delete();
         console.log('[deleteEmployee] テナントユーザー削除完了');
 
-        // 2. global_usersの処理（削除フラグを設定してログイン不可に）
+        // 2. テナント内のdeleted_usersコレクションに記録（権限あり）
         const normalizedEmail = employeeEmail.toLowerCase();
-        const globalUserRef = firebase.firestore().collection('global_users').doc(normalizedEmail);
-
         try {
-            if (isSuper) {
-                // スーパー管理者は完全削除
-                await globalUserRef.delete();
-                console.log('[deleteEmployee] global_users削除完了');
-            } else {
-                // テナント管理者は削除フラグを設定（ログイン時にチェックされる）
-                await globalUserRef.update({
-                    isDeleted: true,
-                    deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            await firebase.firestore()
+                .collection('tenants')
+                .doc(tenantId)
+                .collection('deleted_users')
+                .doc(normalizedEmail)
+                .set({
+                    email: normalizedEmail,
+                    originalEmail: employeeEmail,
+                    employeeId: employeeId,
+                    employeeName: employeeName,
                     deletedBy: window.currentUser?.email || 'admin',
-                    deletedFromTenant: tenantId,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    deletedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                console.log('[deleteEmployee] global_usersに削除フラグを設定');
-            }
-        } catch (globalError) {
-            // 権限がない場合でもテナントユーザー削除は成功しているので続行
-            console.warn('[deleteEmployee] global_users更新失敗:', globalError.message);
+            console.log('[deleteEmployee] deleted_usersに記録完了');
+        } catch (deletedUsersError) {
+            console.warn('[deleteEmployee] deleted_users記録失敗:', deletedUsersError.message);
         }
 
-        // 3. 関連する勤怠データを削除
+        // 3. global_usersの処理（スーパー管理者のみ）
+        const globalUserRef = firebase.firestore().collection('global_users').doc(normalizedEmail);
+
+        if (isSuper) {
+            try {
+                await globalUserRef.delete();
+                console.log('[deleteEmployee] global_users削除完了');
+            } catch (globalError) {
+                console.warn('[deleteEmployee] global_users削除失敗:', globalError.message);
+            }
+        }
+
+        // 4. 関連する勤怠データを削除
         const attendanceQuery = getAttendanceCollection()
             .where('userEmail', '==', employeeEmail);
 
@@ -5104,7 +5112,7 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
             deletePromises.push(doc.ref.delete());
         });
 
-        // 4. 関連する休憩データを削除
+        // 5. 関連する休憩データを削除
         const breakQuery = getBreaksCollection()
             .where('userId', '==', employeeId);
 
@@ -5115,7 +5123,7 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
 
         await Promise.all(deletePromises);
 
-        // 5. 削除ログを記録
+        // 6. 削除ログを記録
         try {
             await firebase.firestore().collection('admin_logs').add({
                 action: 'delete_employee',
