@@ -1740,15 +1740,9 @@ async function getCurrentFilteredData() {
         try {
             querySnapshot = await query.get();
         } catch (queryError) {
-            console.error('Firestoreクエリ実行エラー:', {
-                error: queryError,
-                message: queryError.message,
-                code: queryError.code
-            });
-
-            // インデックスエラーの場合、orderByを除去して再試行
+            // インデックスエラーの場合、orderByを除去して再試行（想定内の動作）
             if (queryError.code === 'failed-precondition' && queryError.message.includes('index')) {
-                console.log('[getCurrentFilteredData] インデックスエラー検出 - orderByなしで再試行');
+                console.info('[getCurrentFilteredData] 複合インデックス未設定のためフォールバック処理を実行');
 
                 // 新しいクエリを作成（orderByなし）
                 let fallbackQuery = getAttendanceCollection();
@@ -1781,12 +1775,18 @@ async function getCurrentFilteredData() {
                 try {
                     querySnapshot = await fallbackQuery.get();
                     needsClientSideSort = true;
-                    console.log('[getCurrentFilteredData] フォールバッククエリ成功 - クライアント側でソート実行');
+                    console.info('[getCurrentFilteredData] フォールバック成功 - クライアント側でソート処理');
                 } catch (fallbackError) {
                     console.error('フォールバッククエリも失敗:', fallbackError);
                     throw new Error(`データベースクエリの実行に失敗しました: ${fallbackError.message}`);
                 }
             } else {
+                // インデックスエラー以外は本当のエラーとしてログ出力
+                console.error('Firestoreクエリ実行エラー:', {
+                    error: queryError,
+                    message: queryError.message,
+                    code: queryError.code
+                });
                 // 具体的なエラーメッセージを生成
                 let errorMessage = 'データベースクエリの実行に失敗しました';
                 if (queryError.code === 'permission-denied') {
@@ -1817,7 +1817,7 @@ async function getCurrentFilteredData() {
 
         // クライアント側でソートが必要な場合
         if (needsClientSideSort && data.length > 0) {
-            console.log(`[getCurrentFilteredData] クライアント側ソート実行: ${sortField} ${sortDirection}`);
+            console.info(`[getCurrentFilteredData] クライアント側ソート実行: ${sortField} ${sortDirection}`);
             data.sort((a, b) => {
                 const aVal = a[sortField] || '';
                 const bVal = b[sortField] || '';
@@ -5054,7 +5054,8 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
 
     try {
         const tenantId = window.getCurrentTenantId();
-        console.log('[deleteEmployee] tenantId:', tenantId);
+        const isSuper = window.currentUser?.role === 'super_admin';
+        console.log('[deleteEmployee] tenantId:', tenantId, 'isSuper:', isSuper);
 
         logger.log('従業員削除開始:', employeeId, employeeName);
 
@@ -5065,21 +5066,37 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
             .collection('users')
             .doc(employeeId)
             .delete();
+        console.log('[deleteEmployee] テナントユーザー削除完了');
 
-        // 2. global_usersからも削除
+        // 2. global_usersの処理（スーパー管理者のみ削除、テナント管理者は無効化）
         const normalizedEmail = employeeEmail.toLowerCase();
-        await firebase.firestore()
-            .collection('global_users')
-            .doc(normalizedEmail)
-            .delete();
+        const globalUserRef = firebase.firestore().collection('global_users').doc(normalizedEmail);
+
+        if (isSuper) {
+            // スーパー管理者は完全削除
+            await globalUserRef.delete();
+            console.log('[deleteEmployee] global_users削除完了');
+        } else {
+            // テナント管理者はテナントからの削除のみ（global_usersは更新を試みる）
+            try {
+                await globalUserRef.update({
+                    [`tenants.${tenantId}`]: firebase.firestore.FieldValue.delete(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('[deleteEmployee] global_usersからテナント情報を削除');
+            } catch (globalError) {
+                // 権限がない場合はスキップ（テナントユーザー削除は成功している）
+                console.warn('[deleteEmployee] global_users更新スキップ:', globalError.message);
+            }
+        }
 
         // 3. 関連する勤怠データを削除
         const attendanceQuery = getAttendanceCollection()
             .where('userEmail', '==', employeeEmail);
-        
+
         const attendanceSnapshot = await attendanceQuery.get();
         const deletePromises = [];
-        
+
         attendanceSnapshot.docs.forEach(doc => {
             deletePromises.push(doc.ref.delete());
         });
@@ -5087,7 +5104,7 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
         // 4. 関連する休憩データを削除
         const breakQuery = getBreaksCollection()
             .where('userId', '==', employeeId);
-        
+
         const breakSnapshot = await breakQuery.get();
         breakSnapshot.docs.forEach(doc => {
             deletePromises.push(doc.ref.delete());
@@ -5096,21 +5113,25 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
         await Promise.all(deletePromises);
 
         // 5. 削除ログを記録
-        await firebase.firestore().collection('admin_logs').add({
-            action: 'delete_employee',
-            deletedEmployee: {
-                id: employeeId,
-                name: employeeName,
-                email: employeeEmail
-            },
-            deletedBy: window.currentUser?.email || 'admin',
-            tenantId: tenantId,
-            deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            deletedRecords: {
-                attendance: attendanceSnapshot.size,
-                breaks: breakSnapshot.size
-            }
-        });
+        try {
+            await firebase.firestore().collection('admin_logs').add({
+                action: 'delete_employee',
+                deletedEmployee: {
+                    id: employeeId,
+                    name: employeeName,
+                    email: employeeEmail
+                },
+                deletedBy: window.currentUser?.email || 'admin',
+                tenantId: tenantId,
+                deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                deletedRecords: {
+                    attendance: attendanceSnapshot.size,
+                    breaks: breakSnapshot.size
+                }
+            });
+        } catch (logError) {
+            console.warn('[deleteEmployee] ログ記録スキップ:', logError.message);
+        }
 
         console.log('[deleteEmployee] 削除完了:', {
             employeeId,
@@ -5119,7 +5140,7 @@ async function deleteEmployee(employeeId, employeeName, employeeEmail) {
             breaksDeleted: breakSnapshot.size
         });
 
-        alert(`${employeeName}さんのアカウントと関連データを完全に削除しました`);
+        alert(`${employeeName}さんのアカウントと関連データを削除しました`);
         loadEmployeeList();
 
     } catch (error) {
