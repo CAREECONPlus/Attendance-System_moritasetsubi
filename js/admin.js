@@ -1735,6 +1735,10 @@ async function getCurrentFilteredData() {
         }
 
         let querySnapshot;
+        let needsClientSideSort = false;
+        const sortField = getElement('sort-field')?.value || 'date';
+        const sortDirection = getElement('sort-direction')?.value || 'desc';
+
         try {
             querySnapshot = await query.get();
         } catch (queryError) {
@@ -1744,20 +1748,62 @@ async function getCurrentFilteredData() {
                 code: queryError.code
             });
 
-            // 具体的なエラーメッセージを生成
-            let errorMessage = 'データベースクエリの実行に失敗しました';
-            if (queryError.code === 'permission-denied') {
-                errorMessage = 'データアクセス権限がありません。管理者権限を確認してください。';
-            } else if (queryError.code === 'unavailable') {
-                errorMessage = 'データベースサービスが一時的に利用できません。';
-            } else if (queryError.code === 'unauthenticated') {
-                errorMessage = '認証が無効です。再度ログインしてください。';
-            }
+            // インデックスエラーの場合、orderByを除去して再試行
+            if (queryError.code === 'failed-precondition' && queryError.message.includes('index')) {
+                console.log('[getCurrentFilteredData] インデックスエラー検出 - orderByなしで再試行');
 
-            throw new Error(`${errorMessage} (${queryError.code}: ${queryError.message})`);
+                // 新しいクエリを作成（orderByなし）
+                let fallbackQuery = getAttendanceCollection();
+
+                // フィルター条件のみ適用
+                if (activeTab === 'daily') {
+                    const filterDate = getElement('filter-date')?.value;
+                    if (filterDate) {
+                        fallbackQuery = fallbackQuery.where('date', '==', filterDate);
+                    }
+                } else if (activeTab === 'monthly') {
+                    const filterMonth = getElement('filter-month')?.value;
+                    if (filterMonth) {
+                        const startDate = `${filterMonth}-01`;
+                        const endDate = `${filterMonth}-31`;
+                        fallbackQuery = fallbackQuery.where('date', '>=', startDate).where('date', '<=', endDate);
+                    }
+                } else if (activeTab === 'employee') {
+                    const employeeId = getElement('filter-employee')?.value;
+                    if (employeeId) {
+                        fallbackQuery = fallbackQuery.where('userId', '==', employeeId);
+                    }
+                } else if (activeTab === 'site') {
+                    const siteName = getElement('filter-site')?.value;
+                    if (siteName) {
+                        fallbackQuery = fallbackQuery.where('siteName', '==', siteName);
+                    }
+                }
+
+                try {
+                    querySnapshot = await fallbackQuery.get();
+                    needsClientSideSort = true;
+                    console.log('[getCurrentFilteredData] フォールバッククエリ成功 - クライアント側でソート実行');
+                } catch (fallbackError) {
+                    console.error('フォールバッククエリも失敗:', fallbackError);
+                    throw new Error(`データベースクエリの実行に失敗しました: ${fallbackError.message}`);
+                }
+            } else {
+                // 具体的なエラーメッセージを生成
+                let errorMessage = 'データベースクエリの実行に失敗しました';
+                if (queryError.code === 'permission-denied') {
+                    errorMessage = 'データアクセス権限がありません。管理者権限を確認してください。';
+                } else if (queryError.code === 'unavailable') {
+                    errorMessage = 'データベースサービスが一時的に利用できません。';
+                } else if (queryError.code === 'unauthenticated') {
+                    errorMessage = '認証が無効です。再度ログインしてください。';
+                }
+
+                throw new Error(`${errorMessage} (${queryError.code}: ${queryError.message})`);
+            }
         }
 
-        const data = querySnapshot.docs.map(doc => {
+        let data = querySnapshot.docs.map(doc => {
             try {
                 return {
                     id: doc.id,
@@ -1770,6 +1816,20 @@ async function getCurrentFilteredData() {
                 };
             }
         });
+
+        // クライアント側でソートが必要な場合
+        if (needsClientSideSort && data.length > 0) {
+            console.log(`[getCurrentFilteredData] クライアント側ソート実行: ${sortField} ${sortDirection}`);
+            data.sort((a, b) => {
+                const aVal = a[sortField] || '';
+                const bVal = b[sortField] || '';
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+        }
 
         if (data.length === 0) {
             return data;
@@ -5283,10 +5343,7 @@ async function initAdminPage() {
         
         // 管理者登録依頼管理（スーパー管理者のみ）
         initAdminRequestsManagement();
-        
-        // 従業員管理機能を初期化（スーパー管理者のみ）
-        initEmployeeManagement();
-        
+
         // role情報の確認（login.jsで既に設定済みの場合はスキップ）
         try {
             if (window.currentUser && window.currentUser.email) {
@@ -5311,7 +5368,11 @@ async function initAdminPage() {
 
         // role取得完了後にタブ制御を実行
         await setupTabsBasedOnRole();
-        
+
+        // 従業員管理機能を初期化（admin または super_admin）
+        // ※ role情報が確定してから呼び出す
+        initEmployeeManagement();
+
         // 現場管理機能の初期化
         initSiteManagement();
         
