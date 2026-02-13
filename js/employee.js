@@ -1124,6 +1124,8 @@ async function handleClockOut() {
         const updateData = {
             endTime: endTime,
             status: 'completed',
+            breakMinutes: breakMinutes,                               // 休憩時間（分）- CSV出力用
+            breakDuration: breakMinutes,                              // 休憩時間（分）- 互換性のため両方保存
             workingMinutes: specialWorkData.workingMinutes,           // 実働時間（分）
             overtimeMinutes: specialWorkData.overtimeMinutes,         // 残業時間（分）
             isNightWork: specialWorkData.isNightWork,                 // 夜間勤務フラグ

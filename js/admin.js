@@ -1921,14 +1921,55 @@ function generateCSVContent(data) {
     const rows = data.map(record => {
         const recordDate = new Date(record.date);
         const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][recordDate.getDay()];
-        
-        const breakTime = calculateTotalBreakTime(record.breakTimes || []);
-        const workTime = calculateWorkingTime(
-            record.startTime,
-            record.endTime,
-            record.breakTimes || []
-        );
-        
+
+        // 休憩時間の計算（breakTimes配列 or breakMinutes/breakDuration フィールド）
+        let breakTime;
+        const breakTimesArray = record.breakTimes || [];
+        if (breakTimesArray.length > 0) {
+            breakTime = calculateTotalBreakTime(breakTimesArray);
+        } else {
+            // breakMinutes または breakDuration から計算
+            const breakMins = record.breakMinutes || record.breakDuration || 0;
+            const hours = Math.floor(breakMins / 60);
+            const minutes = breakMins % 60;
+            breakTime = {
+                minutes: breakMins,
+                formatted: `${hours}時間${minutes}分`
+            };
+        }
+
+        // 実労働時間の計算
+        let workTime;
+        if (breakTimesArray.length > 0) {
+            workTime = calculateWorkingTime(record.startTime, record.endTime, breakTimesArray);
+        } else if (record.workingMinutes !== undefined && record.workingMinutes !== null) {
+            // データベースに保存された workingMinutes を使用
+            const hours = Math.floor(record.workingMinutes / 60);
+            const minutes = record.workingMinutes % 60;
+            workTime = {
+                minutes: record.workingMinutes,
+                formatted: `${hours}時間${minutes}分`
+            };
+        } else if (record.startTime && record.endTime) {
+            // 開始・終了時刻と休憩時間から計算
+            const start = parseJapaneseTime(record.startTime);
+            const end = parseJapaneseTime(record.endTime);
+            if (start && end && end > start) {
+                const totalMins = Math.floor((end - start) / (1000 * 60));
+                const workMins = totalMins - (breakTime.minutes || 0);
+                const hours = Math.floor(workMins / 60);
+                const minutes = workMins % 60;
+                workTime = {
+                    minutes: workMins,
+                    formatted: `${hours}時間${minutes}分`
+                };
+            } else {
+                workTime = { minutes: 0, formatted: '計算エラー' };
+            }
+        } else {
+            workTime = { minutes: 0, formatted: '-' };
+        }
+
         return [
             record.userName || '不明',
             record.userEmail || '',
@@ -2148,7 +2189,7 @@ function generateSpecialWorkCSVContent(data) {
             record.siteName || '',
             formatTime(record.startTime),
             formatTime(record.endTime) || (record.startTime ? '未退勤' : ''),
-            record.breakMinutes || 0,
+            record.breakMinutes || record.breakDuration || 0,
             workingMinutes,
             workingTimeFormatted,
             overtimeMinutes,
