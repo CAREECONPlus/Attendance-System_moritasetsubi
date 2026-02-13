@@ -6095,9 +6095,11 @@ function updateSortIndicators() {
  * 休憩時間の計算
  */
 function calculateBreakDuration(record) {
-    if (record.breakDuration && record.breakDuration > 0) {
-        const hours = Math.floor(record.breakDuration / 60);
-        const minutes = record.breakDuration % 60;
+    // breakDuration または breakMinutes を確認（フィールド名の互換性対応）
+    const breakMins = record.breakDuration || record.breakMinutes || 0;
+    if (breakMins > 0) {
+        const hours = Math.floor(breakMins / 60);
+        const minutes = breakMins % 60;
         if (hours > 0) {
             return `${hours}時間${minutes}分`;
         } else {
@@ -6132,14 +6134,14 @@ function calculateWorkDuration(record) {
 function calculateActualWorkDuration(record, breakDurationText) {
     if (!record.startTime) return '未出勤';
     if (!record.endTime) return '勤務中';
-    
+
     try {
         const start = new Date(`${record.date} ${record.startTime}`);
         const end = new Date(`${record.date} ${record.endTime}`);
         const totalMinutes = Math.floor((end - start) / (1000 * 60));
-        
-        // 休憩時間を分に変換
-        const breakMinutes = record.breakDuration || 0;
+
+        // 休憩時間を分に変換（breakDuration または breakMinutes を確認）
+        const breakMinutes = record.breakDuration || record.breakMinutes || 0;
         
         // 実稼働時間を計算
         const actualMinutes = Math.max(0, totalMinutes - breakMinutes);
@@ -6260,7 +6262,7 @@ async function editAttendanceRecord(recordId) {
         document.getElementById('admin-edit-site-name').value = record.siteName || '';
         document.getElementById('admin-edit-start-time').value = record.startTime || '';
         document.getElementById('admin-edit-end-time').value = record.endTime || '';
-        document.getElementById('admin-edit-break-duration').value = record.breakDuration || 0;
+        document.getElementById('admin-edit-break-duration').value = record.breakDuration || record.breakMinutes || 0;
         document.getElementById('admin-edit-notes').value = record.notes || '';
 
         // モーダルを表示
