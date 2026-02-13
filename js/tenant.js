@@ -345,6 +345,13 @@ async function determineUserTenant(userEmail) {
 
         if (globalUserDoc.exists) {
             const userData = globalUserDoc.data();
+
+            // 削除済みユーザーのチェック
+            if (userData.isDeleted) {
+                logger.log('🚫 削除済みユーザー検出:', normalizedEmail);
+                return null; // nullを返すことでログイン処理を中断
+            }
+
             logger.log('✅ テナントID取得成功:', userData.tenantId);
             return userData.tenantId;
         }
