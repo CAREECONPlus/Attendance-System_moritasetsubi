@@ -2835,7 +2835,7 @@ function renderAttendanceRecord(recordId, data) {
         <div class="record-item ${workTypeClass}" data-record-id="${recordId}">
             <div class="record-buttons">
                 <button class="record-edit-btn" onclick="openEmployeeAttendanceModal('${recordId}')">編集</button>
-                <button class="record-delete-btn" onclick="deleteAttendanceRecord('${recordId}')">削除</button>
+                <button class="record-delete-btn" onclick="deleteEmployeeAttendanceRecord('${recordId}')">削除</button>
             </div>
             <div class="record-date ${isWeekend ? 'weekend' : ''}">
                 ${date} (${dayOfWeek})
@@ -3262,9 +3262,12 @@ async function saveEmployeeAttendance() {
 }
 
 /**
- * 勤怠記録を削除
+ * 勤怠記録を削除（従業員用）
+ * ※ admin.jsのdeleteAttendanceRecordとの衝突を避けるため別名
  */
-async function deleteAttendanceRecord(recordId) {
+async function deleteEmployeeAttendanceRecord(recordId) {
+    console.log('[deleteEmployeeAttendanceRecord] 呼び出し:', recordId);
+
     if (!confirm('この勤怠記録を削除しますか？\n削除すると元に戻せません。')) {
         return;
     }
@@ -3313,5 +3316,5 @@ window.closeEmployeeAttendanceModal = closeEmployeeAttendanceModal;
 window.saveEmployeeAttendance = saveEmployeeAttendance;
 window.loadMonthlyRecords = loadMonthlyRecords;
 window.initMonthSelector = initMonthSelector;
-window.deleteAttendanceRecord = deleteAttendanceRecord;
+window.deleteEmployeeAttendanceRecord = deleteEmployeeAttendanceRecord;
 
