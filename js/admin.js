@@ -6891,8 +6891,13 @@ async function initMonthlySalaryTab() {
 
     // 従業員フィルターを生成
     const employeeFilter = document.getElementById('salary-employee-filter');
-    if (employeeFilter && employeeFilter.options.length <= 1) {
+    if (employeeFilter) {
         try {
+            // 既存のオプションをクリア（最初の「全員」オプションは残す）
+            while (employeeFilter.options.length > 1) {
+                employeeFilter.remove(1);
+            }
+
             const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
             if (tenantId) {
                 const usersSnapshot = await firebase.firestore()
@@ -6901,11 +6906,24 @@ async function initMonthlySalaryTab() {
                     .collection('users')
                     .get();
 
+                // 従業員リストを配列に変換してソート
+                const employees = [];
                 usersSnapshot.forEach(doc => {
                     const userData = doc.data();
+                    employees.push({
+                        id: doc.id,
+                        displayName: userData.displayName || userData.email || doc.id
+                    });
+                });
+
+                // 名前順にソート
+                employees.sort((a, b) => a.displayName.localeCompare(b.displayName, 'ja'));
+
+                // オプションを追加
+                employees.forEach(employee => {
                     const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = userData.displayName || userData.email || doc.id;
+                    option.value = employee.id;
+                    option.textContent = employee.displayName;
                     employeeFilter.appendChild(option);
                 });
             }
@@ -6916,7 +6934,12 @@ async function initMonthlySalaryTab() {
 
     // 現場フィルターを生成
     const siteFilter = document.getElementById('salary-site-filter');
-    if (siteFilter && siteFilter.options.length <= 1) {
+    if (siteFilter) {
+        // 既存のオプションをクリア（最初の「すべて」オプションは残す）
+        while (siteFilter.options.length > 1) {
+            siteFilter.remove(1);
+        }
+
         try {
             const tenantId = window.getCurrentTenantId ? window.getCurrentTenantId() : null;
             if (tenantId && typeof window.getTenantSites === 'function') {
