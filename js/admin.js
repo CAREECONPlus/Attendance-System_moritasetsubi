@@ -853,13 +853,16 @@ function setupAdminBasics() {
         });
     }
 
-    // タブ切り替えイベント
+    // タブ切り替えイベント（重複防止ガード付き）
     const tabBtns = document.querySelectorAll('.tab-btn');
     tabBtns.forEach((btn) => {
-        btn.addEventListener('click', function() {
-            const tab = this.getAttribute('data-tab');
-            switchTab(tab);
-        });
+        if (!btn.hasAttribute('data-listener-set')) {
+            btn.addEventListener('click', function() {
+                const tab = this.getAttribute('data-tab');
+                switchTab(tab);
+            });
+            btn.setAttribute('data-listener-set', 'true');
+        }
     });
 }
 
@@ -6841,6 +6844,7 @@ function resetBreakTimeSettings() {
 
 // 月次給与の集計データを保持
 let currentMonthlySummaryData = [];
+let isMonthlySalaryTabInitializing = false;
 
 /**
  * 月次給与タブを表示
@@ -6877,6 +6881,13 @@ function showMonthlySalaryTab() {
  * 月次給与タブの初期化
  */
 async function initMonthlySalaryTab() {
+    // 並行実行を防止
+    if (isMonthlySalaryTabInitializing) {
+        return;
+    }
+    isMonthlySalaryTabInitializing = true;
+
+    try {
     // 年月セレクトボックスを生成
     const yearMonthSelect = document.getElementById('salary-year-month');
     if (yearMonthSelect && yearMonthSelect.options.length === 0) {
@@ -6992,6 +7003,9 @@ async function initMonthlySalaryTab() {
     if (sheetsSettingsBtn && !sheetsSettingsBtn.hasAttribute('data-listener-set')) {
         sheetsSettingsBtn.addEventListener('click', openSheetsSettings);
         sheetsSettingsBtn.setAttribute('data-listener-set', 'true');
+    }
+    } finally {
+        isMonthlySalaryTabInitializing = false;
     }
 }
 
