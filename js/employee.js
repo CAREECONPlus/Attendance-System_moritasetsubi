@@ -3025,6 +3025,12 @@ function updateEmployeeCalculationPreview() {
 
     if (workingEl) workingEl.textContent = `${workingH}時間${workingM}分`;
     if (overtimeEl) overtimeEl.textContent = `${overtimeH}時間${overtimeM}分`;
+
+    // 残業時間フィールドも自動更新（時刻変更時に残業が正しく反映されるように）
+    const overtimeInput = document.getElementById('emp-overtime-minutes');
+    if (overtimeInput) {
+        overtimeInput.value = overtimeMinutes;
+    }
 }
 
 /**
