@@ -1439,14 +1439,23 @@ function renderAttendanceTable(data) {
                 </div>`;
         }
 
-        // 休日出勤・夜間勤務のバッジ
-        if (record.isHolidayWork) {
-            specialWorkBadges += '<span class="badge badge-holiday">📅 休日出勤</span>';
-        }
-        if (record.nightWorkType === 'through_night') {
-            specialWorkBadges += '<span class="badge badge-night">🌙 通し夜間</span>';
-        } else if (record.nightWorkType === 'night_only') {
-            specialWorkBadges += '<span class="badge badge-night">🌙 夜間</span>';
+        // 有給・代休・休日出勤・夜間勤務のバッジ
+        if (record.specialWorkType === 'paid_leave') {
+            specialWorkBadges += '<span class="badge badge-leave">🌴 有給休暇</span>';
+        } else if (record.specialWorkType === 'compensatory_leave') {
+            specialWorkBadges += '<span class="badge badge-leave">🔄 代休</span>';
+        } else if (record.specialWorkType === 'absence') {
+            specialWorkBadges += '<span class="badge badge-absence">❌ 欠勤</span>';
+        } else {
+            // 通常勤務系の場合のみ休日・夜間バッジを表示
+            if (record.isHolidayWork) {
+                specialWorkBadges += '<span class="badge badge-holiday">📅 休日出勤</span>';
+            }
+            if (record.nightWorkType === 'through_night') {
+                specialWorkBadges += '<span class="badge badge-night">🌙 通し夜間</span>';
+            } else if (record.nightWorkType === 'night_only') {
+                specialWorkBadges += '<span class="badge badge-night">🌙 夜間</span>';
+            }
         }
 
         return `
