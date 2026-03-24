@@ -6105,15 +6105,29 @@ function getSortValue(record, field) {
 function displaySortedData(data) {
     const tbody = document.getElementById('attendance-data');
     if (!tbody) return;
-    
+
     tbody.innerHTML = data.map(record => {
         const breakDuration = calculateBreakDuration(record);
         const workDuration = calculateWorkDuration(record);
         const actualWorkDuration = calculateActualWorkDuration(record, breakDuration);
-        
+
+        // 有給・代休・欠勤のバッジ
+        let badge = '';
+        if (record.specialWorkType === 'paid_leave') {
+            badge = '<span class="badge badge-leave">🌴 有給休暇</span>';
+        } else if (record.specialWorkType === 'compensatory_leave') {
+            badge = '<span class="badge badge-leave">🔄 代休</span>';
+        } else if (record.specialWorkType === 'absence') {
+            badge = '<span class="badge badge-absence">❌ 欠勤</span>';
+        } else if (record.specialWorkType === 'holiday_work' || record.isHolidayWork) {
+            badge = '<span class="badge badge-holiday">📅 休日出勤</span>';
+        } else if (record.specialWorkType === 'night_only' || record.specialWorkType === 'through_night') {
+            badge = '<span class="badge badge-night">🌙 夜間</span>';
+        }
+
         return `
             <tr>
-                <td class="${currentSortField === 'userName' ? 'sorted-column' : ''}">${escapeHtml(record.userName || record.userEmail)}</td>
+                <td class="${currentSortField === 'userName' ? 'sorted-column' : ''}">${escapeHtml(record.userName || record.userEmail)}${badge ? '<br>' + badge : ''}</td>
                 <td class="${currentSortField === 'date' ? 'sorted-column' : ''}">${record.date}</td>
                 <td class="${currentSortField === 'siteName' ? 'sorted-column' : ''}">${escapeHtml(record.siteName || '未設定')}</td>
                 <td class="${currentSortField === 'startTime' ? 'sorted-column' : ''}">${record.startTime || '未出勤'}</td>
