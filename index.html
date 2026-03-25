@@ -2942,6 +2942,45 @@
         </div>
     </div>
 
+    <!-- 従業員情報編集モーダル -->
+    <div id="employee-edit-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeEmployeeEditModal()"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="employee-edit-modal-title">✏️ 従業員情報の編集</h3>
+                <button class="modal-close-btn" onclick="closeEmployeeEditModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="employee-edit-form">
+                    <input type="hidden" id="edit-employee-id">
+                    <input type="hidden" id="edit-employee-tenant-id">
+
+                    <div class="form-group">
+                        <label for="edit-employee-name">👤 氏名</label>
+                        <input type="text" id="edit-employee-name" readonly class="readonly-input">
+                        <small class="form-hint">氏名は変更できません</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-employee-email">📧 メールアドレス</label>
+                        <input type="email" id="edit-employee-email" readonly class="readonly-input">
+                        <small class="form-hint">メールアドレスは変更できません</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-employee-code">🔢 従業員コード <span class="required">*</span></label>
+                        <input type="text" id="edit-employee-code" placeholder="例: 001, EMP001" maxlength="20">
+                        <small class="form-hint">CSVエクスポート時に使用されます（最大20文字）</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEmployeeEditModal()">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployeeEdit()">💾 保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 経費登録・編集モーダル -->
     <div id="expense-modal" class="modal hidden">
         <div class="modal-overlay" onclick="closeExpenseModal()"></div>

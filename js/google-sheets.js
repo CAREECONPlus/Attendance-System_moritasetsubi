@@ -631,8 +631,8 @@ async function exportYayoiSummaryToSheets(summaryData, yearMonth) {
 
         // データ行
         const rows = summaryData.map(record => {
-            // 従業員コード（メールの@前を使用）
-            const employeeCode = record.email?.split('@')[0] || record.employeeName;
+            // 従業員コード: Firestoreのユーザー情報 > メールの@前
+            const employeeCode = record.employeeCode || record.email?.split('@')[0] || record.employeeName;
 
             return [
                 employeeCode,
