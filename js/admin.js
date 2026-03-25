@@ -4999,6 +4999,10 @@ function displayEmployeeList(employees) {
                 </td>
                 <td>
                     <div class="employee-action-buttons">
+                        <button class="action-btn action-btn-primary" onclick="editEmployee('${employee.id}')" title="編集">
+                            <span class="action-icon">✏️</span>
+                            <span class="action-text">編集</span>
+                        </button>
                         ${employee.isActive ? `
                             <button class="action-btn action-btn-warning" onclick="deactivateEmployee('${employee.id}', '${employee.displayName}')" title="無効化">
                                 <span class="action-icon">⏸️</span>
@@ -5371,9 +5375,93 @@ async function deleteEmployeeFromAllTenants(employeeId, employeeName, employeeEm
     }
 }
 
-// 従業員編集（プレースホルダー）
-function editEmployee(employeeId, tenantId) {
-    alert(`従業員編集機能は今後実装予定です。\n\n従業員ID: ${employeeId}\nテナント: ${tenantId}\n\n現在は無効化・有効化・削除機能をご利用ください。`);
+// 従業員編集モーダルを開く
+async function editEmployee(employeeId, tenantId) {
+    try {
+        // テナントIDが指定されていない場合は現在のテナントIDを使用
+        const targetTenantId = tenantId || window.getCurrentTenantId();
+        if (!targetTenantId) {
+            alert('テナントIDが取得できません');
+            return;
+        }
+
+        // 従業員データを取得
+        const userDoc = await firebase.firestore()
+            .collection('tenants')
+            .doc(targetTenantId)
+            .collection('users')
+            .doc(employeeId)
+            .get();
+
+        if (!userDoc.exists) {
+            alert('従業員データが見つかりません');
+            return;
+        }
+
+        const userData = userDoc.data();
+
+        // モーダルにデータをセット
+        document.getElementById('edit-employee-id').value = employeeId;
+        document.getElementById('edit-employee-tenant-id').value = targetTenantId;
+        document.getElementById('edit-employee-name').value = userData.displayName || '';
+        document.getElementById('edit-employee-email').value = userData.email || '';
+        document.getElementById('edit-employee-code').value = userData.employeeCode || '';
+
+        // モーダルを表示
+        const modal = document.getElementById('employee-edit-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('従業員データ取得エラー:', error);
+        alert('従業員データの取得に失敗しました');
+    }
+}
+
+// 従業員編集モーダルを閉じる
+function closeEmployeeEditModal() {
+    const modal = document.getElementById('employee-edit-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// 従業員編集を保存
+async function saveEmployeeEdit() {
+    try {
+        const employeeId = document.getElementById('edit-employee-id').value;
+        const tenantId = document.getElementById('edit-employee-tenant-id').value;
+        const employeeCode = document.getElementById('edit-employee-code').value.trim();
+
+        if (!employeeId || !tenantId) {
+            alert('保存に必要な情報が不足しています');
+            return;
+        }
+
+        // 従業員コードを更新
+        await firebase.firestore()
+            .collection('tenants')
+            .doc(tenantId)
+            .collection('users')
+            .doc(employeeId)
+            .update({
+                employeeCode: employeeCode,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        alert('従業員情報を更新しました');
+        closeEmployeeEditModal();
+
+        // 従業員一覧を再読み込み
+        if (typeof loadTenantEmployeeList === 'function') {
+            loadTenantEmployeeList();
+        } else if (typeof loadAllTenantsEmployeeList === 'function') {
+            loadAllTenantsEmployeeList();
+        }
+    } catch (error) {
+        console.error('従業員情報更新エラー:', error);
+        alert('保存に失敗しました: ' + error.message);
+    }
 }
 
 // 従業員エラー表示
@@ -7480,7 +7568,7 @@ window.handleTestConnection = handleTestConnection;
 window.handleOpenSheet = handleOpenSheet;
 window.saveSheetsSettings = saveSheetsSettings;
 
-// 従業員管理関連（削除・無効化・有効化）
+// 従業員管理関連（削除・無効化・有効化・編集）
 window.deleteEmployee = deleteEmployee;
 window.deleteEmployeeFromAllTenants = deleteEmployeeFromAllTenants;
 window.deactivateEmployee = deactivateEmployee;
@@ -7490,4 +7578,7 @@ window.activateEmployeeFromAllTenants = activateEmployeeFromAllTenants;
 window.showEmployeeManagementTab = showEmployeeManagementTab;
 window.loadEmployeeList = loadEmployeeList;
 window.loadAllTenantsEmployeeList = loadAllTenantsEmployeeList;
+window.editEmployee = editEmployee;
+window.closeEmployeeEditModal = closeEmployeeEditModal;
+window.saveEmployeeEdit = saveEmployeeEdit;
 

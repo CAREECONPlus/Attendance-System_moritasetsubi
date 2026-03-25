@@ -190,7 +190,8 @@ async function fetchUserMap() {
             const data = doc.data();
             userMap[doc.id] = {
                 displayName: data.displayName || data.name || '',
-                email: data.email || ''
+                email: data.email || '',
+                employeeCode: data.employeeCode || ''
             };
         });
 
@@ -315,6 +316,7 @@ function aggregateWorkHours(records, userInfo) {
         userId: records[0]?.userId || records[0]?.uid || '',
         employeeName: userInfo.displayName || '不明',
         email: userInfo.email || '',
+        employeeCode: userInfo.employeeCode || '',
 
         // 勤務時間（時間単位）
         normalHours: toHours(normalMinutes),
@@ -496,8 +498,9 @@ function convertSummaryToYayoiCSV(summaryData, masterData = {}) {
     ];
 
     const rows = summaryData.map(record => {
-        // 従業員コードをマスタから取得（なければメールアドレスの@前を使用）
-        const employeeCode = masterData[record.email]?.employeeCode ||
+        // 従業員コード: Firestoreのユーザー情報 > マスタ > メールアドレスの@前
+        const employeeCode = record.employeeCode ||
+                            masterData[record.email]?.employeeCode ||
                             masterData[record.employeeName]?.employeeCode ||
                             record.email?.split('@')[0] ||
                             record.employeeName;
