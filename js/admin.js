@@ -3017,8 +3017,12 @@ function initEditFunctionStyles() {
     const styleElement = document.createElement('style');
     styleElement.id = 'edit-dialog-styles';
     styleElement.innerHTML = `
-        .modal {
+        .modal.hidden {
             display: none;
+        }
+
+        .modal:not(.hidden) {
+            display: flex;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -3026,6 +3030,8 @@ function initEditFunctionStyles() {
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
         }
         
         .modal-content {
