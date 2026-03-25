@@ -4861,7 +4861,8 @@ async function loadEmployeeList() {
                 role: userData.role || 'employee',
                 createdAt: userData.createdAt,
                 isActive: userData.isActive !== false,
-                lastLogin: userData.lastLogin || null
+                lastLogin: userData.lastLogin || null,
+                tenantId: tenantId
             });
         });
 
@@ -4999,7 +5000,7 @@ function displayEmployeeList(employees) {
                 </td>
                 <td>
                     <div class="employee-action-buttons">
-                        <button class="action-btn action-btn-primary" onclick="editEmployee('${employee.id}')" title="編集">
+                        <button class="action-btn action-btn-primary" onclick="editEmployee('${employee.id}', '${employee.tenantId}')" title="編集">
                             <span class="action-icon">✏️</span>
                             <span class="action-text">編集</span>
                         </button>
@@ -5377,9 +5378,11 @@ async function deleteEmployeeFromAllTenants(employeeId, employeeName, employeeEm
 
 // 従業員編集モーダルを開く
 async function editEmployee(employeeId, tenantId) {
+    console.log('[editEmployee] 呼び出し:', { employeeId, tenantId });
     try {
         // テナントIDが指定されていない場合は現在のテナントIDを使用
         const targetTenantId = tenantId || window.getCurrentTenantId();
+        console.log('[editEmployee] targetTenantId:', targetTenantId);
         if (!targetTenantId) {
             alert('テナントIDが取得できません');
             return;
