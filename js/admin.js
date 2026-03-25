@@ -5384,25 +5384,21 @@ async function deleteEmployeeFromAllTenants(employeeId, employeeName, employeeEm
 
 // 従業員編集モーダルを開く
 async function editEmployee(employeeId, tenantId) {
-    console.log('[editEmployee] 呼び出し:', { employeeId, tenantId });
     try {
         // テナントIDが指定されていない場合は現在のテナントIDを使用
         const targetTenantId = tenantId || window.getCurrentTenantId();
-        console.log('[editEmployee] targetTenantId:', targetTenantId);
         if (!targetTenantId) {
             alert('テナントIDが取得できません');
             return;
         }
 
         // 従業員データを取得
-        console.log('[editEmployee] Firestore呼び出し開始');
         const userDoc = await firebase.firestore()
             .collection('tenants')
             .doc(targetTenantId)
             .collection('users')
             .doc(employeeId)
             .get();
-        console.log('[editEmployee] Firestore呼び出し完了, exists:', userDoc.exists);
 
         if (!userDoc.exists) {
             alert('従業員データが見つかりません');
@@ -5410,22 +5406,13 @@ async function editEmployee(employeeId, tenantId) {
         }
 
         const userData = userDoc.data();
-        console.log('[editEmployee] userData:', userData);
 
         // モーダルにデータをセット
-        console.log('[editEmployee] モーダル要素確認開始');
         const editEmployeeId = document.getElementById('edit-employee-id');
         const editEmployeeTenantId = document.getElementById('edit-employee-tenant-id');
         const editEmployeeName = document.getElementById('edit-employee-name');
         const editEmployeeEmail = document.getElementById('edit-employee-email');
         const editEmployeeCode = document.getElementById('edit-employee-code');
-        console.log('[editEmployee] モーダル要素:', {
-            editEmployeeId: !!editEmployeeId,
-            editEmployeeTenantId: !!editEmployeeTenantId,
-            editEmployeeName: !!editEmployeeName,
-            editEmployeeEmail: !!editEmployeeEmail,
-            editEmployeeCode: !!editEmployeeCode
-        });
 
         if (editEmployeeId) editEmployeeId.value = employeeId;
         if (editEmployeeTenantId) editEmployeeTenantId.value = targetTenantId;
@@ -5435,12 +5422,9 @@ async function editEmployee(employeeId, tenantId) {
 
         // モーダルを表示
         const modal = document.getElementById('employee-edit-modal');
-        console.log('[editEmployee] モーダル要素:', !!modal);
         if (modal) {
             modal.classList.remove('hidden');
-            console.log('[editEmployee] モーダル表示完了');
         } else {
-            console.error('[editEmployee] モーダル要素が見つかりません');
             alert('編集モーダルが見つかりません。ページを再読み込みしてください。');
         }
     } catch (error) {
