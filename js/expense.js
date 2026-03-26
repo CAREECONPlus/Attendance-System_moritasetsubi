@@ -73,7 +73,7 @@ async function openExpenseModal() {
         const modal = document.getElementById('expense-modal');
 
         if (!modal) {
-            alert('経費モーダル要素が見つかりません。ページをリロードしてください。');
+            showToast('経費モーダル要素が見つかりません。ページをリロードしてください。', 'error');
             return;
         }
 
@@ -142,7 +142,7 @@ async function openExpenseModal() {
 
     } catch (error) {
         console.error('openExpenseModal: モーダル表示エラー:', error);
-        alert('モーダルの表示に失敗しました: ' + error.message);
+        showToast('モーダルの表示に失敗しました', 'error');
     }
 }
 
@@ -163,7 +163,7 @@ async function openEditExpenseModal(expenseId) {
             .get();
 
         if (!expenseDoc.exists) {
-            alert('経費データが見つかりませんでした');
+            showToast('経費データが見つかりませんでした', 'error');
             return;
         }
 
@@ -203,7 +203,7 @@ async function openEditExpenseModal(expenseId) {
 
     } catch (error) {
         console.error('編集モーダル表示エラー:', error);
-        alert('編集モーダルの表示に失敗しました');
+        showToast('編集モーダルの表示に失敗しました', 'error');
     }
 }
 
@@ -230,7 +230,7 @@ async function saveExpense(e) {
         const currentUser = window.currentUser || firebase.auth().currentUser;
 
         if (!tenantId || !currentUser) {
-            alert('ユーザー情報が取得できません');
+            showToast('ユーザー情報が取得できません', 'error');
             return;
         }
 
@@ -242,7 +242,7 @@ async function saveExpense(e) {
         const description = document.getElementById('expense-description').value.trim();
 
         if (!date || !category || !amount || !siteName) {
-            alert('必須項目を入力してください');
+            showToast('必須項目を入力してください', 'warning');
             return;
         }
 
@@ -265,12 +265,12 @@ async function saveExpense(e) {
         if (expenseId) {
             // 更新
             await expensesRef.doc(expenseId).update(expenseData);
-            alert('経費を更新しました');
+            showToast('経費を更新しました', 'success');
         } else {
             // 新規作成
             expenseData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await expensesRef.add(expenseData);
-            alert('経費を登録しました');
+            showToast('経費を登録しました', 'success');
         }
 
         // モーダルを閉じる
@@ -281,7 +281,7 @@ async function saveExpense(e) {
 
     } catch (error) {
         console.error('経費保存エラー:', error);
-        alert('経費の保存に失敗しました');
+        showToast('経費の保存に失敗しました', 'error');
     }
 }
 
@@ -444,14 +444,14 @@ async function deleteExpense(expenseId) {
             .doc(expenseId)
             .delete();
 
-        alert('経費を削除しました');
+        showToast('経費を削除しました', 'success');
 
         // 一覧を再読み込み
         await loadExpenseList();
 
     } catch (error) {
         console.error('経費削除エラー:', error);
-        alert('経費の削除に失敗しました');
+        showToast('経費の削除に失敗しました', 'error');
     }
 }
 
