@@ -280,10 +280,13 @@ function aggregateWorkHours(records, userInfo) {
         breakMinutes += breakMins;
 
         // 残業時間の集計（8h超過分）
-        // overtimeMinutesがない古いデータはworkingMinutesから計算
-        const overtimeMins = record.overtimeMinutes !== undefined
-            ? record.overtimeMinutes
-            : Math.max(0, workingMins - 480);
+        // overtimeMinutesが未定義/null、または0で実働8時間超の場合は再計算
+        let overtimeMins = record.overtimeMinutes;
+        const expectedOvertime = Math.max(0, workingMins - 480);
+        if (overtimeMins === undefined || overtimeMins === null ||
+            (overtimeMins === 0 && expectedOvertime > 0)) {
+            overtimeMins = expectedOvertime;
+        }
         overtimeMinutes += overtimeMins;
 
         // 基本労働時間（残業を除いた分）
