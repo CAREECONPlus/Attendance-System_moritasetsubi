@@ -345,12 +345,18 @@ function getCurrentDateTimeLocal() {
 }
 
 /**
- * 今日の日付をYYYY-MM-DD形式で取得
+ * 今日の日付をYYYY-MM-DD形式で取得（日本時間）
  * @returns {string} 今日の日付
  */
 function getTodayString() {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    // Intl APIを使用して日本時間の日付を取得（UTCベースのtoISOString()ではなく）
+    const formatter = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    return formatter.format(new Date()); // YYYY-MM-DD形式
 }
 
 /**

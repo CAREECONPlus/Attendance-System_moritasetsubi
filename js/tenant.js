@@ -204,6 +204,16 @@ async function showSuperAdminDashboard() {
 }
 
 /**
+ * HTMLエスケープ関数（XSS対策）
+ */
+function escapeHtmlForTenant(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+/**
  * テナント一覧を描画
  */
 function renderTenantList(tenants) {
@@ -211,36 +221,36 @@ function renderTenantList(tenants) {
     if (!container) {
         return;
     }
-    
+
     container.innerHTML = `
         <div class="tenant-management-header">
             <h2>🏢 テナント管理ダッシュボード</h2>
             <p>登録テナント数: ${tenants.length}件</p>
         </div>
-        
+
         <div class="tenant-list">
             ${tenants.map(tenant => `
-                <div class="tenant-card" data-tenant-id="${tenant.id}">
+                <div class="tenant-card" data-tenant-id="${escapeHtmlForTenant(tenant.id)}">
                     <div class="tenant-info">
-                        <h3>${tenant.companyName}</h3>
-                        <p><strong>管理者:</strong> ${tenant.adminName} (${tenant.adminEmail})</p>
-                        <p><strong>部署:</strong> ${tenant.department || '未設定'}</p>
-                        <p><strong>電話:</strong> ${tenant.phone || '未設定'}</p>
+                        <h3>${escapeHtmlForTenant(tenant.companyName)}</h3>
+                        <p><strong>管理者:</strong> ${escapeHtmlForTenant(tenant.adminName)} (${escapeHtmlForTenant(tenant.adminEmail)})</p>
+                        <p><strong>部署:</strong> ${escapeHtmlForTenant(tenant.department) || '未設定'}</p>
+                        <p><strong>電話:</strong> ${escapeHtmlForTenant(tenant.phone) || '未設定'}</p>
                         <p><strong>作成日:</strong> ${tenant.createdAt ? new Date(tenant.createdAt.toDate()).toLocaleDateString('ja-JP') : '不明'}</p>
-                        <p><strong>ステータス:</strong> <span class="status-${tenant.status}">${tenant.status === 'active' ? '有効' : '無効'}</span></p>
+                        <p><strong>ステータス:</strong> <span class="status-${escapeHtmlForTenant(tenant.status)}">${tenant.status === 'active' ? '有効' : '無効'}</span></p>
                     </div>
                     <div class="tenant-actions">
-                        <button class="btn btn-primary" onclick="accessTenant('${tenant.id}')">
+                        <button class="btn btn-primary" onclick="accessTenant('${escapeHtmlForTenant(tenant.id)}')">
                             🔍 テナントにアクセス
                         </button>
-                        <button class="btn btn-secondary" onclick="editTenant('${tenant.id}')">
+                        <button class="btn btn-secondary" onclick="editTenant('${escapeHtmlForTenant(tenant.id)}')">
                             ⚙️ 設定編集
                         </button>
                     </div>
                 </div>
             `).join('')}
         </div>
-        
+
         ${tenants.length === 0 ? `
             <div class="no-tenants">
                 <p>📭 登録されているテナントがありません</p>

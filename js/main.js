@@ -61,19 +61,6 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
     };
 }
 
-// グローバルスコープにエクスポート
-if (typeof window.initializeSystem === 'function') {
-    window.initializeSystem = window.initializeSystem;
-}
-if (typeof window.showError === 'function') {
-    window.showError = window.showError;
-}
-if (typeof window.showSuccess === 'function') {
-    window.showSuccess = window.showSuccess;
-}
-if (typeof window.checkAuthStatus === 'function') {
-    window.checkAuthStatus = window.checkAuthStatus;
-}
-if (typeof window.diagnoseApplication === 'function') {
-    window.diagnoseApplication = window.diagnoseApplication;
-}
+// 注: グローバル関数のエクスポートは各ファイルで直接行われています
+// getTenantCollection, getTenantFirestore, getCurrentTenantId, getUserCollection, getGlobalUserDoc
+// は上記で定義済み
