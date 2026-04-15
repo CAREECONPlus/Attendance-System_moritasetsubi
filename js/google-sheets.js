@@ -11,7 +11,7 @@
 
 const GOOGLE_CONFIG = {
     CLIENT_ID: '444922759492-ealpv0n2h378ajdusuqf4ssf9oe1oqji.apps.googleusercontent.com',
-    API_KEY: 'AIzaSyBNYtEypmQ22slU2PSVYiR6g76B5mlM0gw',
+    API_KEY: 'AIzaSyBwuXgnU4_vaYa2Vv26EUgvN4b0YXOYe50',
     SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
     DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4'
 };
