@@ -501,11 +501,10 @@ function convertSummaryToYayoiCSV(summaryData, masterData = {}) {
     ];
 
     const rows = summaryData.map(record => {
-        // 従業員コード: Firestoreのユーザー情報 > マスタ > メールアドレスの@前
+        // 従業員コード: Firestoreのユーザー情報 > マスタ > 従業員名
         const employeeCode = record.employeeCode ||
                             masterData[record.email]?.employeeCode ||
                             masterData[record.employeeName]?.employeeCode ||
-                            record.email?.split('@')[0] ||
                             record.employeeName;
 
         // 残業時間を分から時間に変換（小数点1桁）
