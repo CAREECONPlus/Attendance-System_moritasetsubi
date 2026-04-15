@@ -1,3 +1,6 @@
+# Google API設定（GitHub Actionsで自動生成、gitに含めない）
+js/google-config.local.js
+
 # 環境変数ファイル
 .env
 .env.local
