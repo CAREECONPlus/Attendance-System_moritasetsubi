@@ -10,8 +10,8 @@
 // ========================================
 
 const GOOGLE_CONFIG = {
-    CLIENT_ID: '444922759492-ealpv0n2h378ajdusuqf4ssf9oe1oqji.apps.googleusercontent.com',
-    API_KEY: 'AIzaSyBwuXgnU4_vaYa2Vv26EUgvN4b0YXOYe50',
+    CLIENT_ID: window.GOOGLE_CLIENT_ID || '444922759492-ealpv0n2h378ajdusuqf4ssf9oe1oqji.apps.googleusercontent.com',
+    API_KEY: window.GOOGLE_API_KEY || '',
     SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
     DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4'
 };
