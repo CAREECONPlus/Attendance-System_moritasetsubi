@@ -59,9 +59,6 @@ try {
      * - 初期化直後のテストは誤検知を引き起こす可能性が高い
      * - ユーザーが未ログインの状態では権限エラーが発生する（期待される動作）
      * - 実際の使用時にエラーが発生すれば、各機能のエラーハンドリングで対応可能
-     *
-     * デバッグ用には window.testFirestore() 関数を用意しています。
-     * ブラウザコンソールで実行可能: await testFirestore()
      */
 
 } catch (initError) {
@@ -125,11 +122,6 @@ service cloud.firestore {
     match /admin_requests/{docId} {
       allow read, write: if request.auth != null && isSuperAdmin(request.auth.token.email);
       allow create: if request.auth != null;
-    }
-    
-    // Test collection
-    match /_test/{docId} {
-      allow read, write: if request.auth != null;
     }
     
     // Helper functions
@@ -296,33 +288,6 @@ window.reinitializeFirebase = function() {
         
         isFirebaseInitialized = true;
         return true;
-    } catch (error) {
-        return false;
-    }
-};
-
-/**
- * 🧪 強制Firestoreテスト関数
- */
-window.testFirestore = async function() {
-    
-    if (!window.db) {
-        return false;
-    }
-    
-    try {
-        // 読み取りテスト
-        await window.db.collection('_test').limit(1).get();
-        
-        // 書き込みテスト
-        await window.db.collection('_test').doc('connection-test').set({
-            test: true,
-            timestamp: new Date(),
-            browser: navigator.userAgent
-        });
-        
-        return true;
-        
     } catch (error) {
         return false;
     }

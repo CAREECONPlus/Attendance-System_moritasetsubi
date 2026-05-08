@@ -560,20 +560,13 @@ async function handleAuthStateChange(user) {
             if (userData) {
                 logger.log('✅ ユーザーデータ取得成功 - ロール決定開始');
 
-                // ユーザーのロールを決定
-                let userRole = userData.role || 'employee';
-                
-                // dxconsulting.branu2@gmail.comは自動的にsuper_adminに設定
-                if (user.email === 'dxconsulting.branu2@gmail.com') {
-                    userRole = 'super_admin';
-                    if (userData.role !== 'super_admin') {
-                        await firebase.firestore().collection('users').doc(user.uid).update({ 
-                            role: 'super_admin',
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                }
-                
+                // ユーザーのロールを決定（Firestoreに保存された値のみを信頼）
+                // super_admin への昇格は Firestore Console から手動で行うこと。
+                // クライアント側で role を書き換えると、認証アカウントを乗っ取った
+                // 攻撃者がそのまま super_admin に昇格できてしまう。
+                const userRole = userData.role || 'employee';
+
+
                 // グローバル変数設定
                 window.currentUser = {
                     uid: user.uid,
