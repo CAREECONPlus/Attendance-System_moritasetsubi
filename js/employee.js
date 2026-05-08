@@ -2763,11 +2763,14 @@ function renderAttendanceRecord(recordId, data) {
     } else if (data.isHolidayWork) {
         workTypeLabel = '📅 休日出勤';
         workTypeClass = 'type-holiday';
-    } else if (data.nightWorkType === 'through_night') {
+    } else if (data.nightWorkType === 'through_night' || data.specialWorkType === 'through_night') {
         workTypeLabel = '🌙 通し夜間';
         workTypeClass = 'type-night';
-    } else if (data.nightWorkType === 'night_only' || data.isNightWork) {
-        workTypeLabel = '🌙 夜間';
+    } else if (data.nightWorkType === 'night_only'
+            || data.specialWorkType === 'night_only'
+            || data.specialWorkType === 'night_work'
+            || data.isNightWork) {
+        workTypeLabel = '🌙 夜間のみ';
         workTypeClass = 'type-night';
     } else {
         workTypeLabel = '✅ 出勤';

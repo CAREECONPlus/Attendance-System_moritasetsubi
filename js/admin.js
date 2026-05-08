@@ -1451,10 +1451,13 @@ function renderAttendanceTable(data) {
             if (record.isHolidayWork) {
                 specialWorkBadges += '<span class="badge badge-holiday">📅 休日出勤</span>';
             }
-            if (record.nightWorkType === 'through_night') {
+            if (record.nightWorkType === 'through_night' || record.specialWorkType === 'through_night') {
                 specialWorkBadges += '<span class="badge badge-night">🌙 通し夜間</span>';
-            } else if (record.nightWorkType === 'night_only') {
-                specialWorkBadges += '<span class="badge badge-night">🌙 夜間</span>';
+            } else if (record.nightWorkType === 'night_only'
+                    || record.specialWorkType === 'night_only'
+                    || record.specialWorkType === 'night_work'
+                    || record.isNightWork) {
+                specialWorkBadges += '<span class="badge badge-night">🌙 夜間のみ</span>';
             }
         }
 
@@ -6224,8 +6227,13 @@ function displaySortedData(data) {
             badge = '<span class="badge badge-absence">❌ 欠勤</span>';
         } else if (record.specialWorkType === 'holiday_work' || record.isHolidayWork) {
             badge = '<span class="badge badge-holiday">📅 休日出勤</span>';
-        } else if (record.specialWorkType === 'night_only' || record.specialWorkType === 'through_night') {
-            badge = '<span class="badge badge-night">🌙 夜間</span>';
+        } else if (record.nightWorkType === 'through_night' || record.specialWorkType === 'through_night') {
+            badge = '<span class="badge badge-night">🌙 通し夜間</span>';
+        } else if (record.nightWorkType === 'night_only'
+                || record.specialWorkType === 'night_only'
+                || record.specialWorkType === 'night_work'
+                || record.isNightWork) {
+            badge = '<span class="badge badge-night">🌙 夜間のみ</span>';
         }
 
         return `
