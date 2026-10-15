@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠管理システム</title>
-    <link rel="stylesheet" href="css/style.css?v=20261015a">
+    <link rel="stylesheet" href="css/style.css?v=20261015b">
     
     <!-- Favicon追加 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -38,14 +38,15 @@
     <script src="js/utils.js?v=20250124c"></script>
     <script src="js/auth.js?v=20250124c"></script>
     <script src="js/main.js?v=20250124c"></script>
+    <script src="js/session-manager.js?v=20261015a"></script>
     <script src="js/tenant-settings.js?v=20250124c"></script>
-    <script src="js/employee.js?v=20260203a"></script>
+    <script src="js/employee.js?v=20261015a"></script>
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/expense-report.js?v=20261015a"></script>
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-config.local.js"></script>
     <script src="js/google-sheets.js?v=20251223a"></script>
-    <script src="js/admin.js?v=20260209c"></script>
+    <script src="js/admin.js?v=20261015a"></script>
 
     <style>
         .hidden {
@@ -1822,6 +1823,7 @@
                 <h1>勤怠管理システム</h1>
                 <div class="user-info">
                     <span id="user-name"></span>
+                    <button class="btn btn-secondary btn-small" id="account-btn" onclick="openAccountModal()">👤 アカウント</button>
                     <button class="btn btn-secondary btn-small" id="logout-btn">ログアウト</button>
                 </div>
             </header>
@@ -2069,6 +2071,7 @@
                 <h1>勤怠管理システム</h1>
                 <div class="user-info">
                     <span id="admin-user-name"></span>
+                    <button id="admin-account-btn" class="btn btn-secondary btn-small" onclick="openAccountModal()">👤 アカウント</button>
                     <button id="admin-logout-btn" class="btn btn-secondary btn-small">ログアウト</button>
                 </div>
             </header>
@@ -2885,6 +2888,38 @@
     </div>
 
     <!-- 従業員用 勤怠編集モーダル -->
+    <!-- アカウント設定モーダル（ログイン中の端末） -->
+    <div id="account-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeAccountModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 アカウント設定</h3>
+                <button class="modal-close-btn" onclick="closeAccountModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="account-section">
+                    <div class="account-section-header">
+                        <h4>📱 ログイン中の端末</h4>
+                        <button class="btn btn-secondary btn-small" onclick="refreshSessionList()">🔄 更新</button>
+                    </div>
+                    <p class="account-section-description">
+                        このアカウントでログインしている端末の一覧です。心当たりのない端末や、紛失した端末はここからログアウトさせられます。
+                    </p>
+                    <ul id="session-list" class="session-list">
+                        <li class="session-item session-loading">読み込み中...</li>
+                    </ul>
+                    <div class="account-actions">
+                        <button class="btn btn-secondary" onclick="logoutOtherDevices()">この端末以外をすべてログアウト</button>
+                        <button class="btn btn-danger" onclick="logoutAllDevices()">すべての端末からログアウト（この端末も含む）</button>
+                    </div>
+                    <p class="account-note">
+                        ※ アプリを開いている端末は数秒以内に、閉じている端末は次に開いたときにログアウトされます。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="employee-attendance-modal" class="modal hidden">
         <div class="modal-overlay" onclick="closeEmployeeAttendanceModal()"></div>
         <div class="modal-content">

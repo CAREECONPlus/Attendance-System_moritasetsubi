@@ -1589,8 +1589,14 @@ function handleLogout() {
     if (confirm('ログアウトしますか？')) {
         // 🎯 明示的なログアウトフラグを設定
         window.explicitLogout = true;
-        
-        firebase.auth().signOut()
+
+        // この端末のセッション台帳を削除してからサインアウト（削除には認証が必要）
+        const endSession = window.sessionManager
+            ? window.sessionManager.endCurrentSession().catch(() => {})
+            : Promise.resolve();
+
+        endSession
+            .then(() => firebase.auth().signOut())
             .then(() => {
                 // 変数クリアは onAuthStateChanged で実行される
                 if (typeof window.showPage === 'function') {

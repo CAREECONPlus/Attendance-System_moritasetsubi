@@ -3712,7 +3712,13 @@ function showErrorMessage(message) {
  */
 function signOut() {
     if (confirm('ログアウトしますか？')) {
-        firebase.auth().signOut()
+        // この端末のセッション台帳を削除してからサインアウト（削除には認証が必要）
+        const endSession = window.sessionManager
+            ? window.sessionManager.endCurrentSession().catch(() => {})
+            : Promise.resolve();
+
+        endSession
+            .then(() => firebase.auth().signOut())
             .then(() => {
                 showPage('login');
             })
