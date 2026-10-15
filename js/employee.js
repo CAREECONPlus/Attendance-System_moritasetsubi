@@ -730,9 +730,12 @@ function getStatusText(status) {
 // ユーザー名の表示
 function displayUserName() {
     const userNameElement = document.getElementById('user-name');
-    if (userNameElement && currentUser) {
-        userNameElement.textContent = currentUser.displayName || currentUser.email || 'ユーザー';
-    }
+    if (!userNameElement || !currentUser) return;
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) { stored = null; }
+    const storedName = stored && stored.email === currentUser.email ? stored.displayName : '';
+    const emailName = currentUser.email ? currentUser.email.split('@')[0] : '';
+    userNameElement.textContent = currentUser.displayName || storedName || emailName || 'ユーザー';
 }
 
 // 現在時刻の更新
@@ -1470,6 +1473,14 @@ async function loadRecentRecordsSafely() {
         return;
     }
 
+    // 新UI: 履歴タブは月ごとの一覧。選んでいる月（無ければ今月）を読み直す
+    const monthSelector = document.getElementById('employee-month-selector');
+    if (monthSelector) {
+        const now = new Date();
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        return loadMonthlyRecords(monthSelector.value || thisMonth);
+    }
+
     try {
         if (!currentUser) {
             showWelcomeMessage();
@@ -1522,20 +1533,9 @@ function showWelcomeMessage() {
     const recentList = document.getElementById('recent-list');
     if (recentList) {
         recentList.innerHTML = `
-            <div class="welcome-message">
-                <h4>🎯 勤怠システムへようこそ</h4>
-                <p>まだ勤怠記録がありません</p>
-                <p><strong>出勤ボタンを押して勤務を開始しましょう</strong></p>
-                <div class="usage-tips">
-                    <h5>📝 使い方:</h5>
-                    <ol>
-                        <li>現場を選択してください</li>
-                        <li>出勤ボタンをクリック</li>
-                        <li>休憩時は休憩ボタンを使用</li>
-                        <li>退勤時は退勤ボタンをクリック</li>
-                    </ol>
-                    <p><strong>🔒 注意: 1日1回のみ出勤可能です</strong></p>
-                </div>
+            <div class="ui-empty">
+                <strong>まだ勤怠記録がありません</strong>
+                <span>打刻タブで現場を選んで「出勤を記録する」を押してください</span>
             </div>
         `;
     }
@@ -1812,6 +1812,9 @@ async function initEmployeePage() {
             currentUser = user;
             window.currentUser = user;
         }
+
+        // トップバーに氏名を表示
+        displayUserName();
 
         // 時刻表示の開始
         updateDateTime();
@@ -2742,7 +2745,7 @@ async function loadMonthlyRecords(yearMonth) {
     const listContainer = document.getElementById('recent-list');
     if (!listContainer) return;
 
-    listContainer.innerHTML = '<div class="loading-message">🔄 記録を読み込み中...</div>';
+    listContainer.innerHTML = '<div class="loading-message">記録を読み込み中...</div>';
 
     try {
         if (!currentUser) {
@@ -2765,7 +2768,7 @@ async function loadMonthlyRecords(yearMonth) {
             .get();
 
         if (snapshot.empty) {
-            listContainer.innerHTML = '<div class="no-records">📭 この月の記録はありません</div>';
+            listContainer.innerHTML = '<div class="ui-empty"><strong>この月の記録はありません</strong><span>「記録を追加」から過去の日の記録も入れられます</span></div>';
             return;
         }
 
@@ -2780,7 +2783,7 @@ async function loadMonthlyRecords(yearMonth) {
 
     } catch (error) {
         console.error('月次記録読み込みエラー:', error);
-        listContainer.innerHTML = '<div class="error-message">❌ 記録の読み込みに失敗しました</div>';
+        listContainer.innerHTML = '<div class="ui-empty"><strong>記録の読み込みに失敗しました</strong><span>通信状況を確認して、月を選び直してください</span></div>';
     }
 }
 
