@@ -457,3 +457,98 @@
 #admin-page .sort-controls select { width: auto; }
 #admin-page.ui-nav-collapsed .ui-sidebar-group-title { display: flex; justify-content: center; width: 44px; padding: 0; }
 #admin-page.ui-nav-collapsed .ui-sidebar-group .tab-btn::before { content: attr(data-short); font-size: 13px; font-weight: 700; }
+
+/* ============================================================
+   現場タブ
+   ============================================================ */
+.ui-sites, .ui-expense { display: flex; flex-direction: column; gap: 12px; }
+.ui-search { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-input); color: var(--ink-muted); }
+.ui-search svg { width: 18px; height: 18px; flex: 0 0 18px; }
+.ui-search input { flex: 1 1 auto; min-width: 0; height: 42px; border: none; background: transparent; font: inherit; font-size: 15px; color: var(--ink); outline: none; }
+.ui-search:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 78, 255, 0.2); }
+.ui-sitelist-host { display: flex; flex-direction: column; gap: 18px; }
+.ui-sites-section { display: flex; flex-direction: column; gap: 8px; }
+.ui-sites-section-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px; }
+.ui-sites-section-head h3 { margin: 0; font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--ink-muted); }
+.ui-sites-section-head span { font-size: 13px; color: var(--ink-muted); }
+.ui-sitelist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+.ui-sitelist.is-done { background: var(--row-alt); }
+.ui-siterow { position: relative; overflow: hidden; border-bottom: 1px solid var(--line-row); background: #3C4670; }
+.ui-siterow:last-child { border-bottom: none; }
+.ui-siterow-under { position: absolute; top: 0; right: 0; bottom: 0; width: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #fff; font-size: 12px; font-weight: 700; }
+.ui-siterow-under svg { width: 22px; height: 22px; }
+.ui-siterow-front { position: relative; display: flex; align-items: center; background: var(--surface); touch-action: pan-y; }
+.ui-sitelist.is-done .ui-siterow-front { background: var(--row-alt); }
+.ui-siterow.is-swiping .ui-siterow-front { box-shadow: 4px 0 12px rgba(0, 19, 80, 0.12); }
+.ui-siterow-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-height: 60px; padding: 10px 0 10px 16px; background: transparent; border: none; font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+.ui-siterow-name { font-weight: 700; }
+.ui-siterow-sub { font-size: 13px; color: var(--ink-muted); }
+.ui-sitelist.is-done .ui-siterow-name { color: var(--ink-muted); }
+.ui-sitelist.is-done .ui-siterow-sub { color: var(--ink-faint); }
+.ui-star { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; margin: 0 6px; background: transparent; border: none; color: var(--ink-faint); cursor: pointer; border-radius: var(--r-ctl); }
+.ui-star svg { width: 22px; height: 22px; }
+.ui-star.is-on { color: var(--primary); }
+.ui-star.is-on svg { fill: currentColor; }
+.ui-siterow-restore { margin: 0 10px 0 0; flex: 0 0 auto; color: var(--primary); }
+
+/* 現場の情報シート */
+.ui-site-detail-head { align-items: flex-start; }
+.ui-site-detail-head h3 { margin-bottom: 2px; }
+.ui-site-detail-body { display: flex; flex-direction: column; gap: 14px; }
+.ui-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ui-stat-grid > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--row-alt); border-radius: var(--r-input); }
+.ui-stat-grid span { font-size: 12px; color: var(--ink-muted); }
+.ui-stat-grid strong { font-family: var(--font-display); font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ui-stat-grid strong span { font-size: inherit; color: inherit; }
+.ui-stat-grid small { font-size: 12px; font-weight: 700; }
+.ui-site-detail-actions { display: flex; flex-direction: column; gap: 8px; }
+.ui-site-detail-actions .ui-btn.is-on { background: var(--primary-bg); color: var(--primary-dk); border-color: var(--primary); }
+.ui-site-detail-actions .ui-btn.is-on svg { fill: currentColor; }
+.ui-site-detail-danger { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ui-row-btn { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; background: var(--row-alt); color: var(--ink); border: 1.5px solid var(--line); border-radius: var(--r-card); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; text-align: left; }
+.ui-row-btn svg { width: 22px; height: 22px; flex: 0 0 22px; color: #3C4670; }
+.ui-row-btn > span { display: flex; flex-direction: column; line-height: 1.3; }
+.ui-row-btn small { font-size: 12px; font-weight: 500; color: var(--ink-muted); }
+.ui-row-btn-danger { background: var(--surface); color: var(--danger-fg); border-color: var(--danger-line); }
+.ui-row-btn-danger svg { color: var(--danger-fg); }
+.ui-row-btn-danger small { color: #8E0E33; }
+
+/* ============================================================
+   経費タブ
+   ============================================================ */
+#employee-page .employee-main:has(#expense-management-content.active) { padding-bottom: calc(var(--tabbar-h) + 86px + 16px); }
+.ui-month-nav { display: flex; align-items: center; gap: 2px; padding: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-input); }
+.ui-month-nav button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: transparent; border: none; border-radius: var(--r-ctl); color: var(--ink); cursor: pointer; }
+.ui-month-nav button svg { width: 18px; height: 18px; }
+.ui-month-nav span { padding: 0 6px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-expense-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: 13px; color: var(--ink-muted); padding: 0 4px; }
+.ui-expense-summary strong { font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ui-expense-summary > span:nth-child(2) strong { font-size: 17px; }
+.ui-expense-sitefilter { margin-left: auto; width: auto; min-width: 140px; min-height: 36px; font-size: 13px; }
+.ui-expense-list { display: flex; flex-direction: column; gap: 10px; }
+.ui-expense-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.ui-expense-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ui-expense-row-head { display: flex; align-items: center; gap: 8px; }
+.ui-expense-row-date { font-weight: 700; }
+.ui-expense-row-sub { font-size: 14px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-expense-row-amount { font-family: var(--font-display); font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-badge.ui-cat-parking { background: var(--cat-parking-bg); color: var(--cat-parking-fg); }
+.ui-badge.ui-cat-tools { background: var(--cat-tools-bg); color: var(--cat-tools-fg); }
+.ui-badge.ui-cat-highway { background: var(--cat-highway-bg); color: var(--cat-highway-fg); }
+.ui-badge.ui-cat-other { background: var(--cat-other-bg); color: var(--cat-other-fg); }
+.ui-expense-hint { margin: 0 4px; }
+.ui-cta-bar-plain { border-top: none; background: linear-gradient(to bottom, rgba(241, 244, 255, 0), var(--ground) 30%); }
+.ui-cta-bar-plain .ui-btn { box-shadow: var(--shadow-primary); }
+
+/* 経費の登録シート */
+.ui-expense-row2 { grid-template-columns: 1fr 1.2fr; }
+.ui-amount { display: flex; align-items: center; border: 1.5px solid var(--line-strong); border-radius: var(--r-input); background: var(--surface); }
+.ui-amount:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 78, 255, 0.2); }
+.ui-amount > span { padding-left: 12px; font-family: var(--font-display); font-size: 18px; font-weight: 900; color: var(--ink-muted); }
+.modal .ui-amount input { border: none !important; box-shadow: none !important; min-height: 47px; padding: 0 12px 0 6px; font-family: var(--font-display); font-size: 22px; font-weight: 900; text-align: right; -moz-appearance: textfield; }
+.modal .ui-amount input::-webkit-outer-spin-button, .modal .ui-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.modal .modal-body .modal-footer { padding-left: 0; padding-right: 0; }
+.modal .ui-type-group { margin-top: 2px; }
+.ui-type-btn { white-space: nowrap; padding: 0 2px; letter-spacing: -0.01em; }
+.modal .ui-type-btn { font-size: 12px; }
+.modal .ui-type-btn .ui-check { width: 12px; height: 12px; }

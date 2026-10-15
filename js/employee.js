@@ -2062,6 +2062,7 @@ async function handleEmployeeAddSite(e) {
 
         // フォームをリセット
         document.getElementById('employee-add-site-form').reset();
+        if (typeof window.closeSiteAddSheet === 'function') window.closeSiteAddSheet();
 
         // 現場一覧を更新
         await loadEmployeeSiteList();

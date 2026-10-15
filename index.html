@@ -51,6 +51,8 @@
     <script src="js/tenant-settings.js?v=20250124c"></script>
     <script src="js/employee.js?v=20261015a"></script>
     <script src="js/expense.js?v=20250124c"></script>
+    <script src="js/ui-sites.js?v=20261015a"></script>
+    <script src="js/ui-expense.js?v=20261015a"></script>
     <script src="js/expense-report.js?v=20261015a"></script>
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-config.local.js"></script>
@@ -1943,123 +1945,56 @@
 
                 <!-- 現場管理タブ -->
                 <div id="employee-site-management-content" class="employee-tab-content">
-                    <div class="site-management-section">
-                        <div class="site-management-header">
-                            <h3>🏢 現場管理</h3>
-                            <p class="site-management-description">勤怠打刻で選択できる現場を管理できます。</p>
+                    <div class="site-management-section ui-sites">
+                        <div class="ui-page-head">
+                            <h2 class="ui-h2">現場</h2>
+                            <button type="button" class="ui-btn ui-btn-primary ui-btn-sm" onclick="openSiteAddSheet()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                現場を追加
+                            </button>
                         </div>
-
-                        <!-- 新規現場追加 -->
-                        <div class="site-add-section">
-                            <div class="site-card">
-                                <div class="site-card-header">
-                                    <h4>➕ 新しい現場を追加</h4>
-                                </div>
-                                <div class="site-card-body">
-                                    <form id="employee-add-site-form">
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label for="employee-add-site-name">現場名 <span class="required">*</span></label>
-                                                <input type="text" id="employee-add-site-name" name="siteName" required
-                                                       placeholder="例: 東京本社" maxlength="50">
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="employee-add-site-address">住所</label>
-                                                <input type="text" id="employee-add-site-address" name="siteAddress"
-                                                       placeholder="例: 東京都渋谷区..." maxlength="100">
-                                            </div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label for="employee-add-site-description">説明・備考</label>
-                                                <textarea id="employee-add-site-description" name="siteDescription"
-                                                          placeholder="現場の詳細情報や注意事項など" rows="3"></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="form-actions">
-                                            <button type="submit" class="btn btn-primary">
-                                                ✅ 現場を追加
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+                        <label class="ui-search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>
+                            <span class="ui-sr">現場を検索</span>
+                            <input type="search" id="site-search" placeholder="現場名で検索" autocomplete="off">
+                        </label>
+                        <div id="employee-site-cards-grid" class="ui-sitelist-host">
+                            <div class="loading-message">読み込み中...</div>
                         </div>
-
-                        <!-- 現場一覧 -->
-                        <div class="site-list-section">
-                            <div class="site-list-header">
-                                <h4>📋 現場一覧</h4>
-                                <button id="employee-refresh-sites-btn" class="btn btn-secondary btn-small">🔄 更新</button>
-                            </div>
-
-                            <!-- 現場カードグリッド -->
-                            <div id="employee-site-cards-grid" class="site-cards-grid">
-                                <!-- 現場カードがJavaScriptで動的に生成されます -->
-                                <div class="loading-message">読み込み中...</div>
-                            </div>
-                        </div>
+                        <button type="button" id="employee-refresh-sites-btn" class="ui-hidden" tabindex="-1" aria-hidden="true">更新</button>
                     </div>
                 </div>
 
-                <!-- 経費精算タブ -->
+                <!-- 経費タブ -->
                 <div id="expense-management-content" class="employee-tab-content">
-                    <div class="expense-management-section">
-                        <div class="expense-management-header">
-                            <h3>💰 経費精算</h3>
-                            <p class="expense-management-description">日々の経費を記録・管理できます。</p>
-                        </div>
-
-                        <!-- 経費登録ボタン -->
-                        <div class="expense-add-section">
-                            <button id="add-expense-btn" class="btn btn-primary btn-large" onclick="window.openExpenseModal()">
-                                ➕ 経費を追加
-                            </button>
-                        </div>
-
-                        <!-- 経費一覧ヘッダー -->
-                        <div class="expense-list-header">
-                            <h4>📋 経費一覧</h4>
-                            <div class="expense-list-controls">
-                                <button id="expense-refresh-btn" class="btn btn-secondary btn-small">🔄 更新</button>
+                    <div class="expense-management-section ui-expense">
+                        <div class="ui-page-head">
+                            <h2 class="ui-h2">経費</h2>
+                            <div class="ui-month-nav">
+                                <button type="button" aria-label="前の月" onclick="shiftExpenseMonth(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+                                <span id="expense-month-label">----年--月</span>
+                                <button type="button" aria-label="次の月" onclick="shiftExpenseMonth(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
                             </div>
+                            <input type="month" id="expense-month-filter" class="ui-hidden" tabindex="-1" aria-hidden="true">
                         </div>
-
-                        <!-- フィルターセクション -->
-                        <div class="expense-filter-section">
-                            <div class="expense-filter-row">
-                                <div class="expense-filter-item">
-                                    <label for="expense-month-filter">📅 月別</label>
-                                    <input type="month" id="expense-month-filter" class="filter-input">
-                                </div>
-                                <div class="expense-filter-item">
-                                    <label for="expense-site-filter">🏢 現場別</label>
-                                    <select id="expense-site-filter" class="filter-input">
-                                        <option value="">すべて</option>
-                                    </select>
-                                </div>
-                                <div class="expense-filter-item">
-                                    <button id="expense-clear-filter-btn" class="btn btn-secondary btn-small">🔄 クリア</button>
-                                </div>
-                            </div>
+                        <div class="ui-expense-summary">
+                            <span>今月の合計 <strong id="expense-total-amount">¥0</strong></span>
+                            <span><strong id="expense-count">0</strong></span>
+                            <select id="expense-site-filter" class="ui-select ui-select-sm ui-expense-sitefilter" aria-label="現場でしぼる">
+                                <option value="">すべての現場</option>
+                            </select>
                         </div>
-
-                        <!-- 合計金額表示 -->
-                        <div class="expense-summary-section">
-                            <div class="expense-summary-card">
-                                <div class="expense-summary-label">💵 合計金額</div>
-                                <div class="expense-summary-amount" id="expense-total-amount">¥0</div>
-                            </div>
-                            <div class="expense-summary-card">
-                                <div class="expense-summary-label">📊 表示件数</div>
-                                <div class="expense-summary-count" id="expense-count">0件</div>
-                            </div>
-                        </div>
-
-                        <!-- 経費カードグリッド -->
-                        <div id="expense-cards-grid" class="expense-cards-grid">
-                            <!-- 経費カードがJavaScriptで動的に生成されます -->
+                        <div id="expense-cards-grid" class="ui-expense-list">
                             <div class="loading-message">読み込み中...</div>
+                        </div>
+                        <p class="ui-hint ui-expense-hint">タップすると内容を編集できます。登録した経費は管理者がまとめて確認します。</p>
+                        <button type="button" id="expense-refresh-btn" class="ui-hidden" tabindex="-1" aria-hidden="true">更新</button>
+                        <button type="button" id="expense-clear-filter-btn" class="ui-hidden" tabindex="-1" aria-hidden="true">クリア</button>
+                        <div class="ui-cta-bar ui-cta-bar-plain" id="expense-cta-bar">
+                            <button type="button" class="ui-btn ui-btn-primary ui-btn-lg ui-btn-block" onclick="openExpenseSheet()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                経費を登録
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3140,55 +3075,139 @@
         </div>
     </div>
 
+    <!-- 現場を追加（シート） -->
+    <div id="site-add-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeSiteAddSheet()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>現場を追加</h3>
+                <button type="button" class="modal-close-btn" onclick="closeSiteAddSheet()" aria-label="閉じる">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="employee-add-site-form">
+                    <div class="form-group">
+                        <label for="employee-add-site-name">現場名 <span class="required">必須</span></label>
+                        <input type="text" id="employee-add-site-name" name="siteName" required placeholder="例: 万代 堅田" maxlength="50" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-add-site-address">住所</label>
+                        <input type="text" id="employee-add-site-address" name="siteAddress" placeholder="例: 滋賀県大津市…" maxlength="100" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-add-site-description">メモ（駐車場・入館の注意など）</label>
+                        <textarea id="employee-add-site-description" name="siteDescription" placeholder="任意" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">追加する</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeSiteAddSheet()">キャンセル</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 現場の情報（シート） -->
+    <div id="site-detail-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeSiteDetail()"></div>
+        <div class="modal-content">
+            <div class="modal-header ui-site-detail-head">
+                <div>
+                    <h3 id="site-detail-name">現場</h3>
+                    <span class="ui-hint" id="site-detail-address"></span>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeSiteDetail()" aria-label="閉じる">×</button>
+            </div>
+            <div class="modal-body ui-site-detail-body">
+                <div class="ui-stat-grid">
+                    <div><span>今月</span><strong><span id="site-detail-month">0</span> <small>回</small></strong></div>
+                    <div><span>これまで</span><strong><span id="site-detail-total">0</span> <small>回</small></strong></div>
+                    <div><span>最後の利用</span><strong id="site-detail-last">—</strong></div>
+                </div>
+                <div class="form-group">
+                    <label for="site-detail-memo">メモ（駐車場・入館の注意など）</label>
+                    <textarea id="site-detail-memo" rows="2" placeholder="任意。変更すると自動で保存されます"></textarea>
+                </div>
+                <div class="ui-site-detail-actions">
+                    <button type="button" class="ui-btn ui-btn-primary ui-btn-lg ui-btn-block" id="site-detail-punch" onclick="punchFromSiteDetail()">この現場で出勤を記録する</button>
+                    <button type="button" class="ui-btn ui-btn-block" id="site-detail-fav" onclick="toggleFavoriteFromDetail()" aria-pressed="false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.5 1.2 6.4L12 17.5 6.3 20.6l1.2-6.4L2.8 9.7l6.4-.8z"/></svg>
+                        <span>よく使う現場に入れる</span>
+                    </button>
+                </div>
+                <div class="ui-site-detail-danger">
+                    <button type="button" class="ui-row-btn" id="site-detail-archive" onclick="toggleActiveFromDetail()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3H3zM5 10v10h14V10M10 14h4"/></svg>
+                        <span><b id="site-detail-archive-label">終わった現場に移す</b><small id="site-detail-archive-hint">打刻の候補から外れます。記録は残り、「また使う」で戻せます</small></span>
+                    </button>
+                    <button type="button" class="ui-row-btn ui-row-btn-danger" onclick="deleteFromDetail()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+                        <span><b>この現場を削除する</b><small id="site-detail-delete-hint">記録がない現場だけ削除できます</small></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 経費登録・編集モーダル -->
     <div id="expense-modal" class="modal hidden">
         <div class="modal-overlay" onclick="closeExpenseModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="expense-modal-title">💰 経費を追加</h3>
-                <button class="modal-close-btn" onclick="closeExpenseModal()">×</button>
+                <h3 id="expense-modal-title">経費を登録</h3>
+                <button type="button" class="modal-close-btn" onclick="closeExpenseModal()" aria-label="閉じる">×</button>
             </div>
             <div class="modal-body">
                 <form id="expense-form">
                     <input type="hidden" id="expense-id">
 
                     <div class="form-group">
-                        <label for="expense-date">📅 日付 <span class="required">*</span></label>
-                        <input type="date" id="expense-date" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="expense-category">📂 経費項目 <span class="required">*</span></label>
-                        <select id="expense-category" required>
+                        <label>経費項目 <span class="required">必須</span></label>
+                        <select id="expense-category" class="ui-hidden" required tabindex="-1" aria-hidden="true">
                             <option value="">選択してください</option>
-                            <option value="parking">🅿️ 駐車場代</option>
-                            <option value="tools">🔧 工具代</option>
-                            <option value="highway">🛣️ 高速代</option>
-                            <option value="other">📝 その他</option>
+                            <option value="parking">駐車場代</option>
+                            <option value="tools">工具代</option>
+                            <option value="highway">高速代</option>
+                            <option value="other">その他</option>
                         </select>
+                        <div class="ui-type-group" data-for="expense-category" role="group" aria-label="経費項目">
+                            <button type="button" class="ui-type-btn" data-value="parking" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>駐車場代</button>
+                            <button type="button" class="ui-type-btn" data-value="tools" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>工具代</button>
+                            <button type="button" class="ui-type-btn" data-value="highway" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>高速代</button>
+                            <button type="button" class="ui-type-btn" data-value="other" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>その他</button>
+                        </div>
+                    </div>
+
+                    <div class="form-row ui-expense-row2">
+                        <div class="form-group">
+                            <label for="expense-date">日付 <span class="required">必須</span></label>
+                            <input type="date" id="expense-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-amount">金額 <span class="required">必須</span></label>
+                            <div class="ui-amount">
+                                <span aria-hidden="true">¥</span>
+                                <input type="number" id="expense-amount" min="0" step="1" inputmode="numeric" placeholder="1200" required>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="expense-amount">💵 金額 <span class="required">*</span></label>
-                        <input type="number" id="expense-amount" min="0" step="1" placeholder="1000" required>
-                        <small class="form-hint">円単位で入力してください</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="expense-site-name">🏢 現場名 <span class="required">*</span></label>
+                        <label for="expense-site-name">現場 <span class="required">必須</span></label>
                         <select id="expense-site-name" required>
                             <option value="">現場を選択してください</option>
                         </select>
+                        <small class="form-hint" id="expense-site-hint"></small>
                     </div>
 
                     <div class="form-group">
-                        <label for="expense-description">📝 説明・メモ</label>
-                        <textarea id="expense-description" rows="3" maxlength="500" placeholder="詳細な内容や目的を記入してください"></textarea>
+                        <label for="expense-description">内容</label>
+                        <input type="text" id="expense-description" maxlength="500" placeholder="例: コインパーキング 3時間" autocomplete="off">
                     </div>
 
-                    <div class="modal-actions">
+                    <div class="modal-footer modal-actions">
+                        <button type="submit" class="btn btn-primary" id="expense-submit-btn">登録する</button>
                         <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">キャンセル</button>
-                        <button type="submit" class="btn btn-primary">💾 保存</button>
+                        <button type="button" class="btn btn-danger ui-hidden" id="expense-delete-btn" onclick="deleteFromExpenseSheet()">この経費を削除する</button>
                     </div>
                 </form>
             </div>
