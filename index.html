@@ -2102,10 +2102,10 @@
                         <span class="ui-nav-label">勤怠</span>
                     </div>
                     <div class="ui-sidebar-group">
-                        <button type="button" class="tab-btn active" data-tab="daily" title="日別"><span class="ui-nav-label">日別</span></button>
-                        <button type="button" class="tab-btn" data-tab="monthly" title="月別"><span class="ui-nav-label">月別</span></button>
-                        <button type="button" class="tab-btn" data-tab="employee" title="従業員別"><span class="ui-nav-label">従業員別</span></button>
-                        <button type="button" class="tab-btn" data-tab="site" title="現場別"><span class="ui-nav-label">現場別</span></button>
+                        <button type="button" class="tab-btn active" data-tab="daily" data-short="日" title="日別"><span class="ui-nav-label">日別</span></button>
+                        <button type="button" class="tab-btn" data-tab="monthly" data-short="月" title="月別"><span class="ui-nav-label">月別</span></button>
+                        <button type="button" class="tab-btn" data-tab="employee" data-short="人" title="従業員別"><span class="ui-nav-label">従業員別</span></button>
+                        <button type="button" class="tab-btn" data-tab="site" data-short="場" title="現場別"><span class="ui-nav-label">現場別</span></button>
                     </div>
                     <button type="button" class="tab-btn" data-tab="expense-report" title="経費精算">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4l5 8 5-8M12 12v8M8 14h8M8 17h8"/></svg>
@@ -2226,7 +2226,7 @@
                     <div class="modal-overlay" onclick="closeEditModal()"></div>
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3>📝 勤怠データ編集</h3>
+                            <h3>記録の編集</h3>
                             <button class="modal-close" onclick="closeEditModal()">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -2237,29 +2237,29 @@
                                         <input type="text" id="admin-edit-employee-name" readonly>
                                     </div>
                                     <div class="form-group">
-                                        <label for="admin-edit-date">日付 *</label>
+                                        <label for="admin-edit-date">日付 <span class="required">必須</span></label>
                                         <input type="date" id="admin-edit-date" required>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="admin-edit-site-name">現場名 *</label>
+                                        <label for="admin-edit-site-name">現場 <span class="required">必須</span></label>
                                         <input type="text" id="admin-edit-site-name" required>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="admin-edit-start-time">出勤時間 *</label>
+                                        <label for="admin-edit-start-time">出勤 <span class="required">必須</span></label>
                                         <input type="time" id="admin-edit-start-time" required>
                                     </div>
                                     <div class="form-group">
-                                        <label for="admin-edit-end-time">退勤時間</label>
+                                        <label for="admin-edit-end-time">退勤</label>
                                         <input type="time" id="admin-edit-end-time">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="admin-edit-break-duration">休憩時間（分）</label>
+                                        <label for="admin-edit-break-duration">休憩（分）</label>
                                         <input type="number" id="admin-edit-break-duration" min="0" placeholder="0">
                                     </div>
                                 </div>
@@ -2272,9 +2272,9 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" onclick="deleteAttendanceRecord()">🗑️ 削除</button>
+                            <button type="button" class="btn btn-danger" onclick="deleteAttendanceRecord()">この記録を削除</button>
                             <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
-                            <button type="button" class="btn btn-primary" onclick="saveAttendanceRecord()">💾 保存</button>
+                            <button type="button" class="btn btn-primary" onclick="saveAttendanceRecord()">保存する</button>
                         </div>
                     </div>
                 </div>
@@ -2985,7 +2985,7 @@
         <div class="modal-overlay" onclick="closeEmployeeAttendanceModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="emp-modal-title">📝 勤怠記録の編集</h3>
+                <h3 id="emp-modal-title">記録の編集</h3>
                 <button class="modal-close-btn" onclick="closeEmployeeAttendanceModal()">×</button>
             </div>
             <div class="modal-body">
@@ -2995,17 +2995,17 @@
 
                     <!-- 日付選択（新規追加時のみ表示） -->
                     <div class="form-group" id="emp-date-group">
-                        <label for="emp-attendance-date">📅 日付 <span class="required">*</span></label>
+                        <label for="emp-attendance-date">日付 <span class="required">必須</span></label>
                         <input type="date" id="emp-attendance-date" required>
                     </div>
 
                     <!-- 勤務タイプ選択 -->
                     <div class="form-group">
-                        <label>📋 勤務タイプ <span class="required">*</span></label>
+                        <label>勤務の種類</label>
                         <div class="work-type-radio-group">
                             <label class="radio-label">
                                 <input type="radio" name="emp-work-type" value="normal" checked>
-                                <span>出勤</span>
+                                <span>通常</span>
                             </label>
                             <label class="radio-label">
                                 <input type="radio" name="emp-work-type" value="holiday_work">
@@ -3013,15 +3013,11 @@
                             </label>
                             <label class="radio-label">
                                 <input type="radio" name="emp-work-type" value="night_work">
-                                <span>夜間勤務</span>
+                                <span>夜間</span>
                             </label>
                             <label class="radio-label">
                                 <input type="radio" name="emp-work-type" value="through_night">
                                 <span>通し夜間</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="emp-work-type" value="absence">
-                                <span>欠勤</span>
                             </label>
                             <label class="radio-label">
                                 <input type="radio" name="emp-work-type" value="paid_leave">
@@ -3031,6 +3027,10 @@
                                 <input type="radio" name="emp-work-type" value="compensatory_leave">
                                 <span>代休</span>
                             </label>
+                            <label class="radio-label">
+                                <input type="radio" name="emp-work-type" value="absence">
+                                <span>欠勤</span>
+                            </label>
                         </div>
                     </div>
 
@@ -3038,18 +3038,18 @@
                     <div id="emp-time-inputs">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="emp-start-time">🕐 出勤時刻</label>
+                                <label for="emp-start-time">出勤</label>
                                 <input type="time" id="emp-start-time" value="08:00">
                             </div>
                             <div class="form-group">
-                                <label for="emp-end-time">🕐 退勤時刻</label>
+                                <label for="emp-end-time">退勤</label>
                                 <input type="time" id="emp-end-time" value="17:00">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="emp-break-minutes">☕ 休憩時間</label>
+                                <label for="emp-break-minutes">休憩</label>
                                 <select id="emp-break-minutes">
                                     <option value="0">休憩なし</option>
                                     <option value="30">30分</option>
@@ -3060,16 +3060,16 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="emp-overtime-minutes">⏰ 残業時間（分）</label>
+                                <label for="emp-overtime-minutes">残業（分）</label>
                                 <input type="number" id="emp-overtime-minutes" min="0" max="480" value="0" placeholder="自動計算">
-                                <small class="form-hint">空欄で時刻から自動計算</small>
+                                <small class="form-hint">空欄なら時刻から自動計算</small>
                             </div>
                         </div>
                     </div>
 
                     <!-- 現場選択 -->
                     <div class="form-group" id="emp-site-group">
-                        <label for="emp-site-name">🏢 現場名</label>
+                        <label for="emp-site-name">現場</label>
                         <select id="emp-site-name">
                             <!-- JavaScriptで動的に生成 -->
                         </select>
@@ -3077,26 +3077,26 @@
 
                     <!-- メモ -->
                     <div class="form-group">
-                        <label for="emp-notes">📝 メモ</label>
-                        <textarea id="emp-notes" rows="2" placeholder="備考"></textarea>
+                        <label for="emp-notes">メモ</label>
+                        <textarea id="emp-notes" rows="2" placeholder="作業内容など（任意）"></textarea>
                     </div>
 
                     <!-- 計算結果表示 -->
                     <div class="calculation-preview" id="emp-calculation-preview">
                         <div class="preview-item">
-                            <span class="preview-label">実働時間:</span>
+                            <span class="preview-label">実働</span>
                             <span class="preview-value" id="emp-preview-working">-</span>
                         </div>
                         <div class="preview-item">
-                            <span class="preview-label">残業時間:</span>
+                            <span class="preview-label">残業</span>
                             <span class="preview-value" id="emp-preview-overtime">-</span>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="saveEmployeeAttendance()">保存する</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEmployeeAttendanceModal()">キャンセル</button>
-                <button type="button" class="btn btn-primary" onclick="saveEmployeeAttendance()">💾 保存</button>
             </div>
         </div>
     </div>

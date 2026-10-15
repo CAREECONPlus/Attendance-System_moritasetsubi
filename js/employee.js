@@ -2871,7 +2871,7 @@ async function openEmployeeAttendanceModal(recordId) {
 
         // 編集モードを設定
         document.getElementById('emp-attendance-mode').value = 'edit';
-        document.getElementById('emp-modal-title').textContent = '📝 勤怠記録の編集';
+        document.getElementById('emp-modal-title').textContent = '記録の編集';
         document.getElementById('emp-date-group').style.display = 'none';
 
         // フォームに値をセット
@@ -2954,7 +2954,7 @@ async function openNewAttendanceModal() {
     try {
         // 新規追加モードを設定
         document.getElementById('emp-attendance-mode').value = 'add';
-        document.getElementById('emp-modal-title').textContent = '➕ 勤怠記録の追加';
+        document.getElementById('emp-modal-title').textContent = '記録を追加';
         document.getElementById('emp-date-group').style.display = 'block';
 
         // フォームをリセット

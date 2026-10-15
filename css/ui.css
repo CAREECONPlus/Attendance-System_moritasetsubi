@@ -369,3 +369,91 @@
 #employee-page #clock-status .status-waiting, #employee-page #clock-status .status-working, #employee-page #clock-status .status-completed, #employee-page #clock-status .status-break { background: none !important; border: none !important; padding: 0 !important; color: var(--ink) !important; border-radius: 0 !important; }
 #employee-page #clock-status .status-waiting p, #employee-page #clock-status .status-working p, #employee-page #clock-status .status-completed p { color: var(--ink-muted); }
 #employee-page .record-item { background: var(--surface) !important; }
+
+/* ============================================================
+   既存モーダルの見た目（ID・構造は維持。スマホ幅では下から出るシートに）
+   ============================================================ */
+.modal { font-family: var(--font-body); color: var(--ink); }
+.modal .modal-overlay { background: rgba(0, 19, 80, 0.45); backdrop-filter: blur(2px); }
+.modal .modal-content { border-radius: var(--r-sheet); box-shadow: var(--shadow-dialog); max-width: 560px; animation: none; }
+.modal .modal-header { padding: 18px 20px 12px; border-bottom: none; }
+.modal .modal-header h3 { font-family: var(--font-display); font-size: 18px; font-weight: 900; color: var(--ink); }
+.modal .modal-close-btn, .modal .modal-close { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--ground); border: none; border-radius: var(--r-input); color: var(--ink); font-size: 24px; line-height: 1; cursor: pointer; }
+.modal .modal-body { padding: 4px 20px 16px; }
+.modal .form-group { margin-bottom: 14px; }
+.modal .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.modal .form-row .form-group { margin-bottom: 14px; }
+.modal label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--ink-muted); }
+.modal label .required { font-size: 12px; color: var(--danger-fg) !important; font-weight: 700 !important; margin-left: 4px; }
+.modal input[type="text"], .modal input[type="date"], .modal input[type="time"], .modal input[type="number"], .modal input[type="email"], .modal input[type="password"], .modal select, .modal textarea {
+  width: 100%; min-height: 50px; padding: 0 12px; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: var(--r-input);
+  font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); box-sizing: border-box; font-variant-numeric: tabular-nums;
+}
+.modal textarea { min-height: 56px; padding: 10px 12px; font-weight: 400; resize: none; }
+.modal input:focus, .modal select:focus, .modal textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 78, 255, 0.2); }
+.modal input[readonly] { background: var(--row-alt); color: var(--ink-muted); }
+.modal .form-hint { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-muted); }
+.modal .modal-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 8px 20px 20px; border-top: none; }
+.modal .modal-footer .btn { min-height: 48px; padding: 0 18px; border-radius: var(--r-input); font: inherit; font-size: 15px; font-weight: 700; box-shadow: none; transform: none; }
+.modal .modal-footer .btn-primary { background: var(--primary); border: 1px solid var(--primary); color: #fff; }
+.modal .modal-footer .btn-primary:hover { background: var(--primary-dk); }
+.modal .modal-footer .btn-secondary { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); }
+.modal .modal-footer .btn-danger { margin-right: auto; background: transparent; border: none; color: var(--danger-fg); padding-left: 0; }
+
+/* 勤務の種類（ラジオを選択ボタンの見た目に） */
+.modal .work-type-radio-group { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.modal .work-type-radio-group .radio-label { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0; min-height: 44px; margin: 0; padding: 0 4px; background: var(--surface); color: var(--type-normal-fg); border: 1.5px solid var(--line); border-radius: var(--r-input); font-size: 13px; font-weight: 700; cursor: pointer; }
+.modal .work-type-radio-group .radio-label input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; min-height: 0; }
+.modal .work-type-radio-group .radio-label span { color: inherit; font-weight: inherit; }
+.modal .work-type-radio-group .radio-label:hover { background: var(--row-alt); border-color: var(--line); }
+.modal .work-type-radio-group .radio-label:has(input:checked) { --sel-bg: var(--type-normal-bg); --sel-fg: var(--type-normal-fg); background: var(--sel-bg); color: var(--sel-fg); border-color: var(--sel-fg); }
+.modal .work-type-radio-group .radio-label:has(input[value="holiday_work"]:checked) { --sel-bg: var(--type-holiday-bg); --sel-fg: var(--type-holiday-fg); }
+.modal .work-type-radio-group .radio-label:has(input[value="night_work"]:checked), .modal .work-type-radio-group .radio-label:has(input[value="night_only"]:checked) { --sel-bg: var(--type-night-bg); --sel-fg: var(--type-night-fg); }
+.modal .work-type-radio-group .radio-label:has(input[value="through_night"]:checked) { --sel-bg: var(--type-through-bg); --sel-fg: var(--type-through-fg); }
+.modal .work-type-radio-group .radio-label:has(input[value="paid_leave"]:checked), .modal .work-type-radio-group .radio-label:has(input[value="compensatory_leave"]:checked) { --sel-bg: var(--type-leave-bg); --sel-fg: var(--type-leave-fg); }
+.modal .work-type-radio-group .radio-label:has(input[value="absence"]:checked) { --sel-bg: var(--type-absence-bg); --sel-fg: var(--type-absence-fg); }
+.modal .work-type-radio-group .radio-label:has(input:checked) span::before { content: ""; display: inline-block; width: 7px; height: 11px; margin: 0 6px 2px 0; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); }
+.modal .work-type-radio-group .radio-label:focus-within { box-shadow: 0 0 0 3px rgba(36, 78, 255, 0.25); }
+
+.modal .calculation-preview { display: flex; gap: 20px; padding: 10px 14px; background: var(--row-alt); border: 1px solid var(--line); border-radius: var(--r-input); margin: 0; }
+.modal .preview-item { display: flex; align-items: baseline; gap: 6px; }
+.modal .preview-label { font-size: 12px; color: var(--ink-muted); }
+.modal .preview-value { font-family: var(--font-display); font-size: 16px; font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 600px) {
+  .modal { align-items: flex-end; }
+  .modal .modal-content { width: 100%; max-width: var(--app-max); max-height: 92vh; border-radius: 20px 20px 0 0; box-shadow: var(--shadow-sheet); padding-top: 10px; }
+  .modal .modal-content::before { content: ""; display: block; width: 40px; height: 4px; margin: 0 auto; border-radius: 2px; background: var(--line-strong); }
+  .modal .modal-header { padding: 8px 20px 10px; }
+  .modal .modal-body { padding: 0 20px 12px; }
+  .modal .modal-footer { flex-direction: column; padding: 4px 20px 20px; }
+  .modal .modal-footer .btn { width: 100%; min-height: 56px; font-size: 17px; }
+  .modal .modal-footer .btn-primary { font-family: var(--font-display); font-size: 18px; font-weight: 900; border-radius: var(--r-sheet); box-shadow: var(--shadow-primary); }
+  .modal .modal-footer .btn-secondary { background: transparent; border: none; color: var(--ink-muted); }
+  .modal .modal-footer .btn-danger { margin: 6px 0 0; order: 9; min-height: 44px; }
+  .modal .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.modal .modal-content { padding: 0; border: none; }
+.modal .modal-header, .modal .modal-footer { background: transparent !important; border: none !important; }
+.modal .modal-footer { justify-content: flex-end; }
+.modal .modal-footer .btn { min-width: 0; }
+.modal .calculation-preview { flex-direction: row !important; flex-wrap: wrap; }
+.modal .form-row > .form-group:only-child { grid-column: 1 / -1; }
+@media (max-width: 600px) {
+  .modal .modal-content { padding-top: 10px; }
+}
+
+/* 管理者: フィルター帯の並び（ラベルを小さく、入力を1行に、ボタンは右端で高さを揃える） */
+#admin-page .filter-row { align-items: flex-end; gap: 12px 16px; justify-content: flex-start; }
+#admin-page .date-filter, #admin-page .month-filter, #admin-page .employee-filter, #admin-page .site-filter { flex: 0 1 220px; min-width: 160px; gap: 6px; }
+#admin-page .filter-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); margin: 0; }
+#admin-page .sort-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px; flex: 0 1 auto; }
+#admin-page .sort-controls .filter-label { flex: 1 0 100%; }
+#admin-page .sort-controls select { min-width: 130px; }
+#admin-page .filter-actions { margin-left: auto; margin-top: 0; gap: 8px; flex-wrap: wrap; }
+#admin-page .filter-actions .btn, #admin-page .btn { height: 42px; min-height: 42px; padding: 0 16px; font-size: 14px; }
+#admin-page .filter-row .hidden { display: none !important; }
+#admin-page .sort-controls { flex-direction: row; }
+#admin-page .sort-controls select { width: auto; }
+#admin-page.ui-nav-collapsed .ui-sidebar-group-title { display: flex; justify-content: center; width: 44px; padding: 0; }
+#admin-page.ui-nav-collapsed .ui-sidebar-group .tab-btn::before { content: attr(data-short); font-size: 13px; font-weight: 700; }
