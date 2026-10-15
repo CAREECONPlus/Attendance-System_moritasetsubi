@@ -387,16 +387,19 @@
             }
             list.innerHTML = sessions.map((s) => `
                 <li class="session-item${s.isCurrent ? ' current' : ''}" data-session-id="${escapeHtml(s.id)}">
+                    <span class="session-icon" aria-hidden="true">${/iPhone|iPad|Android|モバイル|Mobile|LINE/i.test(s.deviceLabel || '')
+                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>'
+                        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'}</span>
                     <div class="session-info">
                         <div class="session-device">
-                            📱 ${escapeHtml(s.deviceLabel || '不明な端末')}
+                            ${escapeHtml(s.deviceLabel || '不明な端末')}
                             ${s.isCurrent ? '<span class="session-current-badge">この端末</span>' : ''}
                         </div>
                         <div class="session-meta">
-                            最終利用: ${escapeHtml(formatRelative(s.lastActiveAt))} ／ ログイン: ${escapeHtml(formatDateTime(s.createdAt))}
+                            最終利用 ${escapeHtml(formatRelative(s.lastActiveAt))}　ログイン ${escapeHtml(formatDateTime(s.createdAt))}
                         </div>
                     </div>
-                    ${s.isCurrent ? '' : `<button class="btn btn-secondary btn-small" onclick="logoutDevice('${escapeHtml(s.id)}')">ログアウト</button>`}
+                    ${s.isCurrent ? '' : `<button type="button" class="btn btn-secondary btn-small" onclick="logoutDevice('${escapeHtml(s.id)}')">ログアウト</button>`}
                 </li>
             `).join('');
         } catch (error) {

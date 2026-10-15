@@ -45,7 +45,15 @@ function initAuth() {
  * - Firestore保存に失敗した場合、Firebase Authで作成されたユーザーを自動削除
  * - これにより孤児アカウント（認証のみ存在、データなし）の発生を防止
  */
-async function registerEmployeeWithInvite(email, password, displayName, inviteToken) {
+async function registerEmployeeWithInvite(email, password, displayName, inviteToken, nameProfile = null) {
+    // 姓・名・ふりがな（新UIの登録画面から。旧データとの互換のため displayName も保存する）
+    const nameFields = nameProfile ? {
+        lastName: nameProfile.lastName || '',
+        firstName: nameProfile.firstName || '',
+        lastNameKana: nameProfile.lastNameKana || '',
+        firstNameKana: nameProfile.firstNameKana || '',
+        displayNameKana: nameProfile.displayNameKana || ''
+    } : {};
     try {
         // 招待トークンを検証
         const validation = await validateInviteToken(inviteToken);
@@ -114,6 +122,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
             const userDocPromise = userCollection.doc(user.uid).set({
                 email: email,
                 displayName: displayName,
+                ...nameFields,
                 role: 'employee',
                 tenantId: tenantId,
                 inviteToken: inviteToken,
@@ -130,6 +139,7 @@ async function registerEmployeeWithInvite(email, password, displayName, inviteTo
                     uid: user.uid,
                     email: email,
                     displayName: displayName,
+                    ...nameFields,
                     tenantId: tenantId,
                     role: 'employee',
                     createdAt: new Date()

@@ -1441,23 +1441,23 @@ function renderAttendanceTable(data) {
 
         // 有給・代休・休日出勤・夜間勤務のバッジ
         if (record.specialWorkType === 'paid_leave') {
-            specialWorkBadges += '<span class="badge badge-leave">🌴 有給休暇</span>';
+            specialWorkBadges += '<span class="badge badge-leave">有給休暇</span>';
         } else if (record.specialWorkType === 'compensatory_leave') {
-            specialWorkBadges += '<span class="badge badge-leave">🔄 代休</span>';
+            specialWorkBadges += '<span class="badge badge-leave">代休</span>';
         } else if (record.specialWorkType === 'absence') {
-            specialWorkBadges += '<span class="badge badge-absence">❌ 欠勤</span>';
+            specialWorkBadges += '<span class="badge badge-absence">欠勤</span>';
         } else {
             // 通常勤務系の場合のみ休日・夜間バッジを表示
             if (record.isHolidayWork) {
-                specialWorkBadges += '<span class="badge badge-holiday">📅 休日出勤</span>';
+                specialWorkBadges += '<span class="badge badge-holiday">休日出勤</span>';
             }
             if (record.nightWorkType === 'through_night' || record.specialWorkType === 'through_night') {
-                specialWorkBadges += '<span class="badge badge-night">🌙 通し夜間</span>';
+                specialWorkBadges += '<span class="badge badge-night">通し夜間</span>';
             } else if (record.nightWorkType === 'night_only'
                     || record.specialWorkType === 'night_only'
                     || record.specialWorkType === 'night_work'
                     || record.isNightWork) {
-                specialWorkBadges += '<span class="badge badge-night">🌙 夜間のみ</span>';
+                specialWorkBadges += '<span class="badge badge-night">夜間のみ</span>';
             }
         }
 
@@ -2038,7 +2038,12 @@ function formatDateTime(timestamp) {
 /**
  * CSVファイルをダウンロード
  */
-function downloadCSV(csvContent, filename) {
+function downloadCSV(csvContent, filename, previewOptions) {
+    // 保存前にプレビューで内容を確認（ui-csv.js）。無い場合はそのまま保存
+    if (window.UI && typeof UI.csvPreview === 'function') {
+        UI.csvPreview(csvContent, filename, previewOptions || {});
+        return;
+    }
     const BOM = '\uFEFF';
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -6226,20 +6231,20 @@ function displaySortedData(data) {
         // 有給・代休・欠勤のバッジ
         let badge = '';
         if (record.specialWorkType === 'paid_leave') {
-            badge = '<span class="badge badge-leave">🌴 有給休暇</span>';
+            badge = '<span class="badge badge-leave">有給休暇</span>';
         } else if (record.specialWorkType === 'compensatory_leave') {
-            badge = '<span class="badge badge-leave">🔄 代休</span>';
+            badge = '<span class="badge badge-leave">代休</span>';
         } else if (record.specialWorkType === 'absence') {
-            badge = '<span class="badge badge-absence">❌ 欠勤</span>';
+            badge = '<span class="badge badge-absence">欠勤</span>';
         } else if (record.specialWorkType === 'holiday_work' || record.isHolidayWork) {
-            badge = '<span class="badge badge-holiday">📅 休日出勤</span>';
+            badge = '<span class="badge badge-holiday">休日出勤</span>';
         } else if (record.nightWorkType === 'through_night' || record.specialWorkType === 'through_night') {
-            badge = '<span class="badge badge-night">🌙 通し夜間</span>';
+            badge = '<span class="badge badge-night">通し夜間</span>';
         } else if (record.nightWorkType === 'night_only'
                 || record.specialWorkType === 'night_only'
                 || record.specialWorkType === 'night_work'
                 || record.isNightWork) {
-            badge = '<span class="badge badge-night">🌙 夜間のみ</span>';
+            badge = '<span class="badge badge-night">夜間のみ</span>';
         }
 
         return `
@@ -7268,18 +7273,7 @@ function handleExportMonthlySummaryCSV() {
     const yearMonth = document.getElementById('salary-year-month').value;
     const csvContent = window.MonthlySummary.convertToCSV(currentMonthlySummaryData, yearMonth);
 
-    // BOM付きでダウンロード
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `monthly_salary_${yearMonth}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCSV(csvContent, `monthly_salary_${yearMonth}.csv`, { title: '生データCSV の内容を確認', subtitle: formatYearMonthLabel(yearMonth) });
 }
 
 /**
@@ -7342,18 +7336,12 @@ function handleExportYayoiCSV() {
     const yearMonth = document.getElementById('salary-year-month').value;
     const csvContent = window.MonthlySummary.convertToYayoiCSV(currentMonthlySummaryData, {});
 
-    // BOM付きでダウンロード
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    downloadCSV(csvContent, `yayoi_salary_${yearMonth}.csv`, { title: '弥生給与用CSV の内容を確認', subtitle: formatYearMonthLabel(yearMonth), note: '合計行は含まれません' });
+}
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `yayoi_salary_${yearMonth}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+function formatYearMonthLabel(yearMonth) {
+    const m = String(yearMonth || '').match(/^(\d{4})-(\d{2})/);
+    return m ? `${m[1]}年${parseInt(m[2], 10)}月` : '';
 }
 
 /**

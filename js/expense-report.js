@@ -486,8 +486,13 @@ function renderExpenseDetail() {
 /**
  * CSVダウンロード（BOM付き）
  */
-function downloadCSV(filename, csvContent) {
-    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+function downloadCSV(filename, csvContent, previewOptions) {
+    // 保存前にプレビューで内容を確認（ui-csv.js）。無い場合はそのまま保存
+    if (window.UI && typeof UI.csvPreview === 'function') {
+        UI.csvPreview(csvContent, filename, previewOptions || {});
+        return;
+    }
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -796,11 +801,7 @@ async function exportExpenseReportCSV() {
         const filename = `経費レポート_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
 
         // ダウンロード
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+        downloadCSV(filename, csvContent);
 
         alert('CSV出力が完了しました');
 
@@ -906,11 +907,7 @@ async function exportEmployeeExpenseCSV() {
         console.log('[exportEmployeeExpenseCSV] ファイル名:', filename);
         console.log('[exportEmployeeExpenseCSV] 集計データ件数:', Object.keys(employeeData).length);
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+        downloadCSV(filename, csvContent);
 
         console.log('[exportEmployeeExpenseCSV] CSV出力完了');
         alert('従業員別集計CSVを出力しました');
@@ -1021,11 +1018,7 @@ async function exportSiteExpenseCSV() {
         console.log('[exportSiteExpenseCSV] ファイル名:', filename);
         console.log('[exportSiteExpenseCSV] 集計データ件数:', Object.keys(siteData).length);
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+        downloadCSV(filename, csvContent);
 
         console.log('[exportSiteExpenseCSV] CSV出力完了');
         alert('現場別集計CSVを出力しました');
@@ -1121,11 +1114,7 @@ async function exportCategoryExpenseCSV() {
 
         // ダウンロード
         const filename = `経費_カテゴリー別集計_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+        downloadCSV(filename, csvContent);
 
         alert('カテゴリー別集計CSVを出力しました');
 
