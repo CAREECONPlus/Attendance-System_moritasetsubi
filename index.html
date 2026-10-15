@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠管理システム</title>
     <link rel="stylesheet" href="css/style.css?v=20261015b">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/ui.css?v=20261015a">
     
     <!-- Favicon追加 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -28,6 +32,9 @@
 
     <!-- 不足関数の補完 -->
     <script src="js/missing-functions.js"></script>
+
+    <!-- UI刷新の共通部品（alert→トースト、選択ボタン、サイドバー） -->
+    <script src="js/ui.js?v=20261015a"></script>
 
     <!-- 招待システム -->
     <script src="js/invite-system.js?v=20250124c"></script>
@@ -1819,123 +1826,117 @@
     </div>
 
     <!-- 従業員画面 -->
-    <div id="employee-page" class="page hidden">
+    <div id="employee-page" class="page hidden ui">
         <div class="container">
-            <header class="app-header">
-                <h1>勤怠管理システム</h1>
-                <div class="user-info">
-                    <span id="user-name"></span>
-                    <button class="btn btn-secondary btn-small" id="account-btn" onclick="openAccountModal()">👤 アカウント</button>
-                    <button class="btn btn-secondary btn-small" id="logout-btn">ログアウト</button>
+            <header class="ui-topbar">
+                <img class="ui-logo" src="images/morita-logo.png" alt="株式会社 森田設備">
+                <div class="ui-topbar-right">
+                    <div class="ui-topbar-user">
+                        <span id="current-date">--</span>
+                        <span id="user-name"></span>
+                    </div>
+                    <button type="button" class="ui-avatar-btn" id="account-btn" onclick="openAccountModal()" aria-label="アカウント設定">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                    </button>
+                    <button type="button" id="logout-btn" class="ui-hidden" tabindex="-1" aria-hidden="true">ログアウト</button>
                 </div>
             </header>
 
             <main class="employee-main">
-                <!-- タブナビゲーション -->
-                <div class="employee-tabs">
-                    <button class="employee-tab-btn active" data-tab="attendance">
-                        <span class="tab-icon">⏰</span>
-                        <span class="tab-label">勤怠打刻</span>
-                    </button>
-                    <button class="employee-tab-btn" data-tab="employee-site-management">
-                        <span class="tab-icon">🏢</span>
-                        <span class="tab-label">現場管理</span>
-                    </button>
-                    <button class="employee-tab-btn" data-tab="expense-management">
-                        <span class="tab-icon">💰</span>
-                        <span class="tab-label">経費精算</span>
-                    </button>
-                </div>
-
                 <!-- 勤怠打刻タブ -->
                 <div id="attendance-content" class="employee-tab-content active">
-                    <!-- 現在時刻表示 -->
-                    <div class="date-display">
-                        <div class="date" id="current-date">日付読み込み中...</div>
-                        <div class="time" id="current-time">時刻読み込み中...</div>
-                    </div>
-
-                    <!-- 勤務状況 -->
-                    <div id="clock-status" class="clock-status">
-                        <div class="status-waiting">出勤ボタンを押してください</div>
-                    </div>
-
-                    <!-- 勤務タイプ選択（チェックボックス） -->
-                    <div class="work-type-checkboxes">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="is-holiday-work">
-                            <span class="checkbox-text">📅 休日出勤</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="is-night-work">
-                            <span class="checkbox-text">🌙 夜間勤務</span>
-                        </label>
-                    </div>
-
-                    <!-- 出退勤ボタン -->
-                    <div class="clock-buttons">
-                        <div class="button-row">
-                            <button class="btn btn-primary clock-btn" id="clock-in-btn">出勤</button>
-                            <button class="btn btn-secondary clock-btn" id="clock-out-btn" disabled>退勤</button>
+                    <!-- 今日の記録 -->
+                    <section class="ui-card ui-status-card">
+                        <div id="clock-status" class="clock-status">
+                            <div class="status-waiting"><h4>まだ記録していません</h4><p>今日の記録</p></div>
                         </div>
-                    </div>
+                        <div class="ui-clock" id="current-time">--:--</div>
+                    </section>
 
-                    <!-- 現場名入力 -->
-                    <div class="site-selection">
-                        <div class="form-group">
-                            <label for="site-name">🏢 現場名：</label>
-                            <select id="site-name" required>
-                                <option value="">現場を選択してください</option>
-                            </select>
+                    <!-- 勤務の種類 -->
+                    <section class="ui-card">
+                        <span class="ui-label">勤務の種類</span>
+                        <input type="hidden" id="work-type" value="normal">
+                        <input type="checkbox" id="is-holiday-work" class="ui-hidden" tabindex="-1" aria-hidden="true">
+                        <input type="checkbox" id="is-night-work" class="ui-hidden" tabindex="-1" aria-hidden="true">
+                        <div class="ui-type-group" data-for="work-type" role="group" aria-label="勤務の種類">
+                            <button type="button" class="ui-type-btn is-selected" data-value="normal" aria-pressed="true"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>通常</button>
+                            <button type="button" class="ui-type-btn" data-value="holiday_work" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>休日出勤</button>
+                            <button type="button" class="ui-type-btn" data-value="night_only" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>夜間</button>
+                            <button type="button" class="ui-type-btn" data-value="through_night" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>通し夜間</button>
                         </div>
+                        <details class="ui-more">
+                            <summary>その他の勤務（有給休暇・代休・欠勤）</summary>
+                            <div class="ui-type-group ui-type-group--3" data-for="work-type" role="group" aria-label="その他の勤務">
+                                <button type="button" class="ui-type-btn" data-value="paid_leave" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>有給休暇</button>
+                                <button type="button" class="ui-type-btn" data-value="compensatory_leave" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>代休</button>
+                                <button type="button" class="ui-type-btn" data-value="absence" aria-pressed="false"><svg class="ui-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>欠勤</button>
+                            </div>
+                        </details>
+                    </section>
 
-                        <!-- 休憩時間入力 -->
-                        <div class="form-group">
-                            <label for="break-minutes">☕ 休憩時間（分）：</label>
-                            <select id="break-minutes" required>
-                                <option value="0">休憩なし</option>
-                                <option value="30">30分</option>
-                                <option value="45">45分</option>
-                                <option value="60" selected>60分（1時間）</option>
-                                <option value="90">90分（1.5時間）</option>
-                                <option value="120">120分（2時間）</option>
-                            </select>
-                            <small class="form-hint">勤務時間から自動で控除されます</small>
+                    <!-- 現場 -->
+                    <section class="ui-card" id="site-field">
+                        <div class="ui-card-head">
+                            <span class="ui-label">現場（最近使った順）</span>
+                            <button type="button" class="ui-link" onclick="switchEmployeeTab('employee-site-management')">現場を追加</button>
                         </div>
-
-                        <!-- 最近使った現場（履歴） -->
                         <div id="site-history-section" class="site-history-section" style="display: none;">
-                            <label class="site-history-label">⏱️ 最近使った現場:</label>
-                            <div id="site-history-buttons" class="site-history-buttons">
+                            <div id="site-history-buttons" class="ui-chips site-history-buttons">
                                 <!-- 履歴ボタンがJavaScriptで動的に生成されます -->
                             </div>
                         </div>
-                    </div>
+                        <div class="ui-field">
+                            <label class="ui-label" for="site-name">その他の現場から選ぶ</label>
+                            <select id="site-name" class="ui-select" required>
+                                <option value="">現場を選択してください</option>
+                            </select>
+                        </div>
+                        <div class="ui-field">
+                            <label class="ui-label" for="break-minutes">休憩</label>
+                            <select id="break-minutes" class="ui-select ui-select-sm" required>
+                                <option value="0">休憩なし</option>
+                                <option value="30">30分</option>
+                                <option value="45">45分</option>
+                                <option value="60" selected>60分</option>
+                                <option value="90">90分</option>
+                                <option value="120">120分</option>
+                            </select>
+                        </div>
+                    </section>
 
                     <!-- メモ -->
-                    <div class="form-group">
-                        <label for="work-notes">📝 メモ：</label>
-                        <textarea id="work-notes" placeholder="作業内容を記入（任意）" rows="3" maxlength="500"></textarea>
-                        <div class="form-hint">
-                            <small>💡 作業内容や特記事項を記録できます（任意）</small>
-                        </div>
+                    <section class="ui-field">
+                        <label class="ui-label" for="work-notes" style="padding-left: 4px;">メモ</label>
+                        <textarea id="work-notes" class="ui-textarea" placeholder="作業内容など（任意）" rows="2" maxlength="500"></textarea>
+                    </section>
+
+                    <!-- 旧UIの退勤・休憩ボタン（自動登録のため非表示。JSの参照先として残す） -->
+                    <div class="ui-hidden" aria-hidden="true">
+                        <button type="button" id="clock-out-btn" disabled tabindex="-1">退勤</button>
                     </div>
 
-                    <!-- 勤怠記録 -->
+                    <!-- 固定の主操作 -->
+                    <div class="ui-cta-bar" id="clock-cta-bar">
+                        <button type="button" class="ui-btn ui-btn-primary ui-btn-cta ui-btn-block clock-btn" id="clock-in-btn">出勤を記録する</button>
+                        <span class="ui-cta-caption" id="clock-in-caption">8:00〜17:00（休憩 60分）で登録されます</span>
+                    </div>
+                </div>
+
+                <!-- 勤怠履歴タブ -->
+                <div id="history-content" class="employee-tab-content">
                     <section class="recent-records">
-                        <div class="records-header">
-                            <h3>📋 勤怠記録</h3>
-                            <div class="records-header-actions">
-                                <select id="employee-month-selector" class="month-selector">
+                        <div class="ui-page-head">
+                            <h2 class="ui-h2">勤怠履歴</h2>
+                            <div class="ui-page-head-actions">
+                                <select id="employee-month-selector" class="ui-select ui-select-sm month-selector">
                                     <!-- JavaScriptで動的に生成 -->
                                 </select>
-                                <button type="button" class="btn btn-primary btn-small" onclick="openNewAttendanceModal()">
-                                    ➕ 記録を追加
-                                </button>
+                                <button type="button" class="ui-btn ui-btn-primary ui-btn-sm" onclick="openNewAttendanceModal()">記録を追加</button>
                             </div>
                         </div>
                         <div id="recent-list">
-                            <div class="loading-message">🔄 記録を読み込み中...</div>
+                            <div class="loading-message">記録を読み込み中...</div>
                         </div>
                     </section>
                 </div>
@@ -2063,34 +2064,89 @@
                     </div>
                 </div>
             </main>
+
+            <nav class="ui-tabbar" aria-label="メイン">
+                <button type="button" class="employee-tab-btn active" data-tab="attendance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    <span>打刻</span>
+                </button>
+                <button type="button" class="employee-tab-btn" data-tab="history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                    <span>履歴</span>
+                </button>
+                <button type="button" class="employee-tab-btn" data-tab="employee-site-management">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.2-6-10a6 6 0 0 1 12 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>
+                    <span>現場</span>
+                </button>
+                <button type="button" class="employee-tab-btn" data-tab="expense-management">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4l5 8 5-8M12 12v8M8 14h8M8 17h8"/></svg>
+                    <span>経費</span>
+                </button>
+            </nav>
         </div>
     </div>
 
     <!-- 管理者画面 -->
-    <div id="admin-page" class="page hidden">
-        <div class="container">
-            <header class="app-header">
-                <h1>勤怠管理システム</h1>
-                <div class="user-info">
-                    <span id="admin-user-name"></span>
-                    <button id="admin-account-btn" class="btn btn-secondary btn-small" onclick="openAccountModal()">👤 アカウント</button>
-                    <button id="admin-logout-btn" class="btn btn-secondary btn-small">ログアウト</button>
+    <div id="admin-page" class="page hidden ui">
+        <div class="container ui-admin">
+            <aside class="ui-sidebar">
+                <div class="ui-sidebar-brand">
+                    <img class="ui-sidebar-logo" src="images/morita-logo.png" alt="株式会社 森田設備">
+                    <button type="button" class="ui-sidebar-toggle" id="admin-nav-toggle" aria-label="メニューをたたむ" aria-expanded="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                    </button>
                 </div>
-            </header>
+                <nav class="ui-sidebar-nav admin-tabs" aria-label="メイン">
+                    <div class="ui-sidebar-group-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                        <span class="ui-nav-label">勤怠</span>
+                    </div>
+                    <div class="ui-sidebar-group">
+                        <button type="button" class="tab-btn active" data-tab="daily" title="日別"><span class="ui-nav-label">日別</span></button>
+                        <button type="button" class="tab-btn" data-tab="monthly" title="月別"><span class="ui-nav-label">月別</span></button>
+                        <button type="button" class="tab-btn" data-tab="employee" title="従業員別"><span class="ui-nav-label">従業員別</span></button>
+                        <button type="button" class="tab-btn" data-tab="site" title="現場別"><span class="ui-nav-label">現場別</span></button>
+                    </div>
+                    <button type="button" class="tab-btn" data-tab="expense-report" title="経費精算">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4l5 8 5-8M12 12v8M8 14h8M8 17h8"/></svg>
+                        <span class="ui-nav-label">経費精算</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="monthly-salary" title="月次給与">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16M6 16V9M11 16V5M16 16v-6"/></svg>
+                        <span class="ui-nav-label">月次給与</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="invite" title="従業員招待">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M18 8v6M15 11h6"/></svg>
+                        <span class="ui-nav-label">従業員招待</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;" title="従業員管理">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M21.5 19a5 5 0 0 0-5-5"/></svg>
+                        <span class="ui-nav-label">従業員管理</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="settings" title="設定">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+                        <span class="ui-nav-label">設定</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="admin-requests" id="admin-requests-tab" style="display: none;" title="管理者依頼">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+                        <span class="ui-nav-label">管理者依頼</span>
+                    </button>
+                </nav>
+                <div class="ui-sidebar-user">
+                    <div class="ui-sidebar-user-text">
+                        <span class="ui-sidebar-user-name" id="admin-user-name"></span>
+                        <span class="ui-sidebar-user-role">管理者</span>
+                    </div>
+                    <button type="button" id="admin-account-btn" class="ui-icon-btn" onclick="openAccountModal()" aria-label="アカウント設定" title="アカウント設定">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                    </button>
+                    <button type="button" id="admin-logout-btn" class="ui-icon-btn" aria-label="ログアウト" title="ログアウト">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5v16h5M14 8l5 4-5 4M19 12H9"/></svg>
+                    </button>
+                </div>
+            </aside>
 
             <main class="admin-main">
-                <div class="admin-tabs">
-                    <button class="tab-btn active" data-tab="daily">📅 日別表示</button>
-                    <button class="tab-btn" data-tab="monthly">📊 月別表示</button>
-                    <button class="tab-btn" data-tab="employee">👥 従業員別</button>
-                    <button class="tab-btn" data-tab="site">🏢 現場別</button>
-                    <button class="tab-btn" data-tab="expense-report">💰 経費精算</button>
-                    <button class="tab-btn" data-tab="monthly-salary">📊 月次給与</button>
-                    <button class="tab-btn" data-tab="settings">⚙️ 設定</button>
-                    <button class="tab-btn" data-tab="invite">✉️ 従業員招待</button>
-                    <button class="tab-btn" data-tab="employee-management" id="employee-management-tab" style="display: none;">従業員管理</button>
-                    <button class="tab-btn" data-tab="admin-requests" id="admin-requests-tab" style="display: none;">管理者依頼</button>
-                </div>
 
                 <!-- 勤怠管理タブコンテンツ（日別・月別・従業員別・現場別） -->
                 <div id="attendance-tab-content" class="tab-content">
@@ -2913,6 +2969,9 @@
                     <div class="account-actions">
                         <button class="btn btn-secondary" onclick="logoutOtherDevices()">この端末以外をすべてログアウト</button>
                         <button class="btn btn-danger" onclick="logoutAllDevices()">すべての端末からログアウト（この端末も含む）</button>
+                    </div>
+                    <div class="account-actions account-actions-self">
+                        <button class="btn btn-secondary" onclick="UI.logoutFromModal()">この端末からログアウト</button>
                     </div>
                     <p class="account-note">
                         ※ アプリを開いている端末は数秒以内に、閉じている端末は次に開いたときにログアウトされます。

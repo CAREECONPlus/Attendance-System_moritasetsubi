@@ -743,16 +743,14 @@ function updateCurrentTime() {
     const timeElement = document.getElementById('current-time');
     
     if (dateElement) {
-        dateElement.textContent = now.toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            weekday: 'long'
-        });
+        const weekday = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+        dateElement.textContent = `${now.getMonth() + 1}月${now.getDate()}日（${weekday}）`;
     }
-    
+
     if (timeElement) {
-        timeElement.textContent = now.toLocaleTimeString('ja-JP');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        timeElement.textContent = `${hh}:${mm}`;
     }
 }
 
@@ -884,7 +882,7 @@ function displaySiteHistory() {
 
     const buttonsHTML = history.map(siteName => `
         <button type="button" class="site-history-btn" onclick="selectSiteFromHistory('${escapeHtmlEmployee(siteName)}')">
-            🏢 ${escapeHtmlEmployee(siteName)}
+            ${escapeHtmlEmployee(siteName)}
         </button>
     `).join('');
 
@@ -914,6 +912,40 @@ function setupSiteSelection() {
 }
 
 // 現場名取得関数（管理者設定現場のみ）
+const WORK_TYPE_LABELS = {
+    normal: '通常',
+    holiday_work: '休日出勤',
+    night_only: '夜間',
+    through_night: '通し夜間',
+    paid_leave: '有給休暇',
+    compensatory_leave: '代休',
+    absence: '欠勤'
+};
+
+// 打刻画面で選ばれている勤務の種類（#work-type。無ければ旧チェックボックスから判定）
+function getSelectedWorkType() {
+    const hidden = document.getElementById('work-type');
+    if (hidden && hidden.value) return hidden.value;
+    if (document.getElementById('is-holiday-work')?.checked) return 'holiday_work';
+    if (document.getElementById('is-night-work')?.checked) return 'night_only';
+    return 'normal';
+}
+
+function resetWorkTypeSelection() {
+    if (window.UI && typeof UI.selectTypeValue === 'function') {
+        UI.selectTypeValue('work-type', 'normal');
+    } else {
+        const hidden = document.getElementById('work-type');
+        if (hidden) hidden.value = 'normal';
+    }
+    const holidayCheckbox = document.getElementById('is-holiday-work');
+    const nightCheckbox = document.getElementById('is-night-work');
+    if (holidayCheckbox) holidayCheckbox.checked = false;
+    if (nightCheckbox) nightCheckbox.checked = false;
+    document.querySelectorAll('details.ui-more').forEach((d) => { d.open = false; });
+    if (window.UI && typeof UI.updateClockCaption === 'function') UI.updateClockCaption();
+}
+
 function getSiteNameFromSelection() {
     const siteSelect = document.getElementById('site-name');
     
@@ -945,7 +977,7 @@ async function handleClockIn() {
     
     // ボタンを即座に無効化
     const clockInBtn = document.getElementById('clock-in-btn');
-    const originalText = clockInBtn ? clockInBtn.textContent : '出勤';
+    const originalText = clockInBtn ? clockInBtn.textContent : '出勤を記録する';
     
     // ボタン状態を保存・変更する関数
     function setButtonProcessing() {
@@ -973,10 +1005,14 @@ async function handleClockIn() {
             throw new Error('ユーザーが認証されていません');
         }
 
-        // 現場選択チェック
-        const siteName = getSiteNameFromSelection();
+        // 勤務の種類（選択ボタン → 隠し input #work-type。旧チェックボックスにも対応）
+        const workType = getSelectedWorkType();
+        const isLeaveType = ['paid_leave', 'compensatory_leave', 'absence'].includes(workType);
 
-        if (!siteName) {
+        // 現場選択チェック（有給休暇・代休・欠勤は現場不要）
+        const siteName = isLeaveType ? ((document.getElementById('site-name')?.value || '').trim()) : getSiteNameFromSelection();
+
+        if (!siteName && !isLeaveType) {
             restoreButton();
             return;
         }
@@ -992,14 +1028,13 @@ async function handleClockIn() {
         const breakMinutesElement = document.getElementById('break-minutes');
         const breakMinutes = breakMinutesElement ? parseInt(breakMinutesElement.value) || 60 : 60;
 
-        // チェックボックスの状態を取得
-        const isHolidayWork = document.getElementById('is-holiday-work')?.checked || false;
-        const isNightWork = document.getElementById('is-night-work')?.checked || false;
+        const isHolidayWork = workType === 'holiday_work';
+        const isNightWork = workType === 'night_only' || workType === 'through_night';
 
-        // デフォルト時刻: 8:00-17:00（実働8時間、休憩1時間）
-        const defaultStartTime = '08:00:00';
-        const defaultEndTime = '17:00:00';
-        const workingMinutes = 480; // 8時間
+        // デフォルト時刻: 8:00-17:00（実働8時間、休憩1時間）。休暇系は時刻なし
+        const defaultStartTime = isLeaveType ? null : '08:00:00';
+        const defaultEndTime = isLeaveType ? null : '17:00:00';
+        const workingMinutes = isLeaveType ? 0 : 480; // 8時間
         const overtimeMinutes = 0;
 
         // 勤務タイプを判定
@@ -1008,9 +1043,14 @@ async function handleClockIn() {
 
         if (isHolidayWork) {
             specialWorkType = 'holiday_work';
-        } else if (isNightWork) {
+        } else if (workType === 'night_only') {
             nightWorkType = 'night_only';
             specialWorkType = 'night_work';
+        } else if (workType === 'through_night') {
+            nightWorkType = 'through_night';
+            specialWorkType = 'through_night';
+        } else if (isLeaveType) {
+            specialWorkType = workType;
         }
 
         const attendanceData = {
@@ -1020,7 +1060,7 @@ async function handleClockIn() {
             siteName: siteName,
             startTime: defaultStartTime,
             endTime: defaultEndTime,
-            breakMinutes: breakMinutes,
+            breakMinutes: isLeaveType ? 0 : breakMinutes,
             workingMinutes: workingMinutes,
             overtimeMinutes: overtimeMinutes,
             status: 'completed', // 即座に完了状態
@@ -1053,21 +1093,18 @@ async function handleClockIn() {
         updateStatusDisplay('completed', todayAttendanceData);
 
         // 現場を履歴に追加
-        addSiteToHistory(siteName);
+        if (siteName) addSiteToHistory(siteName);
 
-        // チェックボックスをリセット
-        const holidayCheckbox = document.getElementById('is-holiday-work');
-        const nightCheckbox = document.getElementById('is-night-work');
-        if (holidayCheckbox) holidayCheckbox.checked = false;
-        if (nightCheckbox) nightCheckbox.checked = false;
+        // 勤務の種類をリセット（次回は「通常」から）
+        resetWorkTypeSelection();
 
-        let alertMsg = `✅ 勤怠を登録しました！\n`;
-        alertMsg += `現場: ${siteName}\n`;
-        alertMsg += `日付: ${today}\n`;
-        alertMsg += `時間: 08:00 - 17:00（実働8時間）\n`;
-        if (isHolidayWork) alertMsg += `📅 休日出勤\n`;
-        if (isNightWork) alertMsg += `🌙 夜間勤務\n`;
-        alertMsg += `\n※ 編集が必要な場合は下の記録から編集できます`;
+        const typeLabel = WORK_TYPE_LABELS[workType] || '通常';
+        let alertMsg;
+        if (isLeaveType) {
+            alertMsg = `今日を「${typeLabel}」として記録しました`;
+        } else {
+            alertMsg = `出勤を記録しました\n${siteName}　${typeLabel}　08:00〜17:00（休憩 ${breakMinutes}分）`;
+        }
 
         alert(alertMsg);
 
@@ -1322,7 +1359,7 @@ function updateClockButtons(status) {
             // 出勤ボタンのみ有効
             if (clockInBtn) {
                 clockInBtn.disabled = false;
-                clockInBtn.textContent = '出勤';
+                clockInBtn.textContent = '出勤を記録する';
             }
             if (clockOutBtn) {
                 clockOutBtn.disabled = true;
@@ -1335,7 +1372,7 @@ function updateClockButtons(status) {
             // 出勤済み、退勤が有効
             if (clockInBtn) {
                 clockInBtn.disabled = true;
-                clockInBtn.textContent = '出勤済み';
+                clockInBtn.textContent = '今日は記録済み';
             }
             if (clockOutBtn) {
                 clockOutBtn.disabled = false;
@@ -1347,7 +1384,7 @@ function updateClockButtons(status) {
             // 退勤完了後、再度出勤可能に
             if (clockInBtn) {
                 clockInBtn.disabled = false;
-                clockInBtn.textContent = '出勤';
+                clockInBtn.textContent = '出勤を記録する';
             }
             if (clockOutBtn) {
                 clockOutBtn.disabled = true;
@@ -1387,30 +1424,36 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
                     : '';
                 statusHtml = `
                     <div class="status-working">
-                        <h4>💼 勤務中です</h4>
-                        <p>現場: ${attendanceData.siteName}</p>
-                        <p>出勤時刻: ${attendanceData.startTime}</p>
+                        <p>今日の記録</p>
+                        <h4>勤務中（${escapeHtmlEmployee(attendanceData.siteName || '')}）</h4>
+                        <p>出勤 ${(attendanceData.startTime || '').substring(0, 5)}</p>
                         ${breakInfo}
                     </div>
                 `;
                 break;
 
-            case 'completed':
+            case 'completed': {
+                const leaveLabel = ['paid_leave', 'compensatory_leave', 'absence'].includes(attendanceData.specialWorkType)
+                    ? WORK_TYPE_LABELS[attendanceData.specialWorkType]
+                    : null;
+                const timeText = leaveLabel
+                    ? leaveLabel
+                    : `${(attendanceData.startTime || '').substring(0, 5)}〜${(attendanceData.endTime || '').substring(0, 5)}`;
                 statusHtml = `
                     <div class="status-completed">
-                        <h4>✅ 退勤しました</h4>
-                        <p>現場: ${attendanceData.siteName}</p>
-                        <p>勤務時間: ${attendanceData.startTime} - ${attendanceData.endTime}</p>
-                        <p>お疲れさまでした。再度出勤する場合は出勤ボタンを押してください。</p>
+                        <p>今日の記録</p>
+                        <h4>記録ずみ${attendanceData.siteName ? '　' + escapeHtmlEmployee(attendanceData.siteName) : ''}</h4>
+                        <p>${timeText}　履歴から直せます</p>
                     </div>
                 `;
                 break;
-                
+            }
+
             default:
                 statusHtml = `
                     <div class="status-waiting">
-                        <h4>⏰ 出勤ボタンを押してください</h4>
-                        <p>現場を選択して出勤してください</p>
+                        <p>今日の記録</p>
+                        <h4>まだ記録していません</h4>
                     </div>
                 `;
         }
@@ -2744,49 +2787,51 @@ async function loadMonthlyRecords(yearMonth) {
  * 勤怠記録をHTMLにレンダリング
  */
 function renderAttendanceRecord(recordId, data) {
-    const date = data.date || '';
-    const dateObj = new Date(date);
+    const rawDate = data.date || '';
+    const dateObj = new Date(rawDate);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? `${parseInt(rawDate.slice(5, 7), 10)}/${parseInt(rawDate.slice(8, 10), 10)}` : rawDate;
     const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
-    const startTime = data.startTime ? data.startTime.substring(0, 5) : '-';
-    const endTime = data.endTime ? data.endTime.substring(0, 5) : '-';
-    const siteName = data.siteName || '-';
+    const startTime = data.startTime ? data.startTime.substring(0, 5) : '';
+    const endTime = data.endTime ? data.endTime.substring(0, 5) : '';
+    const siteName = data.siteName || '';
 
     // 勤務タイプの表示
     let workTypeLabel = '';
     let workTypeClass = '';
 
     if (data.specialWorkType === 'paid_leave') {
-        workTypeLabel = '🏖️ 有給';
+        workTypeLabel = '有給休暇';
         workTypeClass = 'type-leave';
     } else if (data.specialWorkType === 'compensatory_leave') {
-        workTypeLabel = '🔄 代休';
+        workTypeLabel = '代休';
         workTypeClass = 'type-leave';
     } else if (data.specialWorkType === 'absence') {
-        workTypeLabel = '❌ 欠勤';
+        workTypeLabel = '欠勤';
         workTypeClass = 'type-absence';
     } else if (data.isHolidayWork) {
-        workTypeLabel = '📅 休日出勤';
+        workTypeLabel = '休日出勤';
         workTypeClass = 'type-holiday';
     } else if (data.nightWorkType === 'through_night' || data.specialWorkType === 'through_night') {
-        workTypeLabel = '🌙 通し夜間';
-        workTypeClass = 'type-night';
+        workTypeLabel = '通し夜間';
+        workTypeClass = 'type-through';
     } else if (data.nightWorkType === 'night_only'
             || data.specialWorkType === 'night_only'
             || data.specialWorkType === 'night_work'
             || data.isNightWork) {
-        workTypeLabel = '🌙 夜間のみ';
+        workTypeLabel = '夜間';
         workTypeClass = 'type-night';
     } else {
-        workTypeLabel = '✅ 出勤';
+        workTypeLabel = '通常';
         workTypeClass = 'type-normal';
     }
 
     // 勤務時間の計算表示
     const workingHours = data.workingMinutes ? Math.floor(data.workingMinutes / 60) : 0;
     const workingMins = data.workingMinutes ? data.workingMinutes % 60 : 0;
-    const workingTimeStr = data.workingMinutes ? `${workingHours}h${workingMins}m` : '-';
+    const workingTimeStr = data.workingMinutes ? `実働 ${workingHours}h${workingMins ? workingMins + 'm' : ''}` : '';
+    const timeStr = (startTime || endTime) ? `${startTime || '--:--'} – ${endTime || '<span class="record-missing">未入力</span>'}` : '';
 
     return `
         <div class="record-item ${workTypeClass}" data-record-id="${recordId}">
@@ -2795,10 +2840,10 @@ function renderAttendanceRecord(recordId, data) {
                 <button class="record-delete-btn" onclick="deleteEmployeeAttendanceRecord('${recordId}')">削除</button>
             </div>
             <div class="record-date ${isWeekend ? 'weekend' : ''}">
-                ${date} (${dayOfWeek})
+                ${date}（${dayOfWeek}）
             </div>
             <div class="record-details">
-                <span class="record-time">${startTime} - ${endTime}</span>
+                <span class="record-time">${timeStr}</span>
                 <span class="record-site">${siteName}</span>
                 <span class="record-type ${workTypeClass}">${workTypeLabel}</span>
                 <span class="record-working">${workingTimeStr}</span>
