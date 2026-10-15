@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠管理システム</title>
-    <link rel="stylesheet" href="css/style.css?v=20260203a">
+    <link rel="stylesheet" href="css/style.css?v=20261015a">
     
     <!-- Favicon追加 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -41,7 +41,7 @@
     <script src="js/tenant-settings.js?v=20250124c"></script>
     <script src="js/employee.js?v=20260203a"></script>
     <script src="js/expense.js?v=20250124c"></script>
-    <script src="js/expense-report.js?v=20260209a"></script>
+    <script src="js/expense-report.js?v=20261015a"></script>
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-config.local.js"></script>
     <script src="js/google-sheets.js?v=20251223a"></script>
@@ -622,9 +622,15 @@
         /* ソートコントロール */
         .sort-controls {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 10px;
             margin: 0 10px;
+        }
+
+        /* ラベルが「並\nび\n順」と1文字ずつ縦に折れないようにする */
+        .sort-controls .filter-label {
+            white-space: nowrap;
         }
 
         .sort-controls select {
@@ -2383,6 +2389,59 @@
                             <div class="expense-summary-card">
                                 <div class="expense-summary-label">👥 従業員数</div>
                                 <div class="expense-summary-count" id="expense-report-employees">0名</div>
+                            </div>
+                        </div>
+
+                        <!-- 経費明細（日別・現場別） -->
+                        <div class="expense-report-table-section" id="expense-detail-section">
+                            <div class="expense-table-header">
+                                <h4>📋 経費明細（日別・現場別）</h4>
+                                <button id="expense-detail-csv-btn" class="btn btn-secondary btn-small">📥 CSV出力</button>
+                            </div>
+                            <p class="expense-detail-description">現場・従業員・経費項目で絞り込み、「その日・その現場」で使った金額を確認できます。見出しをクリックすると並べ替えできます。</p>
+                            <div class="expense-detail-filters">
+                                <div class="expense-filter-item">
+                                    <label for="expense-detail-site-filter">🏢 現場</label>
+                                    <select id="expense-detail-site-filter" class="filter-input">
+                                        <option value="">すべて</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <label for="expense-detail-employee-filter">👤 従業員</label>
+                                    <select id="expense-detail-employee-filter" class="filter-input">
+                                        <option value="">すべて</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <label for="expense-detail-category-filter">🏷️ 経費項目</label>
+                                    <select id="expense-detail-category-filter" class="filter-input">
+                                        <option value="">すべて</option>
+                                        <option value="parking">駐車場代</option>
+                                        <option value="tools">工具代</option>
+                                        <option value="highway">高速代</option>
+                                        <option value="other">その他</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <label for="expense-detail-group-mode">📊 表示方法</label>
+                                    <select id="expense-detail-group-mode" class="filter-input">
+                                        <option value="date-site" selected>日付×現場で小計</option>
+                                        <option value="detail">明細（1件ずつ）</option>
+                                    </select>
+                                </div>
+                                <div class="expense-filter-item">
+                                    <button id="expense-detail-clear-btn" class="btn btn-secondary btn-small">✕ 絞り込み解除</button>
+                                </div>
+                            </div>
+                            <div class="expense-detail-result" id="expense-detail-result-summary"></div>
+                            <div class="attendance-table-container">
+                                <table class="attendance-table expense-detail-table">
+                                    <thead id="expense-detail-head"></thead>
+                                    <tbody id="expense-detail-data">
+                                        <tr><td colspan="9" class="no-data">データを読み込んでいます...</td></tr>
+                                    </tbody>
+                                    <tfoot id="expense-detail-footer"></tfoot>
+                                </table>
                             </div>
                         </div>
 
