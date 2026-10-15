@@ -68,8 +68,11 @@ jobs:
           fi
           printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          npx --yes firebase-tools@13 deploy --only firestore:rules,firestore:indexes \
-            --project "$PROJECT_ID" --non-interactive --force
+          if ! npx --yes firebase-tools@13 deploy --only firestore:rules,firestore:indexes \
+               --project "$PROJECT_ID" --non-interactive --force; then
+            echo "::error::Firestore ルールのデプロイに失敗しました。403 の場合はサービスアカウントに IAM ロール（Firebase Rules 管理者 / Cloud Datastore インデックス管理者 / Firebase Hosting 管理者 / Cloud Run 閲覧者 / API キー閲覧者）を付与してください。手順: docs/DEV_ENVIRONMENT.md 1-A-7"
+            exit 1
+          fi
 
       - name: Deploy to Firebase Hosting preview channel
         uses: FirebaseExtended/action-hosting-deploy@v0

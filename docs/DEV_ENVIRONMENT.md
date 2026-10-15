@@ -26,6 +26,16 @@
 5. **Hosting** → 「始める」を押して有効化（CLI の手順は飛ばして「コンソールに進む」で OK）
 6. **サービスアカウント**: プロジェクトの設定 → サービスアカウント → 「新しい秘密鍵の生成」→ JSON をダウンロード
    （GitHub Actions が Dev へデプロイするための鍵。**リポジトリには絶対に置かない**）
+7. **サービスアカウントにデプロイ権限を付与**（これが無いと CI が `403 The caller does not have permission` で失敗します）
+   1. https://console.cloud.google.com/iam-admin/iam?project=attendance-system-morita-dev を開く
+   2. `firebase-adminsdk-xxxxx@attendance-system-morita-dev.iam.gserviceaccount.com` の行の **鉛筆アイコン（編集）**
+   3. 「別のロールを追加」で次の5つを追加 → 保存
+      - **Firebase Rules 管理者**（`roles/firebaserules.admin`）… firestore.rules のデプロイ
+      - **Cloud Datastore インデックス管理者**（`roles/datastore.indexAdmin`）… firestore.indexes.json のデプロイ
+      - **Firebase Hosting 管理者**（`roles/firebasehosting.admin`）… プレビューURLへのデプロイ
+      - **Cloud Run 閲覧者**（`roles/run.viewer`）… Hosting デプロイ用アクションが参照
+      - **API キー閲覧者**（`roles/serviceusage.apiKeysViewer`）… 同上
+   4. 反映まで 1〜2 分かかることがあります。その後 GitHub Actions の失敗した run を「Re-run jobs」
 
 ### B. Dev 用 API キーの制限（本番と同じ考え方）
 
@@ -143,5 +153,6 @@ npx serve .                          # http://localhost:3000/?tenant=morita-dev
 | Actions が `DEV_FIREBASE_* の Secrets が未設定です` で失敗 | C の Secrets 名が正しいか（大文字・`DEV_` プレフィックス） |
 | ログインで `auth/api-key-not-valid` | B のリファラー制限にプレビューURLのパターンが入っているか |
 | `auth/unauthorized-domain` | Authentication → Settings → 承認済みドメイン にプレビューのドメインを追加 |
+| Actions が `403, The caller does not have permission` で失敗 | 1-A-7 のロール付与ができているか（付与後 1〜2 分待って Re-run） |
 | 画面は出るが `permission-denied` | Actions の「Deploy Firestore rules」ステップが成功しているか |
 | PR にプレビューURLのコメントが付かない | Actions のログ末尾に URL が出ています（フォークからの PR では実行されません） |
