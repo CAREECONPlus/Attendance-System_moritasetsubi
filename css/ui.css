@@ -780,3 +780,15 @@ body.login-screen { background: var(--ground) !important; }
 .modal .connection-result { margin-top: 10px; padding: 10px 12px; border-radius: var(--r-input); font-size: 13px; }
 .modal .readonly-input { background: var(--row-alt); color: var(--ink-muted); }
 .modal .sheets-auth-section, .modal .sheets-config-section { background: transparent; padding: 0; border: none; box-shadow: none; }
+
+/* 履歴が空のとき */
+.ui-history-today { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: var(--surface); border: 1.5px solid var(--primary); border-radius: var(--r-card); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.ui-history-today-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 20px; background: var(--primary-bg); color: var(--primary); }
+.ui-history-today-icon svg { width: 22px; height: 22px; }
+.ui-history-today-text { flex: 1 1 auto; display: flex; flex-direction: column; }
+.ui-history-today-text b { font-weight: 700; }
+.ui-history-today-text small { font-size: 13px; color: var(--ink-muted); }
+.ui-history-today-chevron { flex: 0 0 20px; width: 20px; height: 20px; color: var(--ink-muted); }
+.ui-history-empty { gap: 10px; padding: 36px 20px; background: transparent; }
+.ui-history-empty > svg { width: 40px; height: 40px; color: var(--ink-faint); }
+.ui-history-empty .ui-btn { margin-top: 4px; color: var(--primary); border: 1.5px solid var(--line-strong); border-radius: var(--r-card); }

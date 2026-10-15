@@ -1533,10 +1533,7 @@ function showWelcomeMessage() {
     const recentList = document.getElementById('recent-list');
     if (recentList) {
         recentList.innerHTML = `
-            <div class="ui-empty">
-                <strong>まだ勤怠記録がありません</strong>
-                <span>打刻タブで現場を選んで「出勤を記録する」を押してください</span>
-            </div>
+            ${renderHistoryEmpty(null)}
         `;
     }
 }
@@ -2768,7 +2765,7 @@ async function loadMonthlyRecords(yearMonth) {
             .get();
 
         if (snapshot.empty) {
-            listContainer.innerHTML = '<div class="ui-empty"><strong>この月の記録はありません</strong><span>「記録を追加」から過去の日の記録も入れられます</span></div>';
+            listContainer.innerHTML = renderHistoryEmpty(yearMonth);
             return;
         }
 
@@ -2785,6 +2782,41 @@ async function loadMonthlyRecords(yearMonth) {
         console.error('月次記録読み込みエラー:', error);
         listContainer.innerHTML = '<div class="ui-empty"><strong>記録の読み込みに失敗しました</strong><span>通信状況を確認して、月を選び直してください</span></div>';
     }
+}
+
+/**
+ * 履歴が空のときの表示（モック「履歴が空のとき」）
+ * 今月を見ているときは「今日はまだ記録がありません」カードで打刻画面へ誘導する
+ */
+function renderHistoryEmpty(yearMonth) {
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const ym = yearMonth || thisMonth;
+    const monthNum = parseInt(ym.slice(5, 7), 10);
+    const isThisMonth = ym === thisMonth;
+    const todayCard = isThisMonth ? `
+        <button type="button" class="ui-history-today" onclick="switchEmployeeTab('attendance')">
+            <span class="ui-history-today-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="ui-history-today-text">
+                <b>今日（${now.getMonth() + 1}/${now.getDate()}）はまだ記録がありません</b>
+                <small>打刻画面で「出勤を記録する」を押すとここに並びます</small>
+            </span>
+            <svg class="ui-history-today-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </button>` : '';
+    const hint = isThisMonth
+        ? (now.getDate() <= 7 ? '月が変わったばかりです。先月分は上の月の選択から確認できます。' : '打刻し忘れた日は、下のボタンから追加できます。')
+        : 'この月に記録はありません。打刻し忘れた日は、下のボタンから追加できます。';
+    return `
+        ${todayCard}
+        <div class="ui-empty ui-history-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            <strong>${monthNum}月の記録はまだありません</strong>
+            <span>${hint}</span>
+            <button type="button" class="ui-btn" onclick="openNewAttendanceModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                打刻し忘れた日を追加
+            </button>
+        </div>`;
 }
 
 /**
