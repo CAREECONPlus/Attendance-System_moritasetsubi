@@ -631,3 +631,73 @@ body.login-screen { background: var(--ground) !important; }
   .modal .session-item .btn, .modal .session-item .btn-small { width: auto; }
 }
 .modal .session-item .btn-small { white-space: nowrap; flex: 0 0 auto; }
+
+/* ============================================================
+   管理者: 各タブの共通の見た目（見出し・カード・フィルター・表）
+   ============================================================ */
+#admin-page .tab-content > div > [class$="-header"],
+#admin-page .expense-report-header, #admin-page .monthly-salary-header, #admin-page .settings-header, #admin-page .invite-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 16px; padding: 0; background: none; border: none; box-shadow: none; }
+#admin-page .tab-content h3 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--ink); background: none; -webkit-text-fill-color: initial; border: none; padding: 0; }
+#admin-page .tab-content h4 { margin: 0 0 10px; font-family: var(--font-body); font-size: 15px; font-weight: 700; color: var(--ink); background: none; border: none; padding: 0; }
+#admin-page .expense-report-description, #admin-page .monthly-salary-description, #admin-page .settings-description, #admin-page .invite-description, #admin-page .setting-description { margin: 0; font-size: 13px; color: var(--ink-muted); }
+
+#admin-page .expense-report-filter-section, #admin-page .monthly-salary-filter-section, #admin-page .expense-report-filter-row, #admin-page .monthly-salary-filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+#admin-page .expense-report-filter-section, #admin-page .monthly-salary-filter-section { padding: 14px 16px; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; }
+#admin-page .expense-filter-item, #admin-page .salary-filter-item { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+#admin-page .expense-filter-item label, #admin-page .salary-filter-item label, #admin-page .setting-card label, #admin-page .form-group label { font-size: 12px; font-weight: 700; color: var(--ink-muted); margin: 0; }
+#admin-page .filter-input, #admin-page .expense-filter-item select, #admin-page .expense-filter-item input, #admin-page .salary-filter-item select, #admin-page .salary-filter-item input, #admin-page .search-input { min-height: 42px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); font: inherit; font-size: 14px; background: var(--surface); color: var(--ink); }
+#admin-page .expense-filter-item:has(> .btn), #admin-page .salary-filter-item:has(> .btn) { justify-content: flex-end; }
+#admin-page .monthly-salary-actions, #admin-page .form-actions, #admin-page .header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+#admin-page .expense-report-summary, #admin-page .monthly-salary-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+#admin-page .expense-summary-card, #admin-page .salary-summary-card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; text-align: left; }
+#admin-page .expense-summary-label, #admin-page .salary-summary-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); margin: 0; }
+#admin-page .expense-summary-amount, #admin-page .expense-summary-count, #admin-page .salary-summary-value { font-family: var(--font-display); font-size: 26px; font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; background: none; -webkit-text-fill-color: initial; margin: 0; }
+
+#admin-page .expense-report-table-section, #admin-page .monthly-salary-table-section, #admin-page .invite-history-section, #admin-page .site-list-section { margin-bottom: 20px; }
+#admin-page .expense-table-header, #admin-page .invite-history-header, #admin-page .site-list-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 0 10px; padding: 0; background: none; border: none; }
+#admin-page .expense-table-header h4, #admin-page .invite-history-header h4, #admin-page .site-list-header h4 { margin: 0; }
+
+#admin-page .tab-content table { width: 100%; border-collapse: collapse; font-size: 14px; }
+#admin-page .tab-content thead th { background: var(--row-alt); color: var(--ink-muted); font-size: 12px; font-weight: 700; border-bottom: 2px solid var(--line-strong); padding: 12px 14px; text-align: left; }
+#admin-page .tab-content tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line-row); color: var(--ink); vertical-align: middle; }
+#admin-page .tab-content tbody tr:nth-child(even) td { background: var(--row-alt); }
+#admin-page .tab-content tbody tr:hover td { background: var(--primary-bg); }
+#admin-page .tab-content tfoot td { background: var(--ground); font-weight: 700; border-top: 2px solid var(--line-strong); padding: 11px 14px; }
+#admin-page .attendance-table-container, #admin-page .invite-history-container, #admin-page .site-list-container { background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-card); box-shadow: none; overflow-x: auto; padding: 0; margin: 0; }
+#admin-page .tab-content .no-data, #admin-page .tab-content .loading-cell { padding: 24px; text-align: center; color: var(--ink-muted); font-size: 14px; }
+
+#admin-page .setting-card, #admin-page .invite-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; margin-bottom: 16px; overflow: hidden; }
+#admin-page .setting-card-header, #admin-page .invite-card-header { padding: 14px 16px 0; background: none; border: none; }
+#admin-page .setting-card-header h4, #admin-page .invite-card-header h4 { margin: 0; }
+#admin-page .setting-card-body, #admin-page .invite-card-body { padding: 12px 16px 16px; }
+#admin-page .invite-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
+#admin-page .invite-info-item { padding: 10px 12px; background: var(--row-alt); border-radius: var(--r-input); }
+#admin-page .invite-info-label { font-size: 12px; color: var(--ink-muted); }
+#admin-page .invite-info-value { font-weight: 700; }
+#admin-page .invite-link-input { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); font: inherit; font-size: 14px; }
+#admin-page .export-group { display: flex; flex-direction: column; gap: 6px; }
+#admin-page .export-group-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); }
+#admin-page .btn-large { min-height: 48px; font-size: 15px; }
+#admin-page .btn-danger { background: var(--surface); color: var(--danger-fg); border: 1px solid var(--danger-line); }
+#admin-page .btn-success { background: var(--ok-fg); border-color: var(--ok-fg); color: #fff; }
+#admin-page .badge, #admin-page .status-badge { display: inline-block; padding: 3px 10px; border-radius: var(--r-chip); font-size: 12px; font-weight: 700; background: var(--type-normal-bg); color: var(--type-normal-fg); }
+#admin-page .status-badge.status-active, #admin-page .badge-active { background: var(--ok-bg); color: var(--ok-fg); }
+#admin-page .status-badge.status-inactive, #admin-page .badge-inactive { background: var(--type-absence-bg); color: var(--type-absence-fg); }
+#admin-page .form-group { margin-bottom: 14px; }
+#admin-page .form-group input[type="text"], #admin-page .form-group input[type="number"], #admin-page .form-group input[type="email"], #admin-page .form-group input[type="time"], #admin-page .form-group select, #admin-page .form-group textarea { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); font: inherit; font-size: 14px; background: var(--surface); color: var(--ink); box-sizing: border-box; }
+#admin-page .form-group textarea { min-height: 72px; padding: 10px 12px; }
+#admin-page .form-help, #admin-page .form-hint { font-size: 12px; color: var(--ink-muted); }
+#admin-page .tab-content h3, #admin-page .settings-header h3, #admin-page .setting-card h3 { color: var(--ink) !important; background: none !important; -webkit-text-fill-color: var(--ink) !important; }
+#admin-page .setting-card h3 { font-size: 17px; margin-bottom: 4px; }
+#admin-page .settings-section, #admin-page .settings-section > .setting-card { box-shadow: none; }
+#admin-page .expense-report-table-section, #admin-page .invite-history-section, #admin-page .monthly-salary-table-section, #admin-page .site-list-section, #admin-page .invite-generator, #admin-page .generated-invite-section { background: none; padding: 0; border: none; box-shadow: none; }
+#admin-page .expense-table-header, #admin-page .invite-history-header, #admin-page .site-list-header { background: none !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+#admin-page .salary-filter-item select, #admin-page .salary-filter-item input, #admin-page .expense-filter-item select, #admin-page .expense-filter-item input { min-width: 170px; }
+#admin-page .monthly-salary-actions { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 16px; margin: 16px 0; box-shadow: none; }
+#admin-page .export-group { background: var(--row-alt); border: 1px solid var(--line); border-radius: var(--r-input); padding: 12px; box-shadow: none; }
+#admin-page .sheets-connection-status { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; }
+#admin-page .tab-content h2, #admin-page .settings-header h2 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--ink) !important; background: none !important; -webkit-text-fill-color: var(--ink) !important; border: none; padding: 0; }
+#admin-page .expense-table-header, #admin-page .expense-report-table-section > .expense-table-header { background: transparent !important; background-color: transparent !important; background-image: none !important; }
+#admin-page .expense-report-table-section { background: transparent !important; }
+#admin-page.page, #admin-page { background: var(--ground) !important; }
