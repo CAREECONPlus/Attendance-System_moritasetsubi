@@ -866,11 +866,28 @@ async function ensureTenantInfo(tenantId) {
 async function handleEmployeeRegister(e) {
     e.preventDefault();
     
-    const name = document.getElementById('register-name')?.value?.trim();
+    // 姓・名・ふりがな（新UI）。旧UIの #register-name にも「姓 名」を入れて互換を保つ
+    const lastName = document.getElementById('register-last-name')?.value?.trim() || '';
+    const firstName = document.getElementById('register-first-name')?.value?.trim() || '';
+    const lastNameKana = document.getElementById('register-last-name-kana')?.value?.trim() || '';
+    const firstNameKana = document.getElementById('register-first-name-kana')?.value?.trim() || '';
+    const hasNameParts = !!document.getElementById('register-last-name');
+    const nameInput = document.getElementById('register-name');
+    if (hasNameParts && nameInput) nameInput.value = `${lastName} ${firstName}`.trim();
+    const name = hasNameParts ? `${lastName} ${firstName}`.trim() : nameInput?.value?.trim();
     const email = document.getElementById('register-email')?.value?.trim();
     const password = document.getElementById('register-password')?.value?.trim();
     const passwordConfirm = document.getElementById('register-password-confirm')?.value?.trim();
     const inviteToken = window.currentInviteToken;
+    const nameProfile = hasNameParts ? { lastName, firstName, lastNameKana, firstNameKana, displayNameKana: `${lastNameKana} ${firstNameKana}` } : null;
+    if (hasNameParts && (!lastName || !firstName || !lastNameKana || !firstNameKana)) {
+        showRegisterError('姓・名・ふりがなをすべて入力してください');
+        return;
+    }
+    if (hasNameParts && !/^[ぁ-ゖー\s　]+$/.test(lastNameKana + firstNameKana)) {
+        showRegisterError('ふりがなはひらがなで入力してください');
+        return;
+    }
     
     // バリデーション
     if (!name || !email || !password || !passwordConfirm) {
@@ -904,7 +921,7 @@ async function handleEmployeeRegister(e) {
     let result = null;
     try {
         // 招待トークンを使って従業員登録
-        result = await registerEmployeeWithInvite(email, password, name, inviteToken);
+        result = await registerEmployeeWithInvite(email, password, name, inviteToken, nameProfile);
         
         if (result.success) {
             // 登録成功メッセージを表示
@@ -920,6 +937,7 @@ async function handleEmployeeRegister(e) {
             
             // フォームをリセット
             document.getElementById('register-name').value = '';
+            ['register-last-name', 'register-first-name', 'register-last-name-kana', 'register-first-name-kana'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = ''; });
             document.getElementById('register-email').value = '';
             document.getElementById('register-password').value = '';
             document.getElementById('register-password-confirm').value = '';
@@ -973,7 +991,7 @@ async function handleEmployeeRegister(e) {
         // ローディング解除（成功時以外）
         if (submitBtn && !result?.success) {
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText || '登録';
+            submitBtn.textContent = originalText || '登録して始める';
             submitBtn.style.backgroundColor = '';
             submitBtn.style.borderColor = '';
         }
@@ -1027,3 +1045,34 @@ function showRegisterSuccess(message) {
 }
 
 
+
+
+/**
+ * パスワード再設定メールを送る（ログイン画面の「パスワードをお忘れですか？」）
+ */
+async function handlePasswordReset() {
+    const current = document.getElementById('email')?.value?.trim() || '';
+    let email = current;
+    if (window.UI && typeof UI.prompt === 'function') {
+        email = await UI.prompt({ title: 'パスワードの再設定', message: '登録しているメールアドレスに、再設定用のリンクを送ります。', label: 'メールアドレス', type: 'email', value: current, required: true, confirmText: '送る', autocomplete: 'email' });
+        if (email == null) return;
+    } else if (!email) {
+        email = window.prompt('登録しているメールアドレスを入力してください') || '';
+    }
+    email = String(email).trim();
+    if (!email) return;
+    try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        alert('再設定用のメールを送りました。届いたメールのリンクから新しいパスワードを設定してください');
+    } catch (error) {
+        console.error('Password reset error:', error);
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+            alert('このメールアドレスは登録されていません');
+        } else if (error.code === 'auth/too-many-requests') {
+            alert('しばらく時間をおいてからもう一度お試しください');
+        } else {
+            alert('再設定メールを送れませんでした。時間をおいてもう一度お試しください');
+        }
+    }
+}
+window.handlePasswordReset = handlePasswordReset;

@@ -480,8 +480,10 @@ function updateDateTime() {
     const dateEl = getElement('current-date');
     const timeEl = getElement('current-time');
     
-    if (dateEl) dateEl.textContent = now.toLocaleDateString('ja-JP', dateOptions);
-    if (timeEl) timeEl.textContent = now.toLocaleTimeString('ja-JP', timeOptions);
+    // 新UI: トップバーは「10月15日（水）」、時計は「07:52」
+    const weekdayJa = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+    if (dateEl) dateEl.textContent = `${now.getMonth() + 1}月${now.getDate()}日（${weekdayJa}）`;
+    if (timeEl) timeEl.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 /**

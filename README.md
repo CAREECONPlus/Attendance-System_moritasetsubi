@@ -79,6 +79,15 @@ npm run build:config
 ### 3. Firestore セキュリティルール
 `firestore.rules`をFirebaseコンソールにデプロイ
 
+## 🧪 開発環境（Dev）での確認
+
+`main` へのマージ＝本番公開なので、確認は **Dev 用 Firebase プロジェクト** で行います。
+
+- **PR を開くと自動でプレビューURLが発行**されます（Dev プロジェクトの Hosting、7日で失効）
+- 手元で動かす場合は `.env.dev` を用意して `node scripts/build-config.js --env dev --local` → `npx serve`
+
+セットアップ手順・Secrets 一覧は [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md) を参照してください。
+
 ## 📝 使用方法
 
 ### 新規管理者登録フロー
