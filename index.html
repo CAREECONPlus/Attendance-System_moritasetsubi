@@ -2911,32 +2911,44 @@
         <div class="modal-overlay" onclick="closeAccountModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3>👤 アカウント設定</h3>
-                <button class="modal-close-btn" onclick="closeAccountModal()">×</button>
+                <h3>アカウント</h3>
+                <button type="button" class="modal-close-btn" onclick="closeAccountModal()" aria-label="閉じる">×</button>
             </div>
-            <div class="modal-body">
-                <div class="account-section">
-                    <div class="account-section-header">
-                        <h4>📱 ログイン中の端末</h4>
-                        <button class="btn btn-secondary btn-small" onclick="refreshSessionList()">🔄 更新</button>
+            <div class="modal-body ui-account">
+                <section class="ui-account-user">
+                    <span class="ui-account-avatar" id="account-avatar" aria-hidden="true">？</span>
+                    <div>
+                        <span class="ui-account-name" id="account-user-name">—</span>
+                        <span class="ui-account-sub"><span id="account-user-email"></span>　<span id="account-user-role"></span></span>
                     </div>
-                    <p class="account-section-description">
-                        このアカウントでログインしている端末の一覧です。心当たりのない端末や、紛失した端末はここからログアウトさせられます。
-                    </p>
+                </section>
+
+                <section class="account-section ui-account-section">
+                    <div class="account-section-header ui-account-section-head">
+                        <h4>ログイン中の端末</h4>
+                        <button type="button" class="ui-link" onclick="refreshSessionList()">更新</button>
+                    </div>
                     <ul id="session-list" class="session-list">
                         <li class="session-item session-loading">読み込み中...</li>
                     </ul>
                     <div class="account-actions">
-                        <button class="btn btn-secondary" onclick="logoutOtherDevices()">この端末以外をすべてログアウト</button>
-                        <button class="btn btn-danger" onclick="logoutAllDevices()">すべての端末からログアウト（この端末も含む）</button>
+                        <button type="button" class="ui-btn ui-btn-block" onclick="logoutOtherDevices()">この端末以外をすべてログアウト</button>
                     </div>
-                    <div class="account-actions account-actions-self">
-                        <button class="btn btn-secondary" onclick="UI.logoutFromModal()">この端末からログアウト</button>
-                    </div>
-                    <p class="account-note">
-                        ※ アプリを開いている端末は数秒以内に、閉じている端末は次に開いたときにログアウトされます。
-                    </p>
-                </div>
+                    <p class="account-note ui-hint">心当たりのない端末があれば、ログアウトさせたうえでパスワードを変更してください。開いている端末は数秒で、閉じている端末は次に開いたときにログアウトされます。</p>
+                </section>
+
+                <section class="ui-account-section">
+                    <h4>パスワード</h4>
+                    <button type="button" class="ui-row-btn ui-row-btn-plain" onclick="changePasswordFromAccount()">
+                        <span><b>パスワードを変更</b><small>変更すると、他の端末はすべてログアウトされます</small></span>
+                        <svg class="ui-row-btn-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                    </button>
+                </section>
+
+                <section class="ui-account-section ui-account-bottom">
+                    <button type="button" class="ui-btn ui-btn-danger ui-btn-lg ui-btn-block" onclick="UI.logoutFromModal()">この端末からログアウト</button>
+                    <button type="button" class="ui-link ui-center" onclick="logoutAllDevices()">すべての端末からログアウト（この端末も含む）</button>
+                </section>
             </div>
         </div>
     </div>

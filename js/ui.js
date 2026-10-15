@@ -276,6 +276,51 @@
     });
   }
 
+  // ---------- アカウント（モーダル）: ユーザーカードとパスワード変更 ----------
+  function fillAccountCard() {
+    const u = window.currentUser || {};
+    const name = u.displayName || (u.email ? u.email.split('@')[0] : '') || '—';
+    const roleLabel = { employee: '従業員', admin: '管理者', super_admin: 'スーパー管理者' }[u.role] || '';
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    set('account-user-name', name);
+    set('account-user-email', u.email || '');
+    set('account-user-role', roleLabel);
+    set('account-avatar', String(name).trim().charAt(0) || '？');
+  }
+
+  async function changePasswordFromAccount() {
+    const user = firebase.auth().currentUser;
+    if (!user || !user.email) { toast('ログインし直してからお試しください', 'error'); return; }
+    const current = await promptDialog({ title: 'パスワードを変更', message: '確認のため、今のパスワードを入力してください。', label: '今のパスワード', type: 'password', required: true, confirmText: '次へ', autocomplete: 'current-password' });
+    if (current == null) return;
+    const next = await promptDialog({ title: '新しいパスワード', message: '6文字以上で入力してください。変更すると、他の端末はすべてログアウトされます。', label: '新しいパスワード', type: 'password', required: true, confirmText: '変更する', autocomplete: 'new-password' });
+    if (next == null) return;
+    if (next.length < 6) { toast('パスワードは6文字以上で入力してください', 'error'); return; }
+    try {
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, current);
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(next);
+      if (window.sessionManager && typeof sessionManager.logoutOtherSessions === 'function') {
+        try { await sessionManager.logoutOtherSessions(); if (typeof window.refreshSessionList === 'function') window.refreshSessionList(); } catch (e) { console.warn('他の端末のログアウトに失敗:', e); }
+      }
+      toast('パスワードを変更しました。他の端末はログアウトされます', 'success');
+    } catch (e) {
+      console.error('パスワード変更エラー:', e);
+      if (e && (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials')) toast('今のパスワードが違います', 'error');
+      else if (e && e.code === 'auth/weak-password') toast('そのパスワードは使えません。別のものにしてください', 'error');
+      else if (e && e.code === 'auth/too-many-requests') toast('しばらく時間をおいてからもう一度お試しください', 'error');
+      else toast('パスワードを変更できませんでした', 'error');
+    }
+  }
+
+  function wrapAccountModal() {
+    const orig = window.openAccountModal;
+    if (typeof orig !== 'function' || orig.__uiWrapped) return;
+    const wrapped = function () { fillAccountCard(); return orig.apply(this, arguments); };
+    wrapped.__uiWrapped = true;
+    window.openAccountModal = wrapped;
+  }
+
   // ---------- 初期化 ----------
   function init() {
     // alert → トースト（既存コードの 190 箇所をそのまま活かす）
@@ -291,9 +336,11 @@
     initPunchScreen();
     initAdminSidebar();
     bindPasswordToggles(document);
+    wrapAccountModal();
   }
 
-  window.UI = { toast, confirm: confirmDialog, prompt: promptDialog, selectTypeValue, initTypeGroups, updateClockCaption, syncSiteChips, initPunchScreen, initAdminSidebar, logoutFromModal, bindPasswordToggles, escapeHtml };
+  window.UI = { toast, confirm: confirmDialog, prompt: promptDialog, selectTypeValue, initTypeGroups, updateClockCaption, syncSiteChips, initPunchScreen, initAdminSidebar, logoutFromModal, bindPasswordToggles, fillAccountCard, changePasswordFromAccount, escapeHtml };
+  window.changePasswordFromAccount = changePasswordFromAccount;
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

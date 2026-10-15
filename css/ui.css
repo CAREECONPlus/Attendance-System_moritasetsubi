@@ -594,3 +594,40 @@ body.login-screen { background: var(--ground) !important; }
 @media (min-width: 600px) {
   #login-page .login-container.ui-login { max-width: 460px; }
 }
+
+/* ============================================================
+   アカウント（モーダル）
+   ============================================================ */
+.ui-account { display: flex; flex-direction: column; gap: 18px; }
+.ui-account-user { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--row-alt); border: 1px solid var(--line); border-radius: var(--r-card); }
+.ui-account-user > div { display: flex; flex-direction: column; min-width: 0; }
+.ui-account-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 24px; background: var(--primary-bg); color: var(--primary-dk); font-family: var(--font-display); font-weight: 900; font-size: 18px; }
+.ui-account-name { font-weight: 700; font-size: 17px; }
+.ui-account-sub { font-size: 13px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; }
+.ui-account-section { display: flex; flex-direction: column; gap: 8px; }
+.ui-account-section h4 { margin: 0 4px; font-family: var(--font-body); font-size: 15px; font-weight: 700; color: var(--ink); }
+.ui-account-section-head { display: flex; align-items: center; justify-content: space-between; }
+.modal .session-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+.modal .session-item { display: flex; align-items: center; gap: 12px; padding: 12px 6px 12px 16px; border-bottom: 1px solid var(--line-row); background: var(--surface); }
+.modal .session-item:last-child { border-bottom: none; }
+.modal .session-item.current { background: var(--row-alt); padding-right: 16px; }
+.modal .session-item.session-loading { padding: 16px; justify-content: center; color: var(--ink-muted); font-size: 14px; }
+.modal .session-icon { display: inline-flex; flex: 0 0 22px; width: 22px; height: 22px; color: var(--ink-muted); }
+.modal .session-item.current .session-icon { color: var(--primary); }
+.modal .session-icon svg { width: 22px; height: 22px; }
+.modal .session-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.modal .session-device { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--ink); }
+.modal .session-current-badge { padding: 1px 8px; background: var(--primary); color: #fff; border-radius: var(--r-pill); font-size: 11px; font-weight: 700; }
+.modal .session-meta { font-size: 13px; color: var(--ink-muted); }
+.modal .session-item .btn-small { min-height: 40px; padding: 0 12px; background: var(--surface); color: var(--primary); border: 1px solid var(--line-strong); border-radius: var(--r-ctl); font: inherit; font-size: 13px; font-weight: 700; box-shadow: none; }
+.modal .account-actions { display: flex; flex-direction: column; gap: 8px; }
+.modal .account-note { margin: 0 4px; }
+.ui-row-btn-plain { background: var(--surface); justify-content: space-between; }
+.ui-row-btn-plain > span { flex: 1 1 auto; }
+.ui-row-btn-chevron { width: 20px !important; height: 20px !important; color: var(--ink-muted) !important; }
+.ui-account-bottom { gap: 4px; margin-top: 4px; }
+@media (max-width: 768px) {
+  .modal .session-item { flex-direction: row; align-items: center; }
+  .modal .session-item .btn, .modal .session-item .btn-small { width: auto; }
+}
+.modal .session-item .btn-small { white-space: nowrap; flex: 0 0 auto; }
