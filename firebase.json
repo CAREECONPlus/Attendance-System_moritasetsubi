@@ -7,8 +7,18 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "package.json",
+      "package-lock.json",
+      "LICENSE",
+      "*.md",
+      ".env*",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "scripts/**",
+      "docs/**",
+      "js/config.example.js"
     ]
   }
 }

@@ -27,3 +27,8 @@ Thumbs.db
 # Node.js（もし使用する場合）
 node_modules/
 npm-debug.log*
+# 環境ごとのFirebase設定（手元用: scripts/build-config.js --env dev --local で生成）
+js/config.local.js
+.env.*
+!.env.example
+!.env.dev.example

@@ -24,6 +24,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # FIREBASE_* Secrets が登録されていれば本番設定を生成する。
+      # 未登録の間はリポジトリ内の js/config.js をそのまま使う（移行期間用）。
+      - name: Generate Firebase config from secrets (optional)
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+        run: |
+          if [ -n "$FIREBASE_API_KEY" ]; then
+            node scripts/build-config.js
+          else
+            echo "FIREBASE_* secrets が未設定のため、リポジトリ内の js/config.js を使用します"
+          fi
+          # 本番ではローカル上書きなし（404 を避けるため空ファイルを置く）
+          echo "// production: no local override" > js/config.local.js
+
       - name: Create Google API config from secrets
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
