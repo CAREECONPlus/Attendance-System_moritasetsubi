@@ -913,9 +913,9 @@ function setupSiteSelection() {
 
 // 現場名取得関数（管理者設定現場のみ）
 const WORK_TYPE_LABELS = {
-    normal: '通常',
+    normal: '出勤',
     holiday_work: '休日出勤',
-    night_only: '夜間',
+    night_only: '夜間のみ',
     through_night: '通し夜間',
     paid_leave: '有給休暇',
     compensatory_leave: '代休',
@@ -1098,12 +1098,12 @@ async function handleClockIn() {
         // 勤務の種類をリセット（次回は「通常」から）
         resetWorkTypeSelection();
 
-        const typeLabel = WORK_TYPE_LABELS[workType] || '通常';
+        const typeLabel = WORK_TYPE_LABELS[workType] || '出勤';
         let alertMsg;
         if (isLeaveType) {
             alertMsg = `今日を「${typeLabel}」として記録しました`;
         } else {
-            alertMsg = `出勤を記録しました\n${siteName}　${typeLabel}　08:00〜17:00（休憩 ${breakMinutes}分）`;
+            alertMsg = `勤怠を登録しました\n${siteName}　${typeLabel}　08:00〜17:00（休憩 ${breakMinutes}分）`;
         }
 
         alert(alertMsg);
@@ -1434,7 +1434,7 @@ function updateStatusDisplay(status, attendanceData, breakData = null) {
 
             case 'completed': {
                 const leaveLabel = ['paid_leave', 'compensatory_leave', 'absence'].includes(attendanceData.specialWorkType)
-                    ? WORK_TYPE_LABELS[attendanceData.specialWorkType]
+                    ? ({ paid_leave: '有給休暇', compensatory_leave: '代休', absence: '欠勤' })[attendanceData.specialWorkType]
                     : null;
                 const timeText = leaveLabel
                     ? leaveLabel
@@ -2803,7 +2803,7 @@ function renderAttendanceRecord(recordId, data) {
     let workTypeClass = '';
 
     if (data.specialWorkType === 'paid_leave') {
-        workTypeLabel = '有給休暇';
+        workTypeLabel = '有給';
         workTypeClass = 'type-leave';
     } else if (data.specialWorkType === 'compensatory_leave') {
         workTypeLabel = '代休';
@@ -2821,10 +2821,10 @@ function renderAttendanceRecord(recordId, data) {
             || data.specialWorkType === 'night_only'
             || data.specialWorkType === 'night_work'
             || data.isNightWork) {
-        workTypeLabel = '夜間';
+        workTypeLabel = '夜間のみ';
         workTypeClass = 'type-night';
     } else {
-        workTypeLabel = '通常';
+        workTypeLabel = '出勤';
         workTypeClass = 'type-normal';
     }
 
@@ -2872,7 +2872,7 @@ async function openEmployeeAttendanceModal(recordId) {
 
         // 編集モードを設定
         document.getElementById('emp-attendance-mode').value = 'edit';
-        document.getElementById('emp-modal-title').textContent = '記録の編集';
+        document.getElementById('emp-modal-title').textContent = '勤怠記録の編集';
         document.getElementById('emp-date-group').style.display = 'none';
 
         // フォームに値をセット
@@ -2955,7 +2955,7 @@ async function openNewAttendanceModal() {
     try {
         // 新規追加モードを設定
         document.getElementById('emp-attendance-mode').value = 'add';
-        document.getElementById('emp-modal-title').textContent = '記録を追加';
+        document.getElementById('emp-modal-title').textContent = '勤怠記録の追加';
         document.getElementById('emp-date-group').style.display = 'block';
 
         // フォームをリセット

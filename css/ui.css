@@ -701,3 +701,82 @@ body.login-screen { background: var(--ground) !important; }
 #admin-page .expense-table-header, #admin-page .expense-report-table-section > .expense-table-header { background: transparent !important; background-color: transparent !important; background-image: none !important; }
 #admin-page .expense-report-table-section { background: transparent !important; }
 #admin-page.page, #admin-page { background: var(--ground) !important; }
+
+/* ============================================================
+   テナント管理（スーパー管理者）
+   ============================================================ */
+#tenant-management-page.page, #tenant-management-page { background: var(--ground) !important; min-height: 100vh; }
+#tenant-management-page .container.ui-admin { display: flex; flex-wrap: wrap; max-width: none; margin: 0; padding: 0; min-height: 100vh; }
+#tenant-management-page .admin-main { flex: 999 1 560px; min-width: 0; max-width: none; margin: 0; padding: 24px 28px 32px; background: transparent; display: flex; flex-direction: column; gap: 16px; }
+.ui-sidebar-brand-ops { gap: 10px; }
+.ui-sidebar-mark { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: var(--r-ctl); background: #FFCE2C; color: var(--ink); font-family: var(--font-display); font-weight: 900; font-size: 15px; }
+.ui-sidebar-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.ui-sidebar-brand-text span { font-size: 11px; color: #AEB8E0; }
+.ui-sidebar-brand-text strong { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.ui-tenant-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.ui-tenant-head > div { display: flex; flex-direction: column; gap: 2px; }
+.ui-tenant-title { margin: 0; font-size: 22px; font-weight: 900; }
+.ui-tenant-subtitle { margin: 0 4px; font-family: var(--font-body); font-size: 16px; font-weight: 700; }
+.ui-tenant-table table { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ui-tenant-table thead th { background: var(--row-alt); color: var(--ink-muted); font-size: 12px; font-weight: 700; border-bottom: 2px solid var(--line-strong); padding: 12px 14px; text-align: left; }
+.ui-tenant-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line-row); vertical-align: middle; }
+.ui-tenant-table tbody tr:last-child td { border-bottom: none; }
+.ui-tenant-table tbody tr:nth-child(even) td { background: var(--row-alt); }
+.ui-tenant-table th.num, .ui-tenant-table td.num { text-align: right; }
+.ui-tenant-table .ui-tenant-name { font-weight: 700; }
+.ui-tenant-table tr.is-inactive td { color: var(--ink-muted); }
+.ui-tenant-actions { text-align: right; white-space: nowrap; }
+.ui-tenant-actions .ui-btn { min-height: 34px; margin-left: 6px; }
+.ui-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 13px; color: var(--ink-muted); }
+.ui-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.ui-status .ui-dot { margin: 0; }
+.ui-status.is-on { color: var(--ok-fg); } .ui-status.is-on .ui-dot { background: var(--ok-dot); }
+.ui-status.is-off { color: var(--ink-muted); } .ui-status.is-off .ui-dot { background: var(--ink-faint); }
+#tenant-management-page .loading-message { padding: 24px; text-align: center; color: var(--ink-muted); background: var(--surface); border: 1.5px dashed var(--line-strong); border-radius: var(--r-card); }
+
+/* ============================================================
+   CSV プレビュー
+   ============================================================ */
+.ui-csv-overlay { padding: 20px; }
+.ui-csv-dialog { display: flex; flex-direction: column; width: 920px; max-width: 100%; max-height: 100%; background: var(--surface); border-radius: var(--r-sheet); box-shadow: var(--shadow-dialog); overflow: hidden; }
+.ui-csv-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.ui-csv-head > div { display: flex; flex-direction: column; min-width: 0; }
+.ui-csv-head h2 { margin: 0; font-size: 18px; font-weight: 900; }
+.ui-csv-meta { font-size: 13px; color: var(--ink-muted); }
+.ui-csv-warn { display: flex; align-items: flex-start; gap: 10px; margin: 16px 22px 0; padding: 10px 14px; background: var(--warn-bg); border-radius: var(--r-input); color: var(--warn-fg); font-size: 13px; }
+.ui-csv-warn svg { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px; }
+.ui-csv-table { flex: 1 1 auto; min-height: 0; overflow: auto; margin: 12px 22px 0; border: 1px solid var(--line-strong); border-radius: var(--r-input); }
+.ui-csv-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ui-csv-table thead th { position: sticky; top: 0; background: var(--row-alt); color: var(--ink-muted); font-size: 12px; font-weight: 700; padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--line-strong); white-space: nowrap; }
+.ui-csv-table tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line-row); white-space: nowrap; }
+.ui-csv-table tbody td.num { text-align: right; }
+.ui-csv-table tbody tr:nth-child(even) td { background: var(--row-alt); }
+.ui-csv-table tbody tr:last-child td { border-bottom: none; }
+.ui-csv-foot-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 22px 0; font-size: 12px; color: var(--ink-muted); }
+.ui-csv-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 22px; margin-top: 12px; border-top: 1px solid var(--line); }
+.ui-csv-skip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); }
+.ui-csv-skip input { width: 18px; height: 18px; accent-color: var(--primary); }
+.ui-csv-buttons { display: flex; gap: 8px; }
+@media (max-width: 600px) {
+  .ui-csv-overlay { padding: 0; align-items: flex-end; }
+  .ui-csv-dialog { border-radius: 20px 20px 0 0; max-height: 92vh; }
+  .ui-csv-actions { flex-direction: column; align-items: stretch; }
+  .ui-csv-buttons { flex-direction: column-reverse; }
+  .ui-csv-buttons .ui-btn { width: 100%; }
+}
+
+/* Google Sheets 設定モーダル・従業員編集モーダル */
+.modal .sheets-auth-section h4, .modal .sheets-config-section h4 { margin: 0 0 10px; font-size: 15px; font-weight: 700; color: var(--ink); }
+.modal .sheets-config-section { margin-top: 16px; }
+.modal .auth-status-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--row-alt); border: 1px solid var(--line); border-radius: var(--r-input); }
+.modal .auth-status-card .status-icon { display: none; }
+.modal .auth-status-card .status-info { flex: 1 1 auto; display: flex; flex-direction: column; }
+.modal .auth-status-card .status-info span { font-weight: 700; }
+.modal .auth-status-card .status-info p { margin: 0; font-size: 13px; color: var(--ink-muted); }
+.modal .auth-status-card .btn { min-height: 40px; padding: 0 14px; border-radius: var(--r-ctl); font-weight: 700; }
+.modal .help-text { margin: 6px 0 0; font-size: 12px; color: var(--ink-muted); line-height: 1.5; }
+.modal .button-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.modal .button-group .btn { min-height: 40px; padding: 0 14px; border-radius: var(--r-ctl); font-weight: 700; background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); }
+.modal .connection-result { margin-top: 10px; padding: 10px 12px; border-radius: var(--r-input); font-size: 13px; }
+.modal .readonly-input { background: var(--row-alt); color: var(--ink-muted); }
+.modal .sheets-auth-section, .modal .sheets-config-section { background: transparent; padding: 0; border: none; box-shadow: none; }

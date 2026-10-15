@@ -74,7 +74,7 @@
       const total = items.reduce((s, e) => s + (Number(e.amount) || 0), 0);
       setSummary(total, items.length);
       if (!items.length) {
-        host.innerHTML = `<div class="ui-empty"><strong>${site ? 'この現場の経費はありません' : 'この月の経費はまだありません'}</strong><span>下の「経費を登録」から記録できます</span></div>`;
+        host.innerHTML = `<div class="ui-empty"><strong>${site ? 'この現場の経費はありません' : 'この月の経費はまだありません'}</strong><span>下の「経費を追加」から記録できます</span></div>`;
         return;
       }
       host.innerHTML = items.map((e) => `
@@ -96,9 +96,9 @@
   function afterOpen() {
     const id = (document.getElementById('expense-id') || {}).value || '';
     const title = document.getElementById('expense-modal-title');
-    if (title) title.textContent = id ? '経費を編集' : '経費を登録';
+    if (title) title.textContent = id ? '経費を編集' : '経費を追加';
     const submit = document.getElementById('expense-submit-btn');
-    if (submit) submit.textContent = id ? '保存する' : '登録する';
+    if (submit) submit.textContent = '保存';
     const del = document.getElementById('expense-delete-btn');
     if (del) del.classList.toggle('ui-hidden', !id);
     const cat = document.getElementById('expense-category');

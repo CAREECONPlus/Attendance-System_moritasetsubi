@@ -178,7 +178,7 @@
   }
 
   // ---------- 打刻画面: 主ボタンの説明文と現場チップの選択表示 ----------
-  const TYPE_LABEL = { normal: '通常', holiday_work: '休日出勤', night_only: '夜間', through_night: '通し夜間', paid_leave: '有給休暇', compensatory_leave: '代休', absence: '欠勤' };
+  const TYPE_LABEL = { normal: '出勤', holiday_work: '休日出勤', night_only: '夜間のみ', through_night: '通し夜間', paid_leave: '有給休暇', compensatory_leave: '代休', absence: '欠勤' };
   const LEAVE_TYPES = ['paid_leave', 'compensatory_leave', 'absence'];
 
   function updateClockCaption() {
