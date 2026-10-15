@@ -259,6 +259,23 @@
     if (btn) btn.click();
   }
 
+  // ---------- パスワードの表示／非表示 ----------
+  function bindPasswordToggles(root) {
+    (root || document).querySelectorAll('.ui-pw-toggle[data-for]').forEach((btn) => {
+      if (btn.dataset.uiBound) return;
+      btn.dataset.uiBound = '1';
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.for);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'パスワードを隠す' : 'パスワードを表示');
+        btn.classList.toggle('is-on', show);
+      });
+    });
+  }
+
   // ---------- 初期化 ----------
   function init() {
     // alert → トースト（既存コードの 190 箇所をそのまま活かす）
@@ -273,9 +290,10 @@
     initTypeGroups(document);
     initPunchScreen();
     initAdminSidebar();
+    bindPasswordToggles(document);
   }
 
-  window.UI = { toast, confirm: confirmDialog, prompt: promptDialog, selectTypeValue, initTypeGroups, updateClockCaption, syncSiteChips, initPunchScreen, initAdminSidebar, logoutFromModal, escapeHtml };
+  window.UI = { toast, confirm: confirmDialog, prompt: promptDialog, selectTypeValue, initTypeGroups, updateClockCaption, syncSiteChips, initPunchScreen, initAdminSidebar, logoutFromModal, bindPasswordToggles, escapeHtml };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

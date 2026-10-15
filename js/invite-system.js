@@ -237,6 +237,14 @@ async function initInviteSystem() {
             
             // 招待トークンをグローバル変数として保存
             window.currentInviteToken = inviteToken;
+
+            // 新UI: 見出しと案内文を登録向けに
+            const heading = document.getElementById('login-heading');
+            const sub = document.getElementById('login-subheading');
+            const note = document.getElementById('login-note');
+            if (heading) heading.textContent = '勤怠管理に参加する';
+            if (sub) sub.textContent = '管理者から招待されています。名前とパスワードを決めるだけで始められます。';
+            if (note) note.innerHTML = 'すでに登録している方は、招待リンクを使わずに <a href="./" class="ui-link">ログイン</a>';
             
         } else {
             // 無効な招待リンクの場合 - エラー表示してログインフォーム表示

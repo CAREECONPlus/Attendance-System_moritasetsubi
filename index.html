@@ -1761,69 +1761,94 @@
 </head>
 <body>
     <!-- ログインページ -->
-    <div id="login-page" class="page">
-        <div class="login-container">
-            <div class="login-card">
-                <h1>勤怠管理システム</h1>
-                
-                <!-- 招待情報表示 -->
+    <div id="login-page" class="page ui">
+        <div class="login-container ui-login">
+            <main class="ui-login-main">
+                <div class="ui-login-brand">
+                    <img src="images/morita-logo.png" alt="株式会社 森田設備" class="ui-login-logo">
+                    <div class="ui-login-title">
+                        <h1 id="login-heading">勤怠管理</h1>
+                        <span id="login-subheading">出勤・退勤の記録と経費の申請</span>
+                    </div>
+                </div>
+
+                <!-- 招待情報表示（invite-system.js が表示を切り替える） -->
                 <div id="invite-info" class="invite-info hidden">
                     <div class="invite-welcome">
-                        <h2>従業員登録</h2>
-                        <p>「<span id="company-name-display"></span>」への招待を受けました</p>
+                        <span class="ui-invite-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg></span>
+                        <div>
+                            <h2>招待リンクは有効です</h2>
+                            <p>「<span id="company-name-display"></span>」に従業員として登録します</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- 従業員登録フォーム -->
-                <form id="registerForm" class="hidden">
-                    <div class="form-group">
-                        <label for="register-name">氏名 <span class="required">*</span></label>
-                        <input type="text" id="register-name" name="name" required maxlength="50">
+                <form id="registerForm" class="login-card ui-login-card hidden" autocomplete="on">
+                    <input type="hidden" id="register-name" name="name">
+                    <div class="ui-row-2">
+                        <div class="ui-field">
+                            <label class="ui-label" for="register-last-name">姓 <span class="required">必須</span></label>
+                            <input class="ui-input" type="text" id="register-last-name" name="lastName" required maxlength="25" autocomplete="family-name" placeholder="林">
+                        </div>
+                        <div class="ui-field">
+                            <label class="ui-label" for="register-first-name">名 <span class="required">必須</span></label>
+                            <input class="ui-input" type="text" id="register-first-name" name="firstName" required maxlength="25" autocomplete="given-name" placeholder="武生">
+                        </div>
+                        <div class="ui-field">
+                            <label class="ui-label" for="register-last-name-kana">ふりがな（姓） <span class="required">必須</span></label>
+                            <input class="ui-input" type="text" id="register-last-name-kana" name="lastNameKana" required maxlength="30" autocomplete="off" placeholder="はやし">
+                        </div>
+                        <div class="ui-field">
+                            <label class="ui-label" for="register-first-name-kana">ふりがな（名） <span class="required">必須</span></label>
+                            <input class="ui-input" type="text" id="register-first-name-kana" name="firstNameKana" required maxlength="30" autocomplete="off" placeholder="たけお">
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-email">メールアドレス <span class="required">*</span></label>
-                        <input type="email" id="register-email" name="email" autocomplete="email" required>
+                    <span class="ui-hint">勤怠表や給与データに「姓 名」の形で載ります。ふりがなは並び順と給与ソフトの取り込みに使います</span>
+                    <div class="ui-field">
+                        <label class="ui-label" for="register-email">メールアドレス <span class="required">必須</span></label>
+                        <input class="ui-input" type="email" id="register-email" name="email" autocomplete="email" inputmode="email" required placeholder="example@gmail.com">
+                        <span class="ui-hint">ログインに使います。普段使っているもので構いません</span>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-password">パスワード <span class="required">*</span></label>
-                        <input type="password" id="register-password" name="password" autocomplete="new-password" required minlength="6">
-                        <small class="form-hint">6文字以上で入力してください</small>
+                    <div class="ui-field">
+                        <label class="ui-label" for="register-password">パスワード <span class="required">必須</span></label>
+                        <div class="ui-pw">
+                            <input class="ui-input" type="password" id="register-password" name="password" autocomplete="new-password" required minlength="6" placeholder="6文字以上">
+                            <button type="button" class="ui-pw-toggle" data-for="register-password" aria-label="パスワードを表示" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                        <span class="ui-hint">6文字以上。忘れたときはログイン画面から再設定できます</span>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="register-password-confirm">パスワード確認 <span class="required">*</span></label>
-                        <input type="password" id="register-password-confirm" name="passwordConfirm" autocomplete="new-password" required minlength="6">
+                    <div class="ui-field">
+                        <label class="ui-label" for="register-password-confirm">パスワード（確認） <span class="required">必須</span></label>
+                        <input class="ui-input" type="password" id="register-password-confirm" name="passwordConfirm" autocomplete="new-password" required minlength="6" placeholder="もう一度入力">
                     </div>
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-full">登録</button>
-                    </div>
-                    
-                    <div id="register-error-message" class="error-text hidden"></div>
-                    <div id="register-success-message" class="success-text hidden"></div>
+                    <div id="register-error-message" class="error-text ui-form-msg ui-form-msg-error hidden"></div>
+                    <div id="register-success-message" class="success-text ui-form-msg ui-form-msg-success hidden"></div>
+                    <button type="submit" class="ui-btn ui-btn-primary ui-btn-lg ui-btn-block">登録して始める</button>
+                    <p class="ui-hint ui-center">登録すると、そのまま打刻画面に進みます。</p>
                 </form>
 
                 <!-- ログインフォーム -->
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="email">メールアドレス</label>
-                        <input type="email" id="email" name="email" autocomplete="email" required>
+                <form id="loginForm" class="login-card ui-login-card" autocomplete="on">
+                    <div class="ui-field">
+                        <label class="ui-label" for="email">メールアドレス</label>
+                        <input class="ui-input" type="email" id="email" name="email" autocomplete="username" inputmode="email" required placeholder="example@gmail.com">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="password">パスワード</label>
-                        <input type="password" id="password" name="password" autocomplete="current-password" required>
+                    <div class="ui-field">
+                        <label class="ui-label" for="password">パスワード</label>
+                        <div class="ui-pw">
+                            <input class="ui-input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="6文字以上">
+                            <button type="button" class="ui-pw-toggle" data-for="password" aria-label="パスワードを表示" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-full">ログイン</button>
-                    </div>
-                    
-                    <div id="error-message" class="error-text hidden"></div>
+                    <div id="error-message" class="error-text ui-form-msg ui-form-msg-error hidden"></div>
+                    <button type="submit" class="ui-btn ui-btn-primary ui-btn-lg ui-btn-block">ログイン</button>
+                    <button type="button" class="ui-link ui-center" onclick="handlePasswordReset()">パスワードをお忘れですか？</button>
                 </form>
-            </div>
+
+                <p class="ui-login-note" id="login-note">はじめての方は、管理者から届いた<strong>招待リンク</strong>から登録してください。</p>
+            </main>
+            <footer class="ui-login-footer">提供: BRANU</footer>
         </div>
     </div>
 
