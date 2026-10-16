@@ -587,7 +587,7 @@ function showLoadingOverlay(message = 'ロード中...') {
         justify-content: center;
         align-items: center;
         z-index: 9999;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: inherit;
     `;
     
     overlay.innerHTML = `

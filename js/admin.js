@@ -128,7 +128,7 @@ function initEmployeeManagement() {
     // 管理者の場合タブを表示
     const employeeManagementTab = document.getElementById('employee-management-tab');
     if (employeeManagementTab) {
-        employeeManagementTab.style.display = 'block';
+        employeeManagementTab.style.display = ''; // サイドバーの表示（flex）に戻す
         employeeManagementTab.addEventListener('click', () => {
             showEmployeeManagementTab();
         });
@@ -757,7 +757,7 @@ async function initAdminPage() {
         logger.log('Setting up super admin tabs...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
-            adminRequestsTab.style.display = 'block';
+            adminRequestsTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('Admin requests tab shown');
         }
         if (employeeInviteTab) {
@@ -772,7 +772,7 @@ async function initAdminPage() {
             logger.log('Admin requests tab hidden');
         }
         if (employeeInviteTab) {
-            employeeInviteTab.style.display = 'block';
+            employeeInviteTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('Employee invite tab shown');
         }
     }
@@ -809,7 +809,8 @@ async function initAdminPage() {
     setTimeout(async function() {
         try {
             // 今日の日付をセット
-            const today = new Date().toISOString().split('T')[0];
+            const nowLocal = new Date();
+            const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
             const filterDate = getElement('filter-date');
             if (filterDate) filterDate.value = today;
             
@@ -1598,9 +1599,7 @@ async function exportToCSV() {
 
         const filename = generateCSVFilename();
 
-        downloadCSV(csvContent, filename);
-
-        showToast(`${data.length}件のデータをCSV出力しました`, 'success');
+        downloadCSV(csvContent, filename, { title: '勤怠CSV（弥生給与用）の内容を確認' });
 
     } catch (error) {
         console.error('CSV出力エラー:', {
@@ -2072,7 +2071,7 @@ async function exportSpecialWorkToCSV() {
         exportBtn = getElement('export-special-work-csv');
         if (exportBtn) {
             exportBtn.disabled = true;
-            exportBtn.textContent = '特殊勤務CSV出力中...';
+            exportBtn.textContent = '明細CSV出力中...';
         }
 
         // Firebase初期化確認
@@ -2102,14 +2101,12 @@ async function exportSpecialWorkToCSV() {
         // 🆕 特殊勤務データのみフィルタリング（オプション：全データでもOK）
         const csvContent = generateSpecialWorkCSVContent(data);
         if (!csvContent) {
-            throw new Error('特殊勤務CSVコンテンツの生成に失敗しました');
+            throw new Error('明細CSVコンテンツの生成に失敗しました');
         }
 
         const filename = generateSpecialWorkCSVFilename();
 
-        downloadCSV(csvContent, filename);
-
-        showToast(`${data.length}件の特殊勤務データをCSV出力しました`, 'success');
+        downloadCSV(csvContent, filename, { title: '明細CSV の内容を確認' });
 
     } catch (error) {
         console.error('特殊勤務CSV出力エラー:', {
@@ -2118,7 +2115,7 @@ async function exportSpecialWorkToCSV() {
             code: error.code
         });
 
-        let errorMessage = '特殊勤務CSV出力に失敗しました';
+        let errorMessage = '明細CSV出力に失敗しました';
         if (error.code === 'permission-denied') {
             errorMessage = 'データアクセス権限がありません。管理者にお問い合わせください。';
         } else if (error.message.includes('認証')) {
@@ -2132,7 +2129,7 @@ async function exportSpecialWorkToCSV() {
         // ボタンを元に戻す
         if (exportBtn) {
             exportBtn.disabled = false;
-            exportBtn.textContent = '特殊勤務CSV出力';
+            exportBtn.textContent = '明細CSV出力';
         }
     }
 }
@@ -5619,7 +5616,7 @@ async function setupTabsBasedOnRole() {
         logger.log('initAdminPage (SECOND): スーパー管理者として設定中...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
-            adminRequestsTab.style.display = 'block';
+            adminRequestsTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('initAdminPage (SECOND): 管理者依頼タブを表示');
         }
         if (employeeInviteTab) {
@@ -5634,7 +5631,7 @@ async function setupTabsBasedOnRole() {
             logger.log('initAdminPage (SECOND): 管理者依頼タブを非表示');
         }
         if (employeeInviteTab) {
-            employeeInviteTab.style.display = 'block';
+            employeeInviteTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('initAdminPage (SECOND): 従業員招待タブを表示');
         }
     }
@@ -7195,6 +7192,7 @@ async function handleCalculateMonthlySummary() {
         document.getElementById('salary-export-csv-btn').disabled = !hasData;
         document.getElementById('salary-export-yayoi-csv-btn').disabled = !hasData;
         document.getElementById('salary-export-yayoi-sheets-btn').disabled = !hasData;
+        document.getElementById('salary-export-sheets-btn').disabled = !hasData;
 
     } catch (error) {
         console.error('月次集計エラー:', error);
@@ -7279,6 +7277,21 @@ function handleExportMonthlySummaryCSV() {
 /**
  * スプレッドシートに出力
  */
+/**
+ * スプレッドシート出力時に Google 連携が無い場合の案内
+ * （ログイン時には連携を求めず、出力するときだけ連携設定へ案内する）
+ */
+async function askGoogleLinkForSheets() {
+    const message = 'Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です。\n連携設定を開きますか？';
+    let ok;
+    if (window.UI && typeof UI.confirm === 'function') {
+        ok = await UI.confirm({ title: 'Googleアカウントの連携', message, confirmText: '連携設定を開く' });
+    } else {
+        ok = confirm(message);
+    }
+    if (ok) openSheetsSettings();
+}
+
 async function handleExportToSheets() {
     if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
         alert('出力するデータがありません。先に集計を実行してください。');
@@ -7293,8 +7306,7 @@ async function handleExportToSheets() {
 
     // 認証確認
     if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
-        alert('Google認証が必要です。連携設定から認証を行ってください。');
-        openSheetsSettings();
+        await askGoogleLinkForSheets();
         return;
     }
 
@@ -7361,8 +7373,7 @@ async function handleExportYayoiToSheets() {
 
     // 認証確認
     if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
-        alert('Google認証が必要です。連携設定から認証を行ってください。');
-        openSheetsSettings();
+        await askGoogleLinkForSheets();
         return;
     }
 
@@ -7434,15 +7445,14 @@ async function handleGoogleAuth() {
 
         await window.GoogleSheets.authenticate();
 
-        updateModalAuthStatus();
-        alert('Google認証に成功しました！');
+        alert('Googleアカウントと連携しました');
 
     } catch (error) {
         console.error('認証エラー:', error);
-        alert('認証に失敗しました: ' + error.message);
+        alert('Googleアカウントと連携できませんでした: ' + error.message);
     } finally {
         authBtn.disabled = false;
-        authBtn.textContent = 'Google認証';
+        updateModalAuthStatus();
     }
 }
 
@@ -7459,16 +7469,16 @@ function updateModalAuthStatus() {
 
     if (isAuthed) {
         statusCard.classList.add('authenticated');
-        icon.textContent = '✅';
-        title.textContent = '認証済み';
-        desc.textContent = 'Googleアカウントで認証されています';
-        authBtn.textContent = '再認証';
+        icon.textContent = '';
+        title.textContent = '連携済み';
+        desc.textContent = 'Googleアカウントと連携しています';
+        authBtn.textContent = '連携し直す';
     } else {
         statusCard.classList.remove('authenticated');
-        icon.textContent = '🔒';
-        title.textContent = '未認証';
-        desc.textContent = 'Googleアカウントで認証してください';
-        authBtn.textContent = 'Google認証';
+        icon.textContent = '';
+        title.textContent = '未連携';
+        desc.textContent = 'Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です';
+        authBtn.textContent = '連携する';
     }
 
     // メイン画面の認証状態も更新

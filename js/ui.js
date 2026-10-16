@@ -248,6 +248,22 @@
     try { collapsed = localStorage.getItem('ui_admin_nav_collapsed') === '1'; } catch (e) { /* ignore */ }
     apply(collapsed);
     toggle.addEventListener('click', () => apply(!page.classList.contains('ui-nav-collapsed')));
+
+    // 「勤怠」（カレンダー）: たたんでいるときはメニューを開いて日別・月別…を見せる。
+    // 開いているときは日別を表示する
+    const group = document.getElementById('admin-nav-attendance');
+    if (group && !group.dataset.uiBound) {
+      group.dataset.uiBound = '1';
+      group.addEventListener('click', () => {
+        if (page.classList.contains('ui-nav-collapsed')) {
+          apply(false);
+          return;
+        }
+        // タブボタンは別スクリプトが差し替えることがあるので、押した時点で探す
+        const daily = page.querySelector('.tab-btn[data-tab="daily"]');
+        if (daily) daily.click();
+      });
+    }
   }
 
   // ---------- ログアウト（アカウント設定モーダルから） ----------

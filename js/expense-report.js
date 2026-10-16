@@ -486,7 +486,7 @@ function renderExpenseDetail() {
 /**
  * CSVダウンロード（BOM付き）
  */
-function downloadCSV(filename, csvContent, previewOptions) {
+function downloadExpenseCSV(filename, csvContent, previewOptions) {
     // 保存前にプレビューで内容を確認（ui-csv.js）。無い場合はそのまま保存
     if (window.UI && typeof UI.csvPreview === 'function') {
         UI.csvPreview(csvContent, filename, previewOptions || {});
@@ -537,8 +537,7 @@ function exportExpenseDetailCSV() {
         const monthFilter = document.getElementById('expense-report-month-filter')?.value || '全期間';
         const siteSuffix = filters.site ? `_${filters.site}` : '';
         const filename = `経費明細_${modeLabel}_${monthFilter}${siteSuffix}_${new Date().toISOString().slice(0, 10)}.csv`;
-        downloadCSV(filename, csvContent);
-        alert('経費明細CSVを出力しました');
+        downloadExpenseCSV(filename, csvContent, { title: '経費明細CSV の内容を確認' });
 
     } catch (error) {
         console.error('経費明細CSV出力エラー:', error);
@@ -801,9 +800,8 @@ async function exportExpenseReportCSV() {
         const filename = `経費レポート_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
 
         // ダウンロード
-        downloadCSV(filename, csvContent);
+        downloadExpenseCSV(filename, csvContent, { title: '経費レポートCSV の内容を確認' });
 
-        alert('CSV出力が完了しました');
 
     } catch (error) {
         console.error('CSV出力エラー:', error);
@@ -907,10 +905,8 @@ async function exportEmployeeExpenseCSV() {
         console.log('[exportEmployeeExpenseCSV] ファイル名:', filename);
         console.log('[exportEmployeeExpenseCSV] 集計データ件数:', Object.keys(employeeData).length);
 
-        downloadCSV(filename, csvContent);
+        downloadExpenseCSV(filename, csvContent, { title: '従業員別集計CSV の内容を確認' });
 
-        console.log('[exportEmployeeExpenseCSV] CSV出力完了');
-        alert('従業員別集計CSVを出力しました');
 
     } catch (error) {
         console.error('[exportEmployeeExpenseCSV] エラー:', error);
@@ -1018,10 +1014,8 @@ async function exportSiteExpenseCSV() {
         console.log('[exportSiteExpenseCSV] ファイル名:', filename);
         console.log('[exportSiteExpenseCSV] 集計データ件数:', Object.keys(siteData).length);
 
-        downloadCSV(filename, csvContent);
+        downloadExpenseCSV(filename, csvContent, { title: '現場別集計CSV の内容を確認' });
 
-        console.log('[exportSiteExpenseCSV] CSV出力完了');
-        alert('現場別集計CSVを出力しました');
 
     } catch (error) {
         console.error('[exportSiteExpenseCSV] エラー:', error);
@@ -1114,9 +1108,8 @@ async function exportCategoryExpenseCSV() {
 
         // ダウンロード
         const filename = `経費_カテゴリー別集計_${monthFilter || '全期間'}_${new Date().toISOString().slice(0, 10)}.csv`;
-        downloadCSV(filename, csvContent);
+        downloadExpenseCSV(filename, csvContent, { title: 'カテゴリー別集計CSV の内容を確認' });
 
-        alert('カテゴリー別集計CSVを出力しました');
 
     } catch (error) {
         console.error('カテゴリー別CSV出力エラー:', error);

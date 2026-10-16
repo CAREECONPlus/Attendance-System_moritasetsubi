@@ -69,7 +69,7 @@ function showNotification(message, type = 'info') {
         display: flex;
         align-items: center;
         gap: 10px;
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family: inherit;
         font-size: 14px;
         animation: slideIn 0.3s ease-out;
     `;

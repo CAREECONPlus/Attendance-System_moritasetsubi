@@ -370,22 +370,18 @@ function updateAuthStatusUI(isAuthed) {
         if (isAuthed) {
             statusIndicator.classList.remove('disconnected');
             statusIndicator.classList.add('connected');
-            statusIcon.textContent = '✅';
-            statusText.textContent = 'Google Sheets 連携済み';
+            statusIcon.textContent = '';
+            statusText.textContent = 'Googleアカウントと連携しています';
         } else {
             statusIndicator.classList.remove('connected');
             statusIndicator.classList.add('disconnected');
-            statusIcon.textContent = '🔒';
-            statusText.textContent = 'Google Sheets 未連携';
+            statusIcon.textContent = '';
+            statusText.textContent = 'Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です';
         }
     }
-
-    // スプレッドシート出力ボタンの状態更新
-    const exportBtn = document.getElementById('salary-export-sheets-btn');
-    if (exportBtn) {
-        const settings = getSheetsSettings();
-        exportBtn.disabled = !isAuthed || !settings.spreadsheetId;
-    }
+    const settingsBtn = document.getElementById('sheets-settings-btn');
+    if (settingsBtn) settingsBtn.textContent = isAuthed ? '連携設定' : '連携する';
+    // 出力ボタンは集計データの有無だけで有効にする（未連携なら押したときに連携を案内する）
 }
 
 // ========================================
@@ -707,28 +703,20 @@ async function fetchMasterData() {
 window.GoogleSheets = {
     // 初期化
     init: async function() {
+        // 管理者画面を開いたときは、有効なトークンが残っている場合だけ復元する。
+        // 期限切れでも自動で Google 認証（ポップアップ）を出さない。
+        // 連携が必要になるのはスプレッドシートに出力するときだけで、
+        // そのときは連携設定の「連携する」ボタンから認証する。
+        const storedToken = loadStoredToken();
+        if (!storedToken) {
+            updateAuthStatusUI(false);
+            return;
+        }
         await initGoogleAPI();
         await initGIS();
-
-        // 1. まず保存されたトークンを復元
-        const storedToken = loadStoredToken();
-        if (storedToken) {
-            accessToken = storedToken;
-            gapi.client.setToken({ access_token: accessToken });
-            updateAuthStatusUI(true);
-            return; // 有効なトークンがあれば完了
-        }
-
-        // 2. トークンが期限切れだが以前認証済みの場合、サイレント再認証を試行
-        if (hasAuthorizedBefore()) {
-            const silentSuccess = await trySilentAuth();
-            if (silentSuccess) {
-                // サイレント再認証成功
-                return;
-            }
-            // サイレント認証失敗の場合は手動認証が必要
-            // （Googleからログアウトしている等）
-        }
+        accessToken = storedToken;
+        gapi.client.setToken({ access_token: accessToken });
+        updateAuthStatusUI(true);
     },
 
     // 認証
