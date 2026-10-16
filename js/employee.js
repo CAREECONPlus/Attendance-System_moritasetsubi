@@ -804,7 +804,7 @@ async function loadSiteOptions() {
                     
                     const option = document.createElement('option');
                     option.value = site.name;
-                    option.textContent = `🏢 ${site.name}`;
+                    option.textContent = site.name;
                     if (site.address) {
                         option.textContent += ` (${site.address})`;
                     }
