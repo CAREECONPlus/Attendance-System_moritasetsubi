@@ -128,7 +128,7 @@ function initEmployeeManagement() {
     // 管理者の場合タブを表示
     const employeeManagementTab = document.getElementById('employee-management-tab');
     if (employeeManagementTab) {
-        employeeManagementTab.style.display = 'block';
+        employeeManagementTab.style.display = ''; // サイドバーの表示（flex）に戻す
         employeeManagementTab.addEventListener('click', () => {
             showEmployeeManagementTab();
         });
@@ -757,7 +757,7 @@ async function initAdminPage() {
         logger.log('Setting up super admin tabs...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
-            adminRequestsTab.style.display = 'block';
+            adminRequestsTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('Admin requests tab shown');
         }
         if (employeeInviteTab) {
@@ -772,7 +772,7 @@ async function initAdminPage() {
             logger.log('Admin requests tab hidden');
         }
         if (employeeInviteTab) {
-            employeeInviteTab.style.display = 'block';
+            employeeInviteTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('Employee invite tab shown');
         }
     }
@@ -5619,7 +5619,7 @@ async function setupTabsBasedOnRole() {
         logger.log('initAdminPage (SECOND): スーパー管理者として設定中...');
         // スーパー管理者：管理者依頼タブを表示、従業員招待タブを非表示
         if (adminRequestsTab) {
-            adminRequestsTab.style.display = 'block';
+            adminRequestsTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('initAdminPage (SECOND): 管理者依頼タブを表示');
         }
         if (employeeInviteTab) {
@@ -5634,7 +5634,7 @@ async function setupTabsBasedOnRole() {
             logger.log('initAdminPage (SECOND): 管理者依頼タブを非表示');
         }
         if (employeeInviteTab) {
-            employeeInviteTab.style.display = 'block';
+            employeeInviteTab.style.display = ''; // サイドバーの表示（flex）に戻す
             logger.log('initAdminPage (SECOND): 従業員招待タブを表示');
         }
     }

@@ -792,3 +792,7 @@ body.login-screen { background: var(--ground) !important; }
 .ui-history-empty { gap: 10px; padding: 36px 20px; background: transparent; }
 .ui-history-empty > svg { width: 40px; height: 40px; color: var(--ink-faint); }
 .ui-history-empty .ui-btn { margin-top: 4px; color: var(--primary); border: 1.5px solid var(--line-strong); border-radius: var(--r-card); }
+
+/* 管理者: 初期表示の勤怠タブ（admin.js が注入する .tab-content{display:none} に隠されないように）。
+   他のタブへ切り替えたときは .hidden（!important）で隠れる */
+#admin-page #attendance-tab-content { display: block; }
