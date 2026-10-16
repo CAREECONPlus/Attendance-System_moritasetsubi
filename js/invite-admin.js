@@ -246,7 +246,7 @@ async function loadInviteHistory() {
     
     try {
         // ローディング表示
-        historyContainer.innerHTML = '<tr><td colspan="5" style="text-align: center;">🔄 読み込み中...</td></tr>';
+        historyContainer.innerHTML = '<tr><td colspan="5" class="loading-cell">読み込み中...</td></tr>';
         
         // 現在のユーザーとテナント情報を取得
         logger.log('loadInviteHistory: ユーザー情報取得中...');
@@ -314,7 +314,7 @@ async function loadInviteHistory() {
         }
         
         if (inviteSnapshot.empty) {
-            historyContainer.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6c757d;">招待リンクがまだ生成されていません</td></tr>';
+            historyContainer.innerHTML = '<tr><td colspan="5" class="loading-cell">招待リンクがまだ生成されていません</td></tr>';
             return;
         }
         
@@ -384,7 +384,7 @@ async function loadInviteHistory() {
             tenantId: getCurrentTenantId ? getCurrentTenantId() : 'unknown',
             currentUser: window.currentUser
         });
-        historyContainer.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545;">❌ 読み込みに失敗しました</td></tr>';
+        historyContainer.innerHTML = '<tr><td colspan="5" class="loading-cell">読み込みに失敗しました</td></tr>';
     }
 }
 

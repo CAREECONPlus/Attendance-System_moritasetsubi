@@ -1,8 +1,10 @@
 name: PR Preview (Dev)
 
-# PR を開く/更新するたびに Dev 用 Firebase プロジェクトへデプロイし、
-# 確認用 URL（7日で失効）を PR にコメントする。
-# 手動実行では任意のブランチを固定チャンネル（既定: dev）に 30 日間公開できる（顧客確認用）。
+# PR を開く/更新するたびに Dev 用 Firebase プロジェクトへデプロイする。
+#  - 固定 URL（https://<Devプロジェクト>.web.app）: いちばん新しく更新された PR の内容。
+#    社内・顧客に確認してもらうときはこの URL を共有すれば、PR が変わっても URL は変わらない。
+#  - PR ごとの URL（7日で失効）: PR にコメントされる。複数の PR を見比べたいとき用。
+# 手動実行では任意のブランチを固定チャンネル（既定: dev）に 30 日間公開できる。
 
 on:
   pull_request:
@@ -82,3 +84,22 @@ jobs:
           projectId: ${{ secrets.DEV_FIREBASE_PROJECT_ID }}
           channelId: ${{ github.event_name == 'workflow_dispatch' && inputs.channel || format('pr-{0}', github.event.number) }}
           expires: ${{ github.event_name == 'workflow_dispatch' && '30d' || '7d' }}
+
+      # 固定 URL（Dev プロジェクトの本体 = live チャンネル）にも同じ内容を出す。
+      # 複数の PR を同時に更新した場合は、あとから終わったほうの内容になる。
+      - name: Deploy to the fixed Dev URL (live channel)
+        if: github.event_name == 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.DEV_FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.DEV_FIREBASE_PROJECT_ID }}
+          channelId: live
+
+      - name: Show the fixed Dev URL
+        if: github.event_name == 'pull_request'
+        env:
+          PROJECT_ID: ${{ secrets.DEV_FIREBASE_PROJECT_ID }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo "### 固定の確認用 URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://${PROJECT_ID}.web.app （PR #${PR_NUMBER} の内容）" >> "$GITHUB_STEP_SUMMARY"

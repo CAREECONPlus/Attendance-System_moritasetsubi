@@ -7,8 +7,11 @@
             → 確認 OK → main にマージ → 本番（GitHub Pages）へ自動デプロイ
 ```
 
-- プレビューURLは PR ごとに発行され（例: `https://attendance-system-morita-dev--pr12-abc123.web.app`）、**7日で自動失効**します
-- PR に push するたびに同じ URL が更新されます
+- **固定の確認用 URL: `https://attendance-system-morita-dev.web.app`**（`?tenant=<DevのテナントID>` を付けて開く）
+    - いちばん新しく更新された PR の内容が出ます。社内や顧客に確認してもらうときはこの URL を共有すれば、PR が変わっても URL は変わりません
+    - 複数の PR を同時に更新した場合は、あとからデプロイが終わったほうの内容になります
+- PR ごとのプレビューURLも発行されます（例: `https://attendance-system-morita-dev--pr12-abc123.web.app`）。PR にコメントされ、**7日で自動失効**します。複数の PR を見比べたいとき用です
+- PR に push するたびに、どちらの URL も更新されます
 - ブランチの `firestore.rules` / `firestore.indexes.json` も Dev プロジェクトへ自動反映されるので、ルール変更も一緒に確認できます
 - 本番（GitHub Pages）の仕組みは変わりません
 
