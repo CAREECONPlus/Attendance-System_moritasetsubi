@@ -849,3 +849,40 @@ button, input, select, textarea, optgroup, table, th, td, label { font-family: i
 #admin-page.ui-nav-collapsed .ui-sidebar-group-title { display: flex; align-items: center; justify-content: center; width: 44px; min-height: 44px; height: 44px; padding: 0; color: var(--nav-item); }
 #admin-page.ui-nav-collapsed .ui-sidebar-nav:has(.ui-sidebar-group .tab-btn.active) .ui-sidebar-group-title { background: var(--primary); color: #fff; }
 #admin-page.ui-nav-collapsed .ui-sidebar-group-title:hover { background: var(--nav-sub); color: #fff; }
+
+/* ============================================================
+   管理者: 従業員管理（旧デザインのグラデーション・影をやめ、共通の部品にそろえる）
+   ============================================================ */
+#employee-management-content .employee-management-header { margin-bottom: 16px; }
+#employee-management-content .employee-management-description { margin: 0; font-size: 13px; color: var(--ink-muted); }
+#employee-management-content .employee-list-section { background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-card); box-shadow: none; overflow: hidden; }
+#employee-management-content .employee-list-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px !important; background: var(--surface) !important; border-bottom: 1px solid var(--line) !important; }
+#employee-management-content .employee-list-header h4 { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink); }
+#employee-management-content .header-actions { gap: 8px; }
+#employee-management-content .header-actions .btn { min-height: 38px; padding: 0 14px; font-size: 13px; }
+#employee-management-content .employee-search { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; background: var(--row-alt); border-bottom: 1px solid var(--line); }
+#employee-management-content .employee-search .search-input { flex: 1 1 260px; width: auto; min-width: 0; min-height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); background: var(--surface); font-size: 14px; }
+#employee-management-content .employee-search .status-filter { flex: 0 0 180px; width: 180px; min-height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); background: var(--surface); font: inherit; font-size: 14px; color: var(--ink); }
+#employee-management-content .employee-list-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+#employee-management-content .employee-list-table thead th { background: var(--row-alt); color: var(--ink-muted); font-size: 12px; font-weight: 700; padding: 12px 14px; border-bottom: 2px solid var(--line-strong); text-align: left; }
+#employee-management-content .employee-list-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line-row); vertical-align: middle; color: var(--ink); }
+#employee-management-content .employee-list-table tbody tr:last-child td { border-bottom: none; }
+#employee-management-content .employee-name-large { font-size: 15px; font-weight: 700; color: var(--ink); }
+/* 役割は「役割」列にあるので、氏名の下の重複バッジは出さない */
+#employee-management-content .employee-info-cell .employee-role-badge { display: none; }
+#employee-management-content .employee-email { color: var(--ink-muted); }
+/* 状態: 丸い点＋文字（テナント管理と同じ） */
+#employee-management-content .employee-status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 0; background: none !important; border: none; border-radius: 0; box-shadow: none; font-size: 13px; font-weight: 700; color: var(--ink-muted); }
+#employee-management-content .employee-status-badge::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--ink-faint); }
+#employee-management-content .employee-status-badge.active { color: var(--ok-fg); }
+#employee-management-content .employee-status-badge.active::before { background: var(--ok-dot); }
+/* 操作ボタン: 白地に枠線、色は文字だけ */
+#employee-management-content .employee-action-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+#employee-management-content .action-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; background: var(--surface) !important; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); box-shadow: none !important; transform: none !important; font: inherit; font-size: 12px; font-weight: 700; color: var(--ink); cursor: pointer; }
+#employee-management-content .action-btn:hover { background: var(--row-alt) !important; }
+#employee-management-content .action-btn .action-icon { display: none; }
+#employee-management-content .action-btn-primary { color: var(--primary); }
+#employee-management-content .action-btn-warning { color: var(--ink); }
+#employee-management-content .action-btn-success { color: var(--ok-fg); border-color: #A9E3C8; }
+#employee-management-content .action-btn-danger { color: var(--danger-fg); border-color: var(--danger-line); }
+#employee-management-content .loading-cell { padding: 24px; text-align: center; color: var(--ink-muted); }

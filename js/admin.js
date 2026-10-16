@@ -5018,22 +5018,18 @@ function displayEmployeeList(employees) {
                 <td>
                     <div class="employee-action-buttons">
                         <button class="action-btn action-btn-primary" onclick="editEmployee('${employee.id}', '${employee.tenantId}')" title="編集">
-                            <span class="action-icon">✏️</span>
                             <span class="action-text">編集</span>
                         </button>
                         ${employee.isActive ? `
                             <button class="action-btn action-btn-warning" onclick="deactivateEmployee('${employee.id}', '${employee.displayName}')" title="無効化">
-                                <span class="action-icon">⏸️</span>
                                 <span class="action-text">無効化</span>
                             </button>
                         ` : `
                             <button class="action-btn action-btn-success" onclick="activateEmployee('${employee.id}', '${employee.displayName}')" title="有効化">
-                                <span class="action-icon">▶️</span>
                                 <span class="action-text">有効化</span>
                             </button>
                         `}
                         <button class="action-btn action-btn-danger" onclick="deleteEmployee('${employee.id}', '${employee.displayName}', '${employee.email}')" title="削除">
-                            <span class="action-icon">🗑️</span>
                             <span class="action-text">削除</span>
                         </button>
                     </div>
