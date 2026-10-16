@@ -62,7 +62,7 @@
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-config.local.js"></script>
     <script src="js/google-sheets.js?v=20261016a"></script>
-    <script src="js/admin.js?v=20261016e"></script>
+    <script src="js/admin.js?v=20261016b"></script>
 
     <style>
         .hidden {
@@ -1758,6 +1758,14 @@
                             window.switchTab(tab);
                         }
                     }
+
+                    // 従業員管理などを開くとページ内の表がまとめて隠されるので、開いたタブの中の表は表示に戻す
+                    document.querySelectorAll('#admin-page .tab-content:not(.hidden)').forEach(function(content) {
+                        content.querySelectorAll('.attendance-table-container').forEach(function(container) {
+                            container.classList.remove('hidden');
+                            container.style.display = '';
+                        });
+                    });
                 });
             });
         }, 500); // 500ms後に実行（他のスクリプト読み込み後）

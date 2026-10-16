@@ -6790,6 +6790,19 @@ async function deleteAttendanceRecordFromFirestore(recordId, tenantId) {
 /**
  * 経費レポートタブを表示
  */
+/**
+ * 開いたタブの中にある表を表示に戻す。
+ * 他のタブを開く処理がページ内の .attendance-table-container をまとめて隠すため、
+ * タブを表示しただけでは中の表が隠れたままになることがある。
+ */
+function showTablesInTab(content) {
+    if (!content) return;
+    content.querySelectorAll('.attendance-table-container').forEach(container => {
+        container.classList.remove('hidden');
+        container.style.display = '';
+    });
+}
+
 function showExpenseReportTab() {
     // すべてのタブボタンから active を削除
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -6826,6 +6839,7 @@ function showExpenseReportTab() {
     if (expenseReportContent) {
         expenseReportContent.classList.remove('hidden');
         expenseReportContent.style.display = 'block';
+        showTablesInTab(expenseReportContent);
     }
 
     // 経費レポート機能を初期化
@@ -6878,6 +6892,7 @@ function showSettingsTab() {
     if (settingsContent) {
         settingsContent.classList.remove('hidden');
         settingsContent.style.display = 'block';
+        showTablesInTab(settingsContent);
     }
 
     // 設定機能を初期化
@@ -7002,6 +7017,7 @@ function showMonthlySalaryTab() {
     if (monthlySalaryContent) {
         monthlySalaryContent.classList.remove('hidden');
         monthlySalaryContent.style.display = 'block';
+        showTablesInTab(monthlySalaryContent);
     }
 
     // タブの状態を更新
@@ -7582,6 +7598,7 @@ window.rejectAdminRequest = rejectAdminRequest;
 window.viewRequestDetails = viewRequestDetails;
 window.currentData = currentData;
 window.showExpenseReportTab = showExpenseReportTab;
+window.showTablesInTab = showTablesInTab;
 window.showSettingsTab = showSettingsTab;
 window.saveBreakTimeSettings = saveBreakTimeSettings;
 window.resetBreakTimeSettings = resetBreakTimeSettings;
