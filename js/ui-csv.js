@@ -9,7 +9,7 @@
   'use strict';
 
   const SKIP_KEY = 'ui_csv_preview_skip';
-  const PREVIEW_ROWS = 8;
+  const PREVIEW_ROWS = 50;
 
   function parseCSV(text) {
     const rows = [];
@@ -39,6 +39,14 @@
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (window.UI && typeof UI.toast === 'function') UI.toast(`${filename} を保存しました`, 'success');
+  }
+
+  // 列名を表計算ソフトと同じ A, B, …, Z, AA, AB … にする
+  function columnLetter(i) {
+    let n = i + 1, s = '';
+    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+    return s;
   }
 
   function skipPreview() { try { return localStorage.getItem(SKIP_KEY) === '1'; } catch (e) { return false; } }
@@ -56,7 +64,7 @@
     const title = o.title || `${String(filename).replace(/\.csv$/i, '')} の内容を確認`;
     const metaParts = [];
     if (o.subtitle) metaParts.push(o.subtitle);
-    metaParts.push(`${body.length}行`, `${cols}列`, `ファイル名 <span class="ui-mono">${esc(filename)}</span>`, `文字コード UTF-8（BOM付き）`);
+    metaParts.push(`${body.length}行`, `${cols}列`, `ファイル名 <span class="ui-mono">${esc(filename)}</span>`, `文字コード UTF-8（BOM付き、Excelでそのまま開けます）`);
 
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
@@ -71,14 +79,17 @@
             <button type="button" class="ui-close-btn" data-act="cancel" aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
           ${o.warning ? `<div class="ui-csv-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17h.01"/></svg><span>${esc(o.warning)}</span></div>` : ''}
-          <div class="ui-csv-table">
+          <div class="ui-csv-table ui-sheet-grid">
             ${rows.length ? `<table>
-              <thead><tr>${header.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead>
-              <tbody>${shown.map((r) => `<tr>${Array.from({ length: cols }, (_, i) => `<td class="${isNum(r[i]) ? 'num' : ''}">${esc(r[i] == null ? '' : r[i])}</td>`).join('')}</tr>`).join('')}</tbody>
+              <thead><tr><th class="ui-sheet-corner" aria-hidden="true"></th>${Array.from({ length: cols }, (_, i) => `<th class="ui-sheet-col" scope="col">${columnLetter(i)}</th>`).join('')}</tr></thead>
+              <tbody>
+                <tr class="ui-sheet-header-row"><th class="ui-sheet-rownum" scope="row">1</th>${Array.from({ length: cols }, (_, i) => `<td>${esc(header[i] == null ? '' : header[i])}</td>`).join('')}</tr>
+                ${shown.map((r, ri) => `<tr><th class="ui-sheet-rownum" scope="row">${ri + 2}</th>${Array.from({ length: cols }, (_, i) => `<td class="${isNum(r[i]) ? 'num' : ''}">${esc(r[i] == null ? '' : r[i])}</td>`).join('')}</tr>`).join('')}
+              </tbody>
             </table>` : '<div class="ui-empty"><strong>出力する行がありません</strong></div>'}
           </div>
           <div class="ui-csv-foot-note">
-            <span>${body.length > shown.length ? `先頭 ${shown.length} 行を表示しています（全 ${body.length} 行）。` : `全 ${body.length} 行を表示しています。`}横にスクロールすると残りの列が見られます。</span>
+            <span>${body.length > shown.length ? `先頭 ${shown.length} 行を表示しています（見出しを除いて全 ${body.length} 行）。` : `見出しを除いて全 ${body.length} 行です。`}1 行目は見出しです。</span>
             <span>${esc(o.note || '')}</span>
           </div>
           <div class="ui-csv-actions">

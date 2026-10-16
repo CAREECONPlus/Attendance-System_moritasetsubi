@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/ui.css?v=20261016b">
+    <link rel="stylesheet" href="css/ui.css?v=20261016c">
     
     <!-- Favicon追加 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
@@ -53,13 +53,13 @@
     <script src="js/expense.js?v=20250124c"></script>
     <script src="js/ui-sites.js?v=20261015a"></script>
     <script src="js/ui-expense.js?v=20261015a"></script>
-    <script src="js/ui-csv.js?v=20261015a"></script>
+    <script src="js/ui-csv.js?v=20261016a"></script>
     <script src="js/ui-tenant.js?v=20261015a"></script>
-    <script src="js/expense-report.js?v=20261015a"></script>
+    <script src="js/expense-report.js?v=20261016a"></script>
     <script src="js/monthly-summary.js?v=20260203a"></script>
     <script src="js/google-config.local.js"></script>
-    <script src="js/google-sheets.js?v=20251223a"></script>
-    <script src="js/admin.js?v=20261016a"></script>
+    <script src="js/google-sheets.js?v=20261016a"></script>
+    <script src="js/admin.js?v=20261016c"></script>
 
     <style>
         .hidden {
@@ -2644,9 +2644,9 @@
                         <div class="sheets-connection-status" id="sheets-status">
                             <div class="status-indicator disconnected">
                                 <span class="status-icon"></span>
-                                <span class="status-text">Google Sheets未連携</span>
+                                <span class="status-text">Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です</span>
                             </div>
-                            <button id="sheets-settings-btn" class="btn btn-link" onclick="openSheetsSettings()">連携設定</button>
+                            <button id="sheets-settings-btn" class="btn btn-secondary btn-small" onclick="openSheetsSettings()">連携する</button>
                         </div>
                     </div>
                 </div>
@@ -3006,14 +3006,14 @@
             <div class="modal-body">
                 <!-- 認証ステータス -->
                 <div class="sheets-auth-section">
-                    <h4>1. Google認証</h4>
+                    <h4>1. Googleアカウントの連携</h4>
                     <div class="auth-status-card" id="modal-auth-status">
                         <div class="status-icon" id="modal-auth-icon">🔒</div>
                         <div class="status-info">
-                            <span id="modal-auth-title">未認証</span>
-                            <p id="modal-auth-desc">Googleアカウントで認証してください</p>
+                            <span id="modal-auth-title">未連携</span>
+                            <p id="modal-auth-desc">Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です</p>
                         </div>
-                        <button id="btn-google-auth" class="btn btn-primary" onclick="handleGoogleAuth()">Google認証</button>
+                        <button id="btn-google-auth" class="btn btn-primary" onclick="handleGoogleAuth()">連携する</button>
                     </div>
                 </div>
 

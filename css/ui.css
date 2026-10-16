@@ -796,3 +796,24 @@ body.login-screen { background: var(--ground) !important; }
 /* 管理者: 初期表示の勤怠タブ（admin.js が注入する .tab-content{display:none} に隠されないように）。
    他のタブへ切り替えたときは .hidden（!important）で隠れる */
 #admin-page #attendance-tab-content { display: block; }
+
+/* 月次給与: Google 連携の案内（未連携でもエラー扱いにしない） */
+#admin-page .sheets-connection-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+#admin-page .sheets-connection-status .status-indicator { display: flex; align-items: center; gap: 8px; padding: 0; background: none !important; border: none; color: var(--ink-muted) !important; font-size: 13px; font-weight: 500; }
+#admin-page .sheets-connection-status .status-indicator.connected { color: var(--ok-fg) !important; font-weight: 700; }
+#admin-page .sheets-connection-status .status-icon:empty { display: none; }
+#admin-page .sheets-connection-status .btn-small { min-height: 36px; }
+
+/* CSV プレビュー: 表計算ソフト風（列 A,B,C… と行番号、すべてのセルに罫線） */
+.ui-sheet-grid { max-height: 52vh; background: #fff; }
+.ui-sheet-grid table { border-collapse: separate; border-spacing: 0; font-family: var(--font-body); font-size: 13px; }
+.ui-sheet-grid th, .ui-sheet-grid td { border-right: 1px solid #D9DEE8; border-bottom: 1px solid #D9DEE8; padding: 6px 10px; white-space: nowrap; height: 30px; }
+.ui-sheet-grid thead th { position: sticky; top: 0; z-index: 2; background: #EEF1F6 !important; color: #5B6386; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; height: 26px; border-bottom: 1px solid #C3CAD8 !important; }
+.ui-sheet-grid .ui-sheet-corner { left: 0; z-index: 3; width: 44px; min-width: 44px; }
+.ui-sheet-grid .ui-sheet-rownum { position: sticky; left: 0; z-index: 1; width: 44px; min-width: 44px; background: #EEF1F6; color: #5B6386; font-size: 12px; font-weight: 700; text-align: center; border-right: 1px solid #C3CAD8; }
+.ui-sheet-grid tbody td { background: #fff !important; color: var(--ink); }
+.ui-sheet-grid tbody tr:nth-child(even) td { background: #fff !important; }
+.ui-sheet-grid tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ui-sheet-grid .ui-sheet-header-row td { background: #F7F9FF !important; font-weight: 700; }
+.ui-sheet-grid tbody tr:last-child td, .ui-sheet-grid tbody tr:last-child th { border-bottom: 1px solid #D9DEE8; }
+.ui-csv-head h2 { word-break: break-all; }

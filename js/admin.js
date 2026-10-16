@@ -809,7 +809,8 @@ async function initAdminPage() {
     setTimeout(async function() {
         try {
             // 今日の日付をセット
-            const today = new Date().toISOString().split('T')[0];
+            const nowLocal = new Date();
+            const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
             const filterDate = getElement('filter-date');
             if (filterDate) filterDate.value = today;
             
@@ -1598,9 +1599,7 @@ async function exportToCSV() {
 
         const filename = generateCSVFilename();
 
-        downloadCSV(csvContent, filename);
-
-        showToast(`${data.length}件のデータをCSV出力しました`, 'success');
+        downloadCSV(csvContent, filename, { title: '勤怠CSV（弥生給与用）の内容を確認' });
 
     } catch (error) {
         console.error('CSV出力エラー:', {
@@ -2107,9 +2106,7 @@ async function exportSpecialWorkToCSV() {
 
         const filename = generateSpecialWorkCSVFilename();
 
-        downloadCSV(csvContent, filename);
-
-        showToast(`${data.length}件の特殊勤務データをCSV出力しました`, 'success');
+        downloadCSV(csvContent, filename, { title: '特殊勤務CSV の内容を確認' });
 
     } catch (error) {
         console.error('特殊勤務CSV出力エラー:', {
@@ -7195,6 +7192,7 @@ async function handleCalculateMonthlySummary() {
         document.getElementById('salary-export-csv-btn').disabled = !hasData;
         document.getElementById('salary-export-yayoi-csv-btn').disabled = !hasData;
         document.getElementById('salary-export-yayoi-sheets-btn').disabled = !hasData;
+        document.getElementById('salary-export-sheets-btn').disabled = !hasData;
 
     } catch (error) {
         console.error('月次集計エラー:', error);
@@ -7279,6 +7277,21 @@ function handleExportMonthlySummaryCSV() {
 /**
  * スプレッドシートに出力
  */
+/**
+ * スプレッドシート出力時に Google 連携が無い場合の案内
+ * （ログイン時には連携を求めず、出力するときだけ連携設定へ案内する）
+ */
+async function askGoogleLinkForSheets() {
+    const message = 'Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です。\n連携設定を開きますか？';
+    let ok;
+    if (window.UI && typeof UI.confirm === 'function') {
+        ok = await UI.confirm({ title: 'Googleアカウントの連携', message, confirmText: '連携設定を開く' });
+    } else {
+        ok = confirm(message);
+    }
+    if (ok) openSheetsSettings();
+}
+
 async function handleExportToSheets() {
     if (!currentMonthlySummaryData || currentMonthlySummaryData.length === 0) {
         alert('出力するデータがありません。先に集計を実行してください。');
@@ -7293,8 +7306,7 @@ async function handleExportToSheets() {
 
     // 認証確認
     if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
-        alert('Google認証が必要です。連携設定から認証を行ってください。');
-        openSheetsSettings();
+        await askGoogleLinkForSheets();
         return;
     }
 
@@ -7361,8 +7373,7 @@ async function handleExportYayoiToSheets() {
 
     // 認証確認
     if (!window.GoogleSheets || !window.GoogleSheets.isAuthenticated()) {
-        alert('Google認証が必要です。連携設定から認証を行ってください。');
-        openSheetsSettings();
+        await askGoogleLinkForSheets();
         return;
     }
 
@@ -7434,15 +7445,14 @@ async function handleGoogleAuth() {
 
         await window.GoogleSheets.authenticate();
 
-        updateModalAuthStatus();
-        alert('Google認証に成功しました！');
+        alert('Googleアカウントと連携しました');
 
     } catch (error) {
         console.error('認証エラー:', error);
-        alert('認証に失敗しました: ' + error.message);
+        alert('Googleアカウントと連携できませんでした: ' + error.message);
     } finally {
         authBtn.disabled = false;
-        authBtn.textContent = 'Google認証';
+        updateModalAuthStatus();
     }
 }
 
@@ -7459,16 +7469,16 @@ function updateModalAuthStatus() {
 
     if (isAuthed) {
         statusCard.classList.add('authenticated');
-        icon.textContent = '✅';
-        title.textContent = '認証済み';
-        desc.textContent = 'Googleアカウントで認証されています';
-        authBtn.textContent = '再認証';
+        icon.textContent = '';
+        title.textContent = '連携済み';
+        desc.textContent = 'Googleアカウントと連携しています';
+        authBtn.textContent = '連携し直す';
     } else {
         statusCard.classList.remove('authenticated');
-        icon.textContent = '🔒';
-        title.textContent = '未認証';
-        desc.textContent = 'Googleアカウントで認証してください';
-        authBtn.textContent = 'Google認証';
+        icon.textContent = '';
+        title.textContent = '未連携';
+        desc.textContent = 'Googleスプレッドシートに出力する場合は、Googleアカウントの連携が必要です';
+        authBtn.textContent = '連携する';
     }
 
     // メイン画面の認証状態も更新
