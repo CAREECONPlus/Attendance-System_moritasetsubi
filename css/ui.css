@@ -817,3 +817,13 @@ body.login-screen { background: var(--ground) !important; }
 .ui-sheet-grid .ui-sheet-header-row td { background: #F7F9FF !important; font-weight: 700; }
 .ui-sheet-grid tbody tr:last-child td, .ui-sheet-grid tbody tr:last-child th { border-bottom: 1px solid #D9DEE8; }
 .ui-csv-head h2 { word-break: break-all; }
+
+/* サイドバーを画面の高さに固定（本文をスクロールしても、アカウントとログアウトが常に見える） */
+#admin-page .ui-sidebar, #tenant-management-page .ui-sidebar { position: sticky; top: 0; align-self: flex-start; height: 100vh; overflow-y: auto; overscroll-behavior: contain; }
+#admin-page .ui-sidebar-nav { flex: 0 0 auto; }
+/* たたんだ状態: JS で display を書き換えられた項目も含め、アイコンを中央にそろえる */
+#admin-page.ui-nav-collapsed .ui-sidebar .tab-btn { display: flex !important; align-items: center; justify-content: center; gap: 0; }
+#admin-page.ui-nav-collapsed .ui-sidebar .tab-btn[style*="display: none"] { display: none !important; }
+@media (max-width: 900px) {
+  #admin-page .ui-sidebar { position: static; height: auto; overflow: visible; }
+}
