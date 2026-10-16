@@ -2757,23 +2757,31 @@ async function loadMonthlyRecords(yearMonth) {
         const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
 
         // Firestoreからデータ取得
+        // userId と日付範囲・並び替えを同時に指定すると複合インデックスが必要になり、
+        // インデックスの無い環境では読み込みに失敗する。従業員1人分の記録は多くないので、
+        // userId だけで取得し、月の絞り込みと並び替えは画面側で行う
         const snapshot = await getAttendanceCollection()
             .where('userId', '==', currentUser.uid)
-            .where('date', '>=', startDate)
-            .where('date', '<=', endDate)
-            .orderBy('date', 'desc')
             .get();
 
-        if (snapshot.empty) {
+        const records = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.date && data.date >= startDate && data.date <= endDate) {
+                records.push({ id: doc.id, data });
+            }
+        });
+        records.sort((a, b) => String(b.data.date).localeCompare(String(a.data.date)));
+
+        if (records.length === 0) {
             listContainer.innerHTML = renderHistoryEmpty(yearMonth);
             return;
         }
 
         // 記録を表示
         let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += renderAttendanceRecord(doc.id, data);
+        records.forEach(({ id, data }) => {
+            html += renderAttendanceRecord(id, data);
         });
 
         listContainer.innerHTML = html;
