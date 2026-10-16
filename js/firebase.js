@@ -206,7 +206,7 @@ function createErrorDiv() {
         padding: 20px;
         border-radius: 8px;
         z-index: 9999;
-        font-family: Arial, sans-serif;
+        font-family: inherit;
         max-width: 90%;
         max-height: 80vh;
         overflow-y: auto;

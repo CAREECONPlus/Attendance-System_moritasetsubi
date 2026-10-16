@@ -827,3 +827,25 @@ body.login-screen { background: var(--ground) !important; }
 @media (max-width: 900px) {
   #admin-page .ui-sidebar { position: static; height: auto; overflow: visible; }
 }
+
+/* ============================================================
+   書体の統一（UI刷新の書体: 本文 Noto Sans JP、見出し・大きな数字 Zen Kaku Gothic New）
+   ボタン・入力欄・表はブラウザ既定の書体になるため、明示的に本文の書体を継承させる
+   ============================================================ */
+html, body { font-family: var(--font-body) !important; }
+button, input, select, textarea, optgroup, table, th, td, label { font-family: inherit; }
+.modal, .ui-overlay, .ui-toast-host, .modal-content { font-family: var(--font-body); }
+.modal h2, .modal h3, #admin-page .tab-content h2, #admin-page .tab-content h3,
+.ui-tenant-title, .ui-csv-head h2, .ui-dialog h3 { font-family: var(--font-display); }
+.ui-mono, code, pre, kbd { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+
+/* ============================================================
+   管理者サイドバー: 「勤怠」をボタンに。たたんだときは日別・月別…を隠す
+   ============================================================ */
+.ui-sidebar-group-title { width: 100%; background: transparent; border: none; border-radius: var(--r-ctl); font: inherit; font-size: 11px; font-weight: 700; color: var(--ink-faint); text-align: left; cursor: pointer; }
+.ui-sidebar-group-title:hover { background: var(--nav-sub); color: #fff; }
+.ui-sidebar-group-title svg { flex: 0 0 18px; }
+#admin-page.ui-nav-collapsed .ui-sidebar-group { display: none; }
+#admin-page.ui-nav-collapsed .ui-sidebar-group-title { display: flex; align-items: center; justify-content: center; width: 44px; min-height: 44px; height: 44px; padding: 0; color: var(--nav-item); }
+#admin-page.ui-nav-collapsed .ui-sidebar-nav:has(.ui-sidebar-group .tab-btn.active) .ui-sidebar-group-title { background: var(--primary); color: #fff; }
+#admin-page.ui-nav-collapsed .ui-sidebar-group-title:hover { background: var(--nav-sub); color: #fff; }

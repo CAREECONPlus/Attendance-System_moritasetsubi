@@ -2071,7 +2071,7 @@ async function exportSpecialWorkToCSV() {
         exportBtn = getElement('export-special-work-csv');
         if (exportBtn) {
             exportBtn.disabled = true;
-            exportBtn.textContent = '特殊勤務CSV出力中...';
+            exportBtn.textContent = '明細CSV出力中...';
         }
 
         // Firebase初期化確認
@@ -2101,12 +2101,12 @@ async function exportSpecialWorkToCSV() {
         // 🆕 特殊勤務データのみフィルタリング（オプション：全データでもOK）
         const csvContent = generateSpecialWorkCSVContent(data);
         if (!csvContent) {
-            throw new Error('特殊勤務CSVコンテンツの生成に失敗しました');
+            throw new Error('明細CSVコンテンツの生成に失敗しました');
         }
 
         const filename = generateSpecialWorkCSVFilename();
 
-        downloadCSV(csvContent, filename, { title: '特殊勤務CSV の内容を確認' });
+        downloadCSV(csvContent, filename, { title: '明細CSV の内容を確認' });
 
     } catch (error) {
         console.error('特殊勤務CSV出力エラー:', {
@@ -2115,7 +2115,7 @@ async function exportSpecialWorkToCSV() {
             code: error.code
         });
 
-        let errorMessage = '特殊勤務CSV出力に失敗しました';
+        let errorMessage = '明細CSV出力に失敗しました';
         if (error.code === 'permission-denied') {
             errorMessage = 'データアクセス権限がありません。管理者にお問い合わせください。';
         } else if (error.message.includes('認証')) {
@@ -2129,7 +2129,7 @@ async function exportSpecialWorkToCSV() {
         // ボタンを元に戻す
         if (exportBtn) {
             exportBtn.disabled = false;
-            exportBtn.textContent = '特殊勤務CSV出力';
+            exportBtn.textContent = '明細CSV出力';
         }
     }
 }
